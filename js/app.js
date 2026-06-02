@@ -3,14 +3,15 @@ const db = firebase.database();
 const gameRef = db.ref('currentGame');
 
 // ── State ──────────────────────────────────────────────────────
-let players = [];          // array of { name, avatarId, n10, n20, n50, n100, buyIns }
+let players = [];
 let gameStatus = 'waiting';
-let expandedIdx = -1;      // which player card is expanded (chip input visible)
-let pendingAvatarIdx = -1; // which player slot is getting avatar change
-let pendingNameIdx = -1;   // which player slot is getting name change
-const writeTimers = {};    // debounce timers per player index
+let chipModalIdx = -1;
+let pendingAvatarIdx = -1;
+let pendingNameIdx = -1;
+let pendingDeleteIdx = -1;
+const writeTimers = {};
 
-// ── Init ───────────────────────────────────────────────────────
+// ── Defaults ───────────────────────────────────────────────────
 function defaultPlayers(count) {
     return Array.from({ length: count }, (_, i) => ({
         name: '玩家' + (i + 1),
@@ -19,19 +20,24 @@ function defaultPlayers(count) {
     }));
 }
 
-// ── Firebase listener ──────────────────────────────────────────
+// ── Firebase ───────────────────────────────────────────────────
 gameRef.on('value', snap => {
     const data = snap.val();
     if (!data || !data.players) {
         gameRef.set({ status: 'waiting', players: defaultPlayers(3) });
         return;
     }
-    // Convert Firebase object to array
     players = Object.keys(data.players)
         .sort((a, b) => Number(a) - Number(b))
         .map(k => data.players[k]);
     gameStatus = data.status || 'waiting';
+
     render();
+
+    // Keep chip modal in sync if open
+    if (chipModalIdx >= 0 && players[chipModalIdx]) {
+        updateChipModalCounts(chipModalIdx);
+    }
 });
 
 // ── Render ─────────────────────────────────────────────────────
@@ -43,124 +49,88 @@ function render() {
         gameStatus === 'settled' ? 'none' : 'flex';
     document.getElementById('btn-add-player').style.display =
         gameStatus === 'settled' ? 'none' : 'flex';
+    document.querySelector('.hint-text').style.display =
+        gameStatus === 'settled' ? 'none' : 'block';
 }
 
 function renderPlayers() {
     const list = document.getElementById('player-list');
-    const scrollPositions = {};
-    list.querySelectorAll('.chip-panel').forEach((el, i) => {
-        scrollPositions[i] = el.scrollTop;
-    });
-
     list.innerHTML = players.map((p, i) => {
         const chipTotal = calcChipTotal(p.n10, p.n20, p.n50, p.n100);
         const invested = calcInvested(p.buyIns);
         const pnl = calcPnl(chipTotal, invested);
+        const hasData = chipTotal > 0 || p.buyIns > 0;
         const pnlClass = pnl > 0 ? 'positive' : pnl < 0 ? 'negative' : 'neutral';
-        const isExpanded = expandedIdx === i;
         const settled = gameStatus === 'settled';
 
         return `
-        <div class="player-card ${isExpanded ? 'expanded' : ''} ${settled ? 'settled' : ''}" data-idx="${i}">
+        <div class="player-card ${settled ? 'settled' : ''}"
+             data-idx="${i}"
+             ${settled ? '' : `onclick="openChipModal(${i})"`}>
             <div class="player-card-main">
-                <div class="avatar-circle ${settled ? '' : 'clickable'}" id="avatar-circle-${i}"
+                <div class="avatar-circle ${settled ? '' : 'clickable'}"
                      style="background:${getAvatarBg(p.avatarId)}"
-                     ${settled ? '' : `onclick="openAvatarModal(${i})"`}>
+                     ${settled ? '' : `onclick="event.stopPropagation();openAvatarModal(${i})"`}>
                     ${getAvatarSvg(p.avatarId)}
                     ${settled ? '' : '<div class="avatar-edit-hint">换</div>'}
                 </div>
                 <div class="player-info">
                     <div class="player-name-row">
                         <span class="player-name">${escHtml(p.name)}</span>
-                        ${settled ? '' : `<button class="btn-edit-name" onclick="openNameModal(${i})">✎</button>`}
+                        ${settled ? '' : `
+                        <button class="btn-edit-name" onclick="event.stopPropagation();openNameModal(${i})" aria-label="编辑名字">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+                                <path d="M18.5 2.5a2.12 2.12 0 0 1 3 3L12 15l-4 1 1-4Z"/>
+                            </svg>
+                            编辑
+                        </button>`}
                     </div>
-                    <div class="pnl-inline ${chipTotal === 0 && p.buyIns === 0 ? 'neutral' : pnlClass}">${chipTotal === 0 && p.buyIns === 0 ? '未填写' : formatPnl(pnl) + ' 分'}</div>
+                    <div class="pnl-inline ${hasData ? pnlClass : 'neutral'}">
+                        ${hasData ? formatPnl(pnl) + ' 分' : '点击输入筹码'}
+                    </div>
                 </div>
                 ${settled ? '' : `
-                <div class="card-right">
-                    <button class="btn-expand-chip ${isExpanded ? 'open' : ''}" onclick="toggleExpand(${i})">
-                        ${isExpanded ? '收起 ▲' : '筹码 ▼'}
-                    </button>
-                    ${players.length > 2 ? `<button class="btn-remove-player" onclick="removePlayer(${i})">×</button>` : ''}
+                <div class="card-chevron">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="9 18 15 12 9 6"/></svg>
                 </div>`}
             </div>
-            ${!settled ? `
-            <div class="chip-panel ${isExpanded ? 'open' : ''}" id="panel-${i}">
-                <div class="stepper-rows">${renderChipRows(i, p)}</div>
-            </div>` : ''}
         </div>`;
     }).join('');
-}
 
-function renderChipRows(idx, p) {
-    const chips = [
-        { key: 'n100', label: '100 分', cls: 'c100', val: p.n100 },
-        { key: 'n50',  label: '50 分',  cls: 'c50',  val: p.n50 },
-        { key: 'n20',  label: '20 分',  cls: 'c20',  val: p.n20 },
-        { key: 'n10',  label: '10 分',  cls: 'c10',  val: p.n10 },
-    ];
-    const rows = chips.map(c => `
-        <div class="stepper-row">
-            <div class="chip-dot ${c.cls}">${c.key.slice(1)}</div>
-            <div class="stepper-label">${c.label}</div>
-            <div class="stepper-ctrl">
-                <button class="stepper-btn" onclick="adjustChip(${idx},'${c.key}',-1)">−</button>
-                <span class="stepper-count">${c.val}</span>
-                <button class="stepper-btn" onclick="adjustChip(${idx},'${c.key}',1)">＋</button>
-            </div>
-        </div>`).join('');
-    const buyInRow = `
-        <div class="stepper-row" style="background:var(--gold-light)">
-            <div class="chip-dot" style="background:var(--gold);font-size:9px">底</div>
-            <div class="stepper-label">借底次数<span>每借一底 +1000分投入</span></div>
-            <div class="stepper-ctrl">
-                <button class="stepper-btn" onclick="adjustChip(${idx},'buyIns',-1)">−</button>
-                <span class="stepper-count">${p.buyIns}</span>
-                <button class="stepper-btn" onclick="adjustChip(${idx},'buyIns',1)">＋</button>
-            </div>
-        </div>`;
-    return rows + buyInRow;
+    if (gameStatus !== 'settled') setupLongPress();
 }
 
 function renderSummary() {
     const bar = document.getElementById('summary-bar');
     if (players.length === 0) { bar.classList.add('hidden'); return; }
-    const total = players.reduce((sum, p) => {
-        return sum + calcPnl(calcChipTotal(p.n10, p.n20, p.n50, p.n100), calcInvested(p.buyIns));
-    }, 0);
+    const total = players.reduce((sum, p) =>
+        sum + calcPnl(calcChipTotal(p.n10, p.n20, p.n50, p.n100), calcInvested(p.buyIns)), 0);
+    const hasAnyData = players.some(p => calcChipTotal(p.n10, p.n20, p.n50, p.n100) > 0);
+    if (!hasAnyData) { bar.classList.add('hidden'); return; }
     bar.classList.remove('hidden');
     document.getElementById('total-pnl').textContent = formatPnl(total) + ' 分';
     const ind = document.getElementById('balance-indicator');
-    if (total === 0) {
-        ind.className = 'balance-ok';
-        ind.textContent = '持平 ✓';
-    } else {
-        ind.className = 'balance-warn';
-        ind.textContent = `差额 ${formatPnl(total)}`;
-    }
+    ind.className = total === 0 ? 'balance-ok' : 'balance-warn';
+    ind.textContent = total === 0 ? '持平 ✓' : `差额 ${formatPnl(total)}`;
 }
 
 function renderResults() {
     const section = document.getElementById('results-section');
-    if (gameStatus !== 'settled') {
-        section.classList.add('hidden');
-        section.innerHTML = '';
-        return;
-    }
-    const sorted = [...players]
-        .map((p, i) => {
+    if (gameStatus !== 'settled') { section.classList.add('hidden'); section.innerHTML = ''; return; }
+    const sorted = players
+        .map(p => {
             const chipTotal = calcChipTotal(p.n10, p.n20, p.n50, p.n100);
             const invested = calcInvested(p.buyIns);
             return { ...p, chipTotal, invested, pnl: calcPnl(chipTotal, invested) };
         })
         .sort((a, b) => b.pnl - a.pnl);
-
     const totalPnl = sorted.reduce((s, r) => s + r.pnl, 0);
     const isBalanced = totalPnl === 0;
 
     section.classList.remove('hidden');
     section.innerHTML = `
-        <div class="card slide-up" style="margin-bottom:16px">
+        <div class="card slide-up">
             <div class="card-title">🎉 结算结果</div>
             <table class="results-table">
                 <thead><tr><th></th><th>玩家</th><th>持筹</th><th>投入</th><th>盈亏</th></tr></thead>
@@ -179,11 +149,102 @@ function renderResults() {
                 ${isBalanced ? '验证通过 ✓  总盈亏 = 0' : `验证失败 ✗  总盈亏 = ${formatPnl(totalPnl)}，请检查输入`}
             </div>
         </div>
-        <button class="btn btn-secondary" id="btn-new-round" style="margin-bottom:10px" onclick="showResetModal()">
-            重置筹码，再来一局
-        </button>
+        <button class="btn btn-secondary" style="margin-bottom:10px" onclick="showResetModal()">重置筹码，再来一局</button>
         <button class="btn btn-danger btn-sm" onclick="showResetModal()">完全重置</button>
     `;
+}
+
+// ── Chip half-sheet ────────────────────────────────────────────
+function openChipModal(idx) {
+    if (gameStatus === 'settled') return;
+    chipModalIdx = idx;
+    const p = players[idx];
+
+    // Header
+    const header = document.getElementById('chip-modal-header');
+    header.innerHTML = `
+        <div class="avatar-circle" style="background:${getAvatarBg(p.avatarId)}">${getAvatarSvg(p.avatarId)}</div>
+        <div>
+            <div style="font-size:16px;font-weight:700;color:var(--clr-text)">${escHtml(p.name)}</div>
+            <div style="font-size:12px;color:var(--clr-text-3)">1底 = 1000分 | 默认配置：5×10, 10×20, 5×50, 5×100</div>
+        </div>
+    `;
+
+    // Body
+    renderChipModalBody(idx);
+
+    document.getElementById('chip-modal').classList.remove('hidden');
+    document.body.style.overflow = 'hidden';
+}
+
+function renderChipModalBody(idx) {
+    const p = players[idx];
+    const chips = [
+        { key: 'n100', label: '100 分筹码', cls: 'c100', val: p.n100 },
+        { key: 'n50',  label: '50 分筹码',  cls: 'c50',  val: p.n50 },
+        { key: 'n20',  label: '20 分筹码',  cls: 'c20',  val: p.n20 },
+        { key: 'n10',  label: '10 分筹码',  cls: 'c10',  val: p.n10 },
+    ];
+    const chipRows = chips.map(c => `
+        <div class="stepper-row">
+            <div class="chip-dot ${c.cls}">${c.key.slice(1)}</div>
+            <div class="stepper-label">${c.label}</div>
+            <div class="stepper-ctrl">
+                <button class="stepper-btn" onclick="adjustChip(${idx},'${c.key}',-1)">−</button>
+                <div class="stepper-count" id="mc-${c.key}">${c.val}</div>
+                <button class="stepper-btn" onclick="adjustChip(${idx},'${c.key}',1)">＋</button>
+            </div>
+        </div>`).join('');
+
+    const buyInRow = `
+        <div class="stepper-row buyin-row">
+            <div class="chip-dot" style="background:var(--clr-gold);font-size:9px">底</div>
+            <div class="stepper-label">借底次数<span>每借一底 = 额外 1000 分投入</span></div>
+            <div class="stepper-ctrl">
+                <button class="stepper-btn" onclick="adjustChip(${idx},'buyIns',-1)">−</button>
+                <div class="stepper-count" id="mc-buyIns">${p.buyIns}</div>
+                <button class="stepper-btn" onclick="adjustChip(${idx},'buyIns',1)">＋</button>
+            </div>
+        </div>`;
+
+    const pnlPreview = `<div class="chip-modal-pnl" id="mc-pnl-wrap"></div>`;
+
+    document.getElementById('chip-modal-body').innerHTML =
+        `<div class="stepper-rows">${chipRows}${buyInRow}</div>${pnlPreview}`;
+
+    updateChipModalPnl(idx);
+}
+
+function updateChipModalCounts(idx) {
+    const p = players[idx];
+    const keys = ['n100', 'n50', 'n20', 'n10', 'buyIns'];
+    keys.forEach(k => {
+        const el = document.getElementById('mc-' + k);
+        if (el) el.textContent = p[k] || 0;
+    });
+    updateChipModalPnl(idx);
+}
+
+function updateChipModalPnl(idx) {
+    const p = players[idx];
+    const chipTotal = calcChipTotal(p.n10, p.n20, p.n50, p.n100);
+    const invested = calcInvested(p.buyIns);
+    const pnl = calcPnl(chipTotal, invested);
+    const el = document.getElementById('mc-pnl-wrap');
+    if (!el) return;
+    const cls = pnl > 0 ? 'positive' : pnl < 0 ? 'negative' : 'neutral';
+    el.innerHTML = `
+        <div class="pnl-preview-row">
+            <span>持筹 <strong>${chipTotal}</strong></span>
+            <span>投入 <strong>${invested}</strong></span>
+            <span class="${cls}">盈亏 <strong>${formatPnl(pnl)}</strong></span>
+        </div>`;
+}
+
+function closeChipModal() {
+    document.getElementById('chip-modal').classList.add('hidden');
+    document.body.style.overflow = '';
+    chipModalIdx = -1;
 }
 
 // ── Chip adjustments ───────────────────────────────────────────
@@ -194,71 +255,88 @@ function adjustChip(idx, key, delta) {
     if (next === current) return;
     players[idx][key] = next;
 
-    // Update DOM without full re-render
-    const panel = document.getElementById('panel-' + idx);
-    if (panel) {
-        // Update just the count display
-        const steppers = panel.querySelectorAll('.stepper-count');
-        const keyOrder = ['n100', 'n50', 'n20', 'n10', 'buyIns'];
-        const keyIdx = keyOrder.indexOf(key);
-        if (steppers[keyIdx]) steppers[keyIdx].textContent = next;
+    // Update modal display instantly
+    const countEl = document.getElementById('mc-' + key);
+    if (countEl) countEl.textContent = next;
+    updateChipModalPnl(idx);
+
+    // Update player card pnl
+    const chipTotal = calcChipTotal(players[idx].n10, players[idx].n20, players[idx].n50, players[idx].n100);
+    const invested = calcInvested(players[idx].buyIns);
+    const pnl = calcPnl(chipTotal, invested);
+    const pnlEl = document.querySelector(`.player-card[data-idx="${idx}"] .pnl-inline`);
+    if (pnlEl) {
+        const hasData = chipTotal > 0 || players[idx].buyIns > 0;
+        pnlEl.textContent = hasData ? formatPnl(pnl) + ' 分' : '点击输入筹码';
+        pnlEl.className = 'pnl-inline ' + (hasData ? (pnl > 0 ? 'positive' : pnl < 0 ? 'negative' : 'neutral') : 'neutral');
     }
-    // Update pnl inline
-    updatePlayerPnlDisplay(idx);
     renderSummary();
 
-    // Debounce write to Firebase
     clearTimeout(writeTimers[idx]);
     writeTimers[idx] = setTimeout(() => {
         gameRef.child('players/' + idx).update({ [key]: next });
     }, 400);
 }
 
-function updatePlayerPnlDisplay(idx) {
-    const p = players[idx];
-    const pnl = calcPnl(calcChipTotal(p.n10, p.n20, p.n50, p.n100), calcInvested(p.buyIns));
-    const el = document.querySelector(`.player-card[data-idx="${idx}"] .pnl-inline`);
-    if (el) {
-        el.textContent = formatPnl(pnl) + ' 分';
-        el.className = 'pnl-inline ' + (pnl > 0 ? 'positive' : pnl < 0 ? 'negative' : 'neutral');
-    }
-}
+// ── Long-press delete ──────────────────────────────────────────
+function setupLongPress() {
+    document.querySelectorAll('.player-card[data-idx]').forEach(card => {
+        let timer = null;
+        let startX = 0, startY = 0;
 
-// ── Expand/collapse chip panel ─────────────────────────────────
-function toggleExpand(idx) {
-    expandedIdx = expandedIdx === idx ? -1 : idx;
-    render();
-    if (expandedIdx === idx) {
-        setTimeout(() => {
-            const card = document.querySelector(`.player-card[data-idx="${idx}"]`);
-            if (card) card.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-        }, 150);
-    }
-}
+        card.addEventListener('touchstart', e => {
+            startX = e.touches[0].clientX;
+            startY = e.touches[0].clientY;
+            timer = setTimeout(() => {
+                const idx = parseInt(card.dataset.idx);
+                if (players.length <= 2) { showToast('至少保留2位玩家'); return; }
+                card.classList.add('long-press-active');
+                pendingDeleteIdx = idx;
+                document.getElementById('delete-modal-text').textContent =
+                    `删除「${players[idx].name}」？`;
+                document.getElementById('delete-modal').classList.remove('hidden');
+                document.body.style.overflow = 'hidden';
+            }, 600);
+        }, { passive: true });
 
-// ── Add / remove player ────────────────────────────────────────
-function addPlayer() {
-    if (players.length >= 8) { showToast('最多支持8位玩家'); return; }
-    const idx = players.length;
-    const newPlayer = { name: '玩家' + (idx + 1), avatarId: idx % AVATARS.length, n10: 0, n20: 0, n50: 0, n100: 0, buyIns: 0 };
-    gameRef.child('players/' + idx).set(newPlayer);
+        card.addEventListener('touchmove', e => {
+            const dx = Math.abs(e.touches[0].clientX - startX);
+            const dy = Math.abs(e.touches[0].clientY - startY);
+            if (dx > 8 || dy > 8) { clearTimeout(timer); timer = null; }
+        }, { passive: true });
+
+        card.addEventListener('touchend', () => {
+            clearTimeout(timer); timer = null;
+            card.classList.remove('long-press-active');
+        });
+        card.addEventListener('touchcancel', () => {
+            clearTimeout(timer); timer = null;
+            card.classList.remove('long-press-active');
+        });
+    });
 }
 
 function removePlayer(idx) {
-    if (players.length <= 2) { showToast('至少保留2位玩家'); return; }
-    // Cancel any pending write for this player and re-index others
     clearTimeout(writeTimers[idx]);
     delete writeTimers[idx];
     const newPlayers = players.filter((_, i) => i !== idx);
     gameRef.child('players').set(newPlayers);
-    if (expandedIdx === idx) expandedIdx = -1;
-    else if (expandedIdx > idx) expandedIdx--;
+}
+
+// ── Add player ─────────────────────────────────────────────────
+function addPlayer() {
+    if (players.length >= 8) { showToast('最多支持8位玩家'); return; }
+    const idx = players.length;
+    gameRef.child('players/' + idx).set({
+        name: '玩家' + (idx + 1),
+        avatarId: idx % AVATARS.length,
+        n10: 0, n20: 0, n50: 0, n100: 0, buyIns: 0
+    });
 }
 
 // ── Avatar modal ───────────────────────────────────────────────
 function openAvatarModal(idx) {
     pendingAvatarIdx = idx;
-    const modal = document.getElementById('avatar-modal');
     const grid = document.getElementById('modal-avatar-grid');
     grid.innerHTML = '';
     AVATARS.forEach((av, i) => {
@@ -267,22 +345,17 @@ function openAvatarModal(idx) {
         div.innerHTML = av.svg;
         div.style.background = av.bg;
         div.addEventListener('click', () => {
-            saveAvatar(pendingAvatarIdx, i);
+            gameRef.child('players/' + pendingAvatarIdx + '/avatarId').set(i);
             closeAvatarModal();
         });
         grid.appendChild(div);
     });
-    modal.classList.remove('hidden');
+    document.getElementById('avatar-modal').classList.remove('hidden');
     document.body.style.overflow = 'hidden';
 }
-
 function closeAvatarModal() {
     document.getElementById('avatar-modal').classList.add('hidden');
     document.body.style.overflow = '';
-}
-
-function saveAvatar(idx, avatarId) {
-    gameRef.child('players/' + idx + '/avatarId').set(avatarId);
 }
 
 // ── Name modal ─────────────────────────────────────────────────
@@ -292,14 +365,12 @@ function openNameModal(idx) {
     input.value = players[idx].name;
     document.getElementById('name-modal').classList.remove('hidden');
     document.body.style.overflow = 'hidden';
-    setTimeout(() => input.focus(), 100);
+    setTimeout(() => input.focus(), 150);
 }
-
 function closeNameModal() {
     document.getElementById('name-modal').classList.add('hidden');
     document.body.style.overflow = '';
 }
-
 function saveName() {
     const name = document.getElementById('name-modal-input').value.trim();
     if (!name) { showToast('名字不能为空'); return; }
@@ -312,7 +383,6 @@ async function confirmSettle() {
     const hasData = players.some(p => calcChipTotal(p.n10, p.n20, p.n50, p.n100) > 0);
     if (!hasData) { showToast('请先输入筹码数量'); return; }
     await gameRef.child('status').set('settled');
-    expandedIdx = -1;
 }
 
 // ── Reset ──────────────────────────────────────────────────────
@@ -320,25 +390,18 @@ function showResetModal() {
     document.getElementById('reset-modal').classList.remove('hidden');
     document.body.style.overflow = 'hidden';
 }
-
 function closeResetModal() {
     document.getElementById('reset-modal').classList.add('hidden');
     document.body.style.overflow = '';
 }
-
 function resetSoft() {
-    // Zero out chips, keep names and avatars, back to waiting
     const newPlayers = players.map(p => ({ ...p, n10: 0, n20: 0, n50: 0, n100: 0, buyIns: 0 }));
     gameRef.set({ status: 'waiting', players: newPlayers });
-    expandedIdx = -1;
     closeResetModal();
     showToast('已重置筹码，可以开始新一局');
 }
-
 function resetHard() {
-    const fresh = defaultPlayers(3);
-    gameRef.set({ status: 'waiting', players: fresh });
-    expandedIdx = -1;
+    gameRef.set({ status: 'waiting', players: defaultPlayers(3) });
     closeResetModal();
     showToast('已完全重置');
 }
@@ -347,7 +410,6 @@ function resetHard() {
 function escHtml(str) {
     return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 }
-
 function showToast(msg) {
     const t = document.getElementById('toast');
     t.textContent = msg;
@@ -359,6 +421,11 @@ function showToast(msg) {
 document.getElementById('btn-add-player').addEventListener('click', addPlayer);
 document.getElementById('btn-confirm').addEventListener('click', confirmSettle);
 document.getElementById('btn-reset-soft').addEventListener('click', showResetModal);
+
+document.getElementById('btn-chip-done').addEventListener('click', closeChipModal);
+document.getElementById('chip-modal').addEventListener('click', e => {
+    if (e.target === e.currentTarget) closeChipModal();
+});
 
 document.getElementById('btn-close-modal').addEventListener('click', closeAvatarModal);
 document.getElementById('avatar-modal').addEventListener('click', e => {
@@ -372,6 +439,19 @@ document.getElementById('name-modal-input').addEventListener('keydown', e => {
 });
 document.getElementById('name-modal').addEventListener('click', e => {
     if (e.target === e.currentTarget) closeNameModal();
+});
+
+document.getElementById('btn-delete-confirm').addEventListener('click', () => {
+    if (pendingDeleteIdx >= 0) removePlayer(pendingDeleteIdx);
+    document.getElementById('delete-modal').classList.add('hidden');
+    document.body.style.overflow = '';
+    pendingDeleteIdx = -1;
+});
+document.getElementById('btn-delete-cancel').addEventListener('click', () => {
+    document.getElementById('delete-modal').classList.add('hidden');
+    document.body.style.overflow = '';
+    pendingDeleteIdx = -1;
+    document.querySelectorAll('.long-press-active').forEach(el => el.classList.remove('long-press-active'));
 });
 
 document.getElementById('btn-reset-soft-confirm').addEventListener('click', resetSoft);
