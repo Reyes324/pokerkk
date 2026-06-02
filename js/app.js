@@ -74,7 +74,7 @@ function renderPlayers() {
                         <span class="player-name">${escHtml(p.name)}</span>
                         ${settled ? '' : `<button class="btn-edit-name" onclick="openNameModal(${i})">✎</button>`}
                     </div>
-                    <div class="pnl-inline ${pnlClass}">${formatPnl(pnl)} 分</div>
+                    <div class="pnl-inline ${chipTotal === 0 && p.buyIns === 0 ? 'neutral' : pnlClass}">${chipTotal === 0 && p.buyIns === 0 ? '未填写' : formatPnl(pnl) + ' 分'}</div>
                 </div>
                 ${settled ? '' : `
                 <div class="card-right">
@@ -179,7 +179,7 @@ function renderResults() {
                 ${isBalanced ? '验证通过 ✓  总盈亏 = 0' : `验证失败 ✗  总盈亏 = ${formatPnl(totalPnl)}，请检查输入`}
             </div>
         </div>
-        <button class="btn btn-secondary" id="btn-new-round" style="margin-bottom:10px" onclick="resetSoft()">
+        <button class="btn btn-secondary" id="btn-new-round" style="margin-bottom:10px" onclick="showResetModal()">
             重置筹码，再来一局
         </button>
         <button class="btn btn-danger btn-sm" onclick="showResetModal()">完全重置</button>
@@ -246,7 +246,9 @@ function addPlayer() {
 
 function removePlayer(idx) {
     if (players.length <= 2) { showToast('至少保留2位玩家'); return; }
-    // Remove player and re-index
+    // Cancel any pending write for this player and re-index others
+    clearTimeout(writeTimers[idx]);
+    delete writeTimers[idx];
     const newPlayers = players.filter((_, i) => i !== idx);
     gameRef.child('players').set(newPlayers);
     if (expandedIdx === idx) expandedIdx = -1;
