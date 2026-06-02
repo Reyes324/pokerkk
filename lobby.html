@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>等待加入 — 德州结算</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<div class="container">
+    <div class="page-header">
+        <div class="logo-icon">
+            <svg viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <circle cx="20" cy="20" r="18" stroke="white" stroke-width="2.5"/>
+                <circle cx="20" cy="20" r="12" stroke="white" stroke-width="2"/>
+                <line x1="20" y1="2" x2="20" y2="38" stroke="white" stroke-width="2"/>
+                <line x1="2" y1="20" x2="38" y2="20" stroke="white" stroke-width="2"/>
+                <circle cx="20" cy="20" r="3" fill="white"/>
+            </svg>
+        </div>
+        <h1>等待加入</h1>
+    </div>
+
+    <div class="card" style="text-align:center">
+        <div class="room-code-label">房间码</div>
+        <div class="room-code-display" id="room-code-display">----</div>
+        <div class="qr-wrap">
+            <div id="qrcode"></div>
+            <p class="qr-hint">扫描二维码加入<br>或将房间码分享给朋友</p>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-title">玩家列表 <span id="player-count" style="color:var(--green)">0</span> 人</div>
+        <div class="player-list" id="player-list"></div>
+        <p style="font-size:12px;color:var(--gray-400);margin-top:12px;text-align:center" id="min-hint">至少需要 2 位玩家才能开始</p>
+    </div>
+
+    <button class="btn btn-primary" id="btn-start" disabled>
+        开始结算
+    </button>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
+<script src="js/firebase-config.js"></script>
+<script src="js/avatars.js"></script>
+<script src="js/lobby.js"></script>
+</body>
+</html>
