@@ -5,9 +5,9 @@
   --bg:           #F5F4F2;
   --surface:      #FFFFFF;
   --surface2:     #FAFAF8;
-  --green:        #107C10;
-  --green-dk:     #0B5C0B;
-  --green-lt:     #DFF6DD;
+  --green:        #3D7A5A;
+  --green-dk:     #2D6047;
+  --green-lt:     #E8F5EE;
   --gold:         #C19A00;
   --gold-lt:      #FFF8DC;
   --red:          #A4262C;
@@ -70,7 +70,7 @@ body{
   box-shadow:0 2px 6px rgba(16,124,16,.28);
 }
 .app-title-icon svg{width:22px;height:22px}
-.app-title-text{font-size:17px;font-weight:700;letter-spacing:.2px;color:var(--text)}
+.app-title-text{font-size:17px;font-weight:500;letter-spacing:.2px;color:var(--text)}
 .header-actions{display:flex;gap:2px}
 .btn-icon{
   width:40px;height:40px;
@@ -153,7 +153,7 @@ body{
 /* ─── Player info ─── */
 .player-info{flex:1;min-width:0}
 .player-name-row{display:flex;align-items:center;gap:6px;margin-bottom:3px;flex-wrap:wrap}
-.player-name{font-size:16px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.player-name{font-size:15px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .btn-edit-name{
   display:inline-flex;align-items:center;gap:3px;
   background:var(--green-lt);color:var(--green);
@@ -196,7 +196,7 @@ body{
 }
 .summary-item{display:flex;align-items:center;gap:8px}
 .summary-label{font-size:12px;color:var(--text3);font-weight:500}
-.summary-value{font-size:18px;font-weight:800;color:var(--text)}
+.summary-value{font-size:17px;font-weight:600;color:var(--text)}
 .balance-ok{background:var(--green-lt);color:var(--green);font-size:12px;font-weight:700;padding:4px 10px;border-radius:var(--rfull)}
 .balance-warn{background:var(--red-lt);color:var(--red);font-size:12px;font-weight:700;padding:4px 10px;border-radius:var(--rfull)}
 
@@ -435,8 +435,8 @@ body{
   white-space: nowrap;
 }
 .float-bar-value {
-  font-size: 20px;
-  font-weight: 800;
+  font-size: 18px;
+  font-weight: 600;
   color: var(--text);
   letter-spacing: -.5px;
 }
@@ -560,9 +560,79 @@ body{
 }
 .toast.show{transform:translate(-50%,-50%) scale(1);opacity:1}
 
+/* ─── Skeleton loading ─── */
+@keyframes shimmer {
+  0%   { background-position: -400px 0 }
+  100% { background-position: 400px 0 }
+}
+.skeleton-avatar {
+  width: 48px; height: 48px;
+  border-radius: 50%;
+  background: linear-gradient(90deg, var(--n20) 25%, var(--n10) 50%, var(--n20) 75%);
+  background-size: 800px 100%;
+  animation: shimmer 1.4s infinite linear;
+  flex-shrink: 0;
+}
+.skeleton-line {
+  height: 12px;
+  border-radius: 6px;
+  background: linear-gradient(90deg, var(--n20) 25%, var(--n10) 50%, var(--n20) 75%);
+  background-size: 800px 100%;
+  animation: shimmer 1.4s infinite linear;
+}
+.skeleton-line.wide  { width: 72%; }
+.skeleton-line.narrow { width: 44%; }
+
+/* ─── Chip modal inline name ─── */
+.chip-modal-name {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--text);
+  cursor: pointer;
+  padding: 2px 0;
+  border-bottom: 1px dashed var(--n40);
+  margin-bottom: 2px;
+}
+.chip-modal-name:active { color: var(--green); border-color: var(--green); }
+
+/* ─── Edit name btn — icon only ─── */
+.btn-edit-name {
+  background: none;
+  border: none;
+  color: var(--text3);
+  padding: 4px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 28px; min-height: 28px;
+  border-radius: var(--r4);
+  -webkit-tap-highlight-color: transparent;
+  transition: color .12s, background .12s;
+}
+.btn-edit-name:active { color: var(--green); background: var(--green-lt); }
+
+/* ─── Ant Design-style reset modal buttons ─── */
+/* Override the reset modal to use consistent height/spacing */
+#reset-modal .modal-sheet > .btn,
+#reset-modal .modal-sheet > button {
+  height: 40px !important;
+  font-size: 14px !important;
+  border-radius: var(--r8) !important;
+  margin-bottom: 8px !important;
+}
+#reset-modal .modal-sheet > button:last-child { margin-bottom: 0 !important; }
+
 /* ─── Utilities ─── */
 .hidden{display:none!important}
-@keyframes slideUp{
-  from{opacity:0;transform:translateY(16px)}
+@keyframes slideUp {
+  from{opacity:0;transform:translateY(20px)}
   to{opacity:1;transform:translateY(0)}
+}
+@keyframes slideDown {
+  from{opacity:1;transform:translateY(0)}
+  to{opacity:0;transform:translateY(24px)}
 }

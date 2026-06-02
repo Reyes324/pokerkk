@@ -4,6 +4,7 @@ const gameRef = db.ref('currentGame');
 
 // ── State ──────────────────────────────────────────────────────
 let players = [];
+let isLoading = true; // true until first Firebase response
 let chipModalIdx = -1;
 let chipInputMode = 'stepper'; // 'stepper' | 'direct'
 let pendingAvatarIdx = -1;
@@ -22,6 +23,7 @@ function defaultPlayers(count) {
 // ── Firebase ───────────────────────────────────────────────────
 gameRef.on('value', snap => {
     const data = snap.val();
+    isLoading = false;
     if (!data || !data.players) {
         gameRef.set({ status: 'waiting', players: defaultPlayers(3) });
         return;
@@ -33,6 +35,9 @@ gameRef.on('value', snap => {
     if (chipModalIdx >= 0 && players[chipModalIdx]) syncChipModal(chipModalIdx);
 });
 
+// Show skeleton immediately on load
+renderPlayers();
+
 // ── Render ─────────────────────────────────────────────────────
 function render() {
     renderPlayers();
@@ -41,6 +46,24 @@ function render() {
 
 function renderPlayers() {
     const list = document.getElementById('player-list');
+
+    // Show skeleton while Firebase hasn't responded yet
+    if (isLoading) {
+        list.innerHTML = [0,1,2].map(() => `
+            <div class="swipe-row">
+                <div class="player-card skeleton-card">
+                    <div class="player-card-main">
+                        <div class="skeleton-avatar"></div>
+                        <div class="player-info">
+                            <div class="skeleton-line wide"></div>
+                            <div class="skeleton-line narrow" style="margin-top:6px"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>`).join('');
+        return;
+    }
+
     list.innerHTML = players.map((p, i) => {
         const chipTotal = calcChipTotal(p.n10, p.n20, p.n50, p.n100);
         const invested = calcInvested(p.buyIns);
@@ -70,12 +93,10 @@ function renderPlayers() {
                         <div class="player-name-row">
                             <span class="player-name">${escHtml(p.name)}</span>
                             ${settled ? '' : `
-                            <button class="btn-edit-name" onclick="event.stopPropagation();openNameModal(${i})">
-                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                    <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+                            <button class="btn-edit-name" onclick="event.stopPropagation();openNameModal(${i})" aria-label="编辑名字">
+                                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                                     <path d="M18.5 2.5a2.12 2.12 0 0 1 3 3L12 15l-4 1 1-4Z"/>
                                 </svg>
-                                编辑
                             </button>`}
                         </div>
                         <div class="pnl-inline ${hasData ? pnlClass : 'neutral'}">
@@ -91,10 +112,8 @@ function renderPlayers() {
         </div>`;
     }).join('');
 
-    if (gameStatus !== 'settled') {
-        setupSwipeDelete();
-        setupLongPress();
-    }
+    setupSwipeDelete();
+    setupLongPress();
 }
 
 function renderFloatBar() {
@@ -294,7 +313,6 @@ function showDeleteConfirm(idx) {
 
 // ── Chip half-sheet ────────────────────────────────────────────
 function openChipModal(idx) {
-    if (gameStatus === 'settled') return;
     chipModalIdx = idx;
     chipInputMode = 'stepper';
     renderChipModal(idx);
@@ -304,15 +322,24 @@ function openChipModal(idx) {
 
 function renderChipModal(idx) {
     const p = players[idx];
-    // Header
+    // Header — tap avatar to change, tap name to edit
     document.getElementById('chip-modal-header').innerHTML = `
-        <div class="avatar-circle" style="background:${getAvatarBg(p.avatarId)}">${getAvatarSvg(p.avatarId)}</div>
-        <div>
-            <div style="font-size:16px;font-weight:700">${escHtml(p.name)}</div>
+        <div class="avatar-circle clickable" style="background:${getAvatarBg(p.avatarId)}"
+             onclick="openAvatarModal(${idx})">
+            ${getAvatarSvg(p.avatarId)}
+            <div class="avatar-edit-hint">换</div>
+        </div>
+        <div style="flex:1;min-width:0">
+            <div class="chip-modal-name" onclick="openNameModal(${idx})">
+                ${escHtml(p.name)}
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;opacity:.4">
+                    <path d="M18.5 2.5a2.12 2.12 0 0 1 3 3L12 15l-4 1 1-4Z"/>
+                </svg>
+            </div>
             <div style="font-size:12px;color:var(--text3)">1底 = 1000分</div>
         </div>
-        <button class="mode-toggle-btn" id="btn-mode-toggle" onclick="toggleChipMode(${idx})" style="margin-left:auto">
-            切换输入
+        <button class="mode-toggle-btn" id="btn-mode-toggle" onclick="toggleChipMode(${idx})">
+            切换
         </button>`;
     renderChipModalBody(idx);
 }
@@ -433,11 +460,28 @@ function applyDirectInput(idx) {
     }, 400);
 }
 
+// ── Modal animation helper ─────────────────────────────────────
+function closeModal(id, callback) {
+    const overlay = document.getElementById(id);
+    const sheet = overlay.querySelector('.modal-sheet');
+    if (sheet) {
+        sheet.style.animation = 'slideDown .2s cubic-bezier(.4,0,1,1) both';
+        setTimeout(() => {
+            overlay.classList.add('hidden');
+            sheet.style.animation = '';
+            document.body.style.overflow = '';
+            if (callback) callback();
+        }, 200);
+    } else {
+        overlay.classList.add('hidden');
+        document.body.style.overflow = '';
+        if (callback) callback();
+    }
+}
+
 function closeChipModal() {
     if (chipInputMode === 'direct') applyDirectInput(chipModalIdx);
-    document.getElementById('chip-modal').classList.add('hidden');
-    document.body.style.overflow = '';
-    chipModalIdx = -1;
+    closeModal('chip-modal', () => { chipModalIdx = -1; });
 }
 
 function syncChipModal(idx) {
@@ -535,10 +579,7 @@ function openAvatarModal(idx) {
     document.getElementById('avatar-modal').classList.remove('hidden');
     document.body.style.overflow = 'hidden';
 }
-function closeAvatarModal() {
-    document.getElementById('avatar-modal').classList.add('hidden');
-    document.body.style.overflow = '';
-}
+function closeAvatarModal() { closeModal('avatar-modal'); }
 
 // ── Name modal ─────────────────────────────────────────────────
 function openNameModal(idx) {
@@ -549,10 +590,7 @@ function openNameModal(idx) {
     document.body.style.overflow = 'hidden';
     setTimeout(() => inp.focus(), 150);
 }
-function closeNameModal() {
-    document.getElementById('name-modal').classList.add('hidden');
-    document.body.style.overflow = '';
-}
+function closeNameModal() { closeModal('name-modal'); }
 function saveName() {
     const name = document.getElementById('name-modal-input').value.trim();
     if (!name) { showToast('名字不能为空'); return; }
@@ -566,10 +604,7 @@ function showResetModal() {
     document.getElementById('reset-modal').classList.remove('hidden');
     document.body.style.overflow = 'hidden';
 }
-function closeResetModal() {
-    document.getElementById('reset-modal').classList.add('hidden');
-    document.body.style.overflow = '';
-}
+function closeResetModal() { closeModal('reset-modal'); }
 function resetSoft() {
     gameRef.set({ status: 'waiting', players: players.map(p => ({ ...p, n10: 0, n20: 0, n50: 0, n100: 0, buyIns: 0 })) });
     closeResetModal();
