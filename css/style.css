@@ -367,7 +367,8 @@ body{
   background:var(--surface);
   border-radius:var(--r16) var(--r16) 0 0;
   width:100%;max-width:480px;margin:0 auto;
-  padding:16px 20px calc(24px + env(safe-area-inset-bottom));
+  padding:16px 20px;
+  padding-bottom:max(28px, calc(16px + env(safe-area-inset-bottom)));
   box-shadow:0 -4px 24px rgba(0,0,0,.12);
   animation:slideUp .22s cubic-bezier(.4,0,.2,1) both;
 }
@@ -409,11 +410,17 @@ body{
   position: fixed;
   bottom: 0; left: 0; right: 0;
   z-index: 30;
-  padding: 10px 12px calc(12px + env(safe-area-inset-bottom));
-  background: rgba(245,244,242,.92);
+  padding: 10px 12px;
+  /* iOS home indicator safe area */
+  padding-bottom: max(16px, env(safe-area-inset-bottom));
+  background: rgba(245,244,242,.96);
   backdrop-filter: blur(14px);
   -webkit-backdrop-filter: blur(14px);
   border-top: 1px solid rgba(0,0,0,.08);
+  /* WeChat WebView GPU layer fix */
+  -webkit-transform: translateZ(0);
+  transform: translateZ(0);
+  will-change: transform;
 }
 .float-bar-inner {
   max-width: 480px;

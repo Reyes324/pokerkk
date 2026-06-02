@@ -1,3 +1,20 @@
+// WeChat WebView: fix position:fixed scrolling away bug
+// When body scrolls in WeChat, re-pin the float bar
+(function fixWechatFixed() {
+    let ticking = false;
+    window.addEventListener('scroll', () => {
+        if (ticking) return;
+        ticking = true;
+        requestAnimationFrame(() => {
+            const bar = document.getElementById('float-bar');
+            if (bar) {
+                bar.style.bottom = '0px';
+            }
+            ticking = false;
+        });
+    }, { passive: true });
+})();
+
 firebase.initializeApp(FIREBASE_CONFIG);
 const db = firebase.database();
 const gameRef = db.ref('currentGame');
@@ -16,7 +33,7 @@ function defaultPlayers(count) {
     return Array.from({ length: count }, (_, i) => ({
         name: '玩家' + (i + 1),
         avatarId: i % AVATARS.length,
-        n10: 0, n20: 0, n50: 0, n100: 0, buyIns: 0
+        n10: 0, n20: 0, n50: 0, n100: 0, buyIns: 0, confirmed: false
     }));
 }
 
@@ -68,7 +85,7 @@ function renderPlayers() {
         const chipTotal = calcChipTotal(p.n10, p.n20, p.n50, p.n100);
         const invested = calcInvested(p.buyIns);
         const pnl = calcPnl(chipTotal, invested);
-        const hasData = chipTotal > 0 || p.buyIns > 0;
+        const isConfirmed = p.confirmed === true;
         const pnlClass = pnl > 0 ? 'positive' : pnl < 0 ? 'negative' : 'neutral';
         const settled = false;
 
@@ -99,8 +116,8 @@ function renderPlayers() {
                                 </svg>
                             </button>`}
                         </div>
-                        <div class="pnl-inline ${hasData ? pnlClass : 'neutral'}">
-                            ${hasData ? formatPnl(pnl) + ' 分' : '点击录入筹码 →'}
+                        <div class="pnl-inline ${isConfirmed ? pnlClass : 'neutral'}">
+                            ${isConfirmed ? formatPnl(pnl) + ' 分' : '点击录入筹码 →'}
                         </div>
                     </div>
                     ${settled ? '' : `
@@ -404,17 +421,16 @@ function renderChipModalBody(idx) {
                 <p style="font-size:11px;color:var(--text3);text-align:center">直接输入本局最终持有的筹码总分</p>
             </div>`;
     }
-    // PnL preview — only show meaningful data when chips entered
+    // PnL preview — always show real calculation
     const chipTotal = calcChipTotal(p.n10, p.n20, p.n50, p.n100);
     const invested = calcInvested(p.buyIns);
     const pnl = calcPnl(chipTotal, invested);
-    const hasData = chipTotal > 0 || p.buyIns > 0;
     const pnlClass = pnl > 0 ? 'positive' : pnl < 0 ? 'negative' : '';
     body.innerHTML += `
         <div class="pnl-preview-row" id="mc-pnl">
             <span>持筹<strong>${chipTotal}</strong></span>
-            <span>投入<strong>${hasData ? invested : 1000}</strong></span>
-            <span class="${hasData ? pnlClass : ''}">盈亏<strong>${hasData ? formatPnl(pnl) : '0'}</strong></span>
+            <span>投入<strong>${invested}</strong></span>
+            <span class="${pnlClass}">盈亏<strong>${formatPnl(pnl)}</strong></span>
         </div>`;
 }
 
@@ -481,6 +497,9 @@ function closeModal(id, callback) {
 
 function closeChipModal() {
     if (chipInputMode === 'direct') applyDirectInput(chipModalIdx);
+    if (chipModalIdx >= 0) {
+        gameRef.child('players/' + chipModalIdx + '/confirmed').set(true);
+    }
     closeModal('chip-modal', () => { chipModalIdx = -1; });
 }
 
@@ -494,13 +513,12 @@ function syncChipModal(idx) {
     const chipTotal = calcChipTotal(p.n10, p.n20, p.n50, p.n100);
     const invested = calcInvested(p.buyIns);
     const pnl = calcPnl(chipTotal, invested);
-    const hasData = chipTotal > 0 || p.buyIns > 0;
     const pnlClass = pnl > 0 ? 'positive' : pnl < 0 ? 'negative' : '';
     const pnlEl = document.getElementById('mc-pnl');
     if (pnlEl) pnlEl.innerHTML = `
         <span>持筹<strong>${chipTotal}</strong></span>
-        <span>投入<strong>${hasData ? invested : 1000}</strong></span>
-        <span class="${hasData ? pnlClass : ''}">盈亏<strong>${hasData ? formatPnl(pnl) : '0'}</strong></span>`;
+        <span>投入<strong>${invested}</strong></span>
+        <span class="${pnlClass}">盈亏<strong>${formatPnl(pnl)}</strong></span>`;
 }
 
 // ── Chip adjustments ───────────────────────────────────────────
@@ -538,11 +556,11 @@ function updateCardPnl(idx) {
     const chipTotal = calcChipTotal(p.n10, p.n20, p.n50, p.n100);
     const invested = calcInvested(p.buyIns);
     const pnl = calcPnl(chipTotal, invested);
-    const hasData = chipTotal > 0 || p.buyIns > 0;
+    const isConfirmed = players[idx]?.confirmed === true;
     const el = document.querySelector(`.player-card[data-idx="${idx}"] .pnl-inline`);
     if (!el) return;
-    el.textContent = hasData ? formatPnl(pnl) + ' 分' : '点击输入筹码';
-    el.className = 'pnl-inline ' + (hasData ? (pnl > 0 ? 'positive' : pnl < 0 ? 'negative' : 'neutral') : 'neutral');
+    el.textContent = isConfirmed ? formatPnl(pnl) + ' 分' : '点击录入筹码 →';
+    el.className = 'pnl-inline ' + (isConfirmed ? (pnl > 0 ? 'positive' : pnl < 0 ? 'negative' : 'neutral') : 'neutral');
 }
 
 // ── Add / remove ───────────────────────────────────────────────
@@ -606,7 +624,7 @@ function showResetModal() {
 }
 function closeResetModal() { closeModal('reset-modal'); }
 function resetSoft() {
-    gameRef.set({ status: 'waiting', players: players.map(p => ({ ...p, n10: 0, n20: 0, n50: 0, n100: 0, buyIns: 0 })) });
+    gameRef.set({ status: 'waiting', players: players.map(p => ({ ...p, n10: 0, n20: 0, n50: 0, n100: 0, buyIns: 0, confirmed: false })) });
     closeResetModal();
     showToast('已重置筹码，可以开始新一局');
 }
