@@ -47,24 +47,32 @@
     </button>
 
     <!-- Long-press hint -->
-    <p class="hint-text">长按玩家卡片可删除</p>
+    <p class="hint-text">左滑或长按玩家卡片可删除</p>
 
-    <!-- Summary -->
-    <div id="summary-bar" class="summary-bar hidden">
-        <div class="summary-item">
-            <span class="summary-label">总盈亏验证</span>
-            <span class="summary-value" id="total-pnl">0</span>
-        </div>
-        <div id="balance-indicator" class="balance-ok">持平 ✓</div>
-    </div>
-
-    <!-- Confirm -->
-    <button class="btn btn-primary" id="btn-confirm" style="margin-bottom:10px">确认结算</button>
-
-    <!-- Results -->
-    <div id="results-section" class="hidden"></div>
+    <!-- Bottom spacer so content isn't hidden behind floating bar -->
+    <div style="height:88px"></div>
 
 </div>
+
+<!-- ── Floating bottom bar ── -->
+<div class="float-bar" id="float-bar">
+    <div class="float-bar-inner">
+        <div class="float-bar-pnl">
+            <span class="float-bar-label">总盈亏</span>
+            <span class="float-bar-value" id="total-pnl">— 分</span>
+            <span class="float-bar-badge balance-ok hidden" id="balance-indicator">持平 ✓</span>
+        </div>
+        <button class="btn-export" id="btn-export">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                <polyline points="7 10 12 15 17 10"/>
+                <line x1="12" y1="15" x2="12" y2="3"/>
+            </svg>
+            导出结果
+        </button>
+    </div>
+</div>
+
 
 <!-- ── Chip input half-sheet ── -->
 <div id="chip-modal" class="modal-overlay hidden">
@@ -131,8 +139,44 @@
     </div>
 </div>
 
+<!-- ── Export modal ── -->
+<div id="export-modal" class="modal-overlay hidden">
+    <div class="modal-sheet export-modal-sheet">
+        <div class="modal-handle"></div>
+        <div class="modal-header">
+            <span>导出结算结果</span>
+            <button class="btn-icon" id="btn-close-export">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+            </button>
+        </div>
+        <!-- The card to be captured as image -->
+        <div id="export-card">
+            <div class="export-card-header">
+                <div class="export-card-logo">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+                        <path d="M4 10 Q4 4 8 3 L8 8 Q10 6 12 6 Q14 6 16 8 L16 3 Q20 4 20 10 Q20 16 12 20 Q4 16 4 10Z" fill="white" opacity=".9"/>
+                        <path d="M8 3 L8 1 L10 3Z" fill="white"/>
+                        <path d="M16 3 L14 1 L16 3Z" fill="white"/>
+                        <path d="M12 12 Q10 10 10 9 Q10 7.5 12 7.5 Q14 7.5 14 9 Q14 10 12 12Z" fill="#107C10"/>
+                        <rect x="11" y="12" width="2" height="2" fill="#107C10"/>
+                        <rect x="10" y="14" width="4" height="1" fill="#107C10"/>
+                    </svg>
+                    猫店德州结算
+                </div>
+                <div class="export-card-date" id="export-date"></div>
+            </div>
+            <div id="export-table-wrap"></div>
+            <div id="export-badge"></div>
+        </div>
+        <p class="export-hint">长按图片保存到相册</p>
+        <img id="export-image" style="display:none;width:100%;border-radius:12px;margin-bottom:12px" alt="结算结果">
+        <button class="btn btn-primary" id="btn-generate-img">生成图片</button>
+    </div>
+</div>
+
 <div class="toast" id="toast"></div>
 
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
 <script src="js/firebase-config.js"></script>

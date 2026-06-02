@@ -4,7 +4,6 @@ const gameRef = db.ref('currentGame');
 
 // ── State ──────────────────────────────────────────────────────
 let players = [];
-let gameStatus = 'waiting';
 let chipModalIdx = -1;
 let chipInputMode = 'stepper'; // 'stepper' | 'direct'
 let pendingAvatarIdx = -1;
@@ -30,7 +29,6 @@ gameRef.on('value', snap => {
     players = Object.keys(data.players)
         .sort((a, b) => Number(a) - Number(b))
         .map(k => data.players[k]);
-    gameStatus = data.status || 'waiting';
     render();
     if (chipModalIdx >= 0 && players[chipModalIdx]) syncChipModal(chipModalIdx);
 });
@@ -38,11 +36,7 @@ gameRef.on('value', snap => {
 // ── Render ─────────────────────────────────────────────────────
 function render() {
     renderPlayers();
-    renderSummary();
-    renderResults();
-    document.getElementById('btn-confirm').style.display = gameStatus === 'settled' ? 'none' : 'flex';
-    document.getElementById('btn-add-player').style.display = gameStatus === 'settled' ? 'none' : 'flex';
-    document.querySelector('.hint-text').style.display = gameStatus === 'settled' ? 'none' : 'block';
+    renderFloatBar();
 }
 
 function renderPlayers() {
@@ -53,7 +47,7 @@ function renderPlayers() {
         const pnl = calcPnl(chipTotal, invested);
         const hasData = chipTotal > 0 || p.buyIns > 0;
         const pnlClass = pnl > 0 ? 'positive' : pnl < 0 ? 'negative' : 'neutral';
-        const settled = gameStatus === 'settled';
+        const settled = false;
 
         return `
         <div class="swipe-row" data-idx="${i}">
@@ -85,7 +79,7 @@ function renderPlayers() {
                             </button>`}
                         </div>
                         <div class="pnl-inline ${hasData ? pnlClass : 'neutral'}">
-                            ${hasData ? formatPnl(pnl) + ' 分' : '点击输入筹码'}
+                            ${hasData ? formatPnl(pnl) + ' 分' : '点击录入筹码 →'}
                         </div>
                     </div>
                     ${settled ? '' : `
@@ -103,22 +97,29 @@ function renderPlayers() {
     }
 }
 
-function renderSummary() {
-    const bar = document.getElementById('summary-bar');
-    const hasAnyData = players.some(p => calcChipTotal(p.n10, p.n20, p.n50, p.n100) > 0);
-    if (!hasAnyData) { bar.classList.add('hidden'); return; }
-    bar.classList.remove('hidden');
+function renderFloatBar() {
     const total = players.reduce((sum, p) =>
         sum + calcPnl(calcChipTotal(p.n10, p.n20, p.n50, p.n100), calcInvested(p.buyIns)), 0);
-    document.getElementById('total-pnl').textContent = formatPnl(total) + ' 分';
-    const ind = document.getElementById('balance-indicator');
-    ind.className = total === 0 ? 'balance-ok' : 'balance-warn';
-    ind.textContent = total === 0 ? '持平 ✓' : `差额 ${formatPnl(total)}`;
+    const hasAnyData = players.some(p => calcChipTotal(p.n10, p.n20, p.n50, p.n100) > 0);
+
+    const pnlEl = document.getElementById('total-pnl');
+    const badge = document.getElementById('balance-indicator');
+
+    if (!hasAnyData) {
+        pnlEl.textContent = '— 分';
+        pnlEl.className = 'float-bar-value neutral';
+        badge.classList.add('hidden');
+    } else {
+        pnlEl.textContent = formatPnl(total) + ' 分';
+        pnlEl.className = 'float-bar-value ' + (total === 0 ? 'positive' : 'negative');
+        badge.classList.remove('hidden');
+        badge.className = 'float-bar-badge ' + (total === 0 ? 'balance-ok' : 'balance-warn');
+        badge.textContent = total === 0 ? '持平 ✓' : `差额 ${formatPnl(total)}`;
+    }
 }
 
-function renderResults() {
-    const section = document.getElementById('results-section');
-    if (gameStatus !== 'settled') { section.classList.add('hidden'); section.innerHTML = ''; return; }
+// ── Export results ─────────────────────────────────────────────
+function openExportModal() {
     const sorted = players.map(p => {
         const chipTotal = calcChipTotal(p.n10, p.n20, p.n50, p.n100);
         const invested = calcInvested(p.buyIns);
@@ -127,28 +128,61 @@ function renderResults() {
     const totalPnl = sorted.reduce((s, r) => s + r.pnl, 0);
     const isBalanced = totalPnl === 0;
 
-    section.classList.remove('hidden');
-    section.innerHTML = `
-        <div class="card slide-up">
-            <div class="card-title">🎉 结算结果</div>
-            <table class="results-table">
-                <thead><tr><th></th><th>玩家</th><th>持筹</th><th>投入</th><th>盈亏</th></tr></thead>
-                <tbody>${sorted.map(r => `
-                    <tr class="${r.pnl > 0 ? 'win' : r.pnl < 0 ? 'lose' : ''}">
-                        <td><div class="avatar-circle sm" style="background:${getAvatarBg(r.avatarId)}">${getAvatarSvg(r.avatarId)}</div></td>
-                        <td>${escHtml(r.name)}</td>
-                        <td>${r.chipTotal}</td>
-                        <td>${r.invested}</td>
-                        <td>${formatPnl(r.pnl)}</td>
-                    </tr>`).join('')}
-                </tbody>
-            </table>
-            <div class="${isBalanced ? 'badge-balanced' : 'badge-unbalanced'}">
-                ${isBalanced ? '验证通过 ✓  总盈亏 = 0' : `验证失败 ✗  总盈亏 = ${formatPnl(totalPnl)}，请检查输入`}
-            </div>
-        </div>
-        <button class="btn btn-secondary" style="margin-bottom:10px" onclick="showResetModal()">重置筹码，再来一局</button>
-        <button class="btn btn-danger btn-sm" onclick="showResetModal()">完全重置</button>`;
+    // Set date
+    const now = new Date();
+    document.getElementById('export-date').textContent =
+        `${now.getFullYear()}/${now.getMonth()+1}/${now.getDate()} ${now.getHours()}:${String(now.getMinutes()).padStart(2,'0')}`;
+
+    // Build table
+    document.getElementById('export-table-wrap').innerHTML = `
+        <table class="export-table">
+            <thead><tr><th>玩家</th><th>持筹</th><th>投入</th><th>盈亏</th></tr></thead>
+            <tbody>${sorted.map(r => `
+                <tr class="${r.pnl > 0 ? 'win' : r.pnl < 0 ? 'lose' : ''}">
+                    <td class="export-name-cell">
+                        <div class="avatar-circle sm" style="background:${getAvatarBg(r.avatarId)}">${getAvatarSvg(r.avatarId)}</div>
+                        ${escHtml(r.name)}
+                    </td>
+                    <td>${r.chipTotal}</td>
+                    <td>${r.invested}</td>
+                    <td>${formatPnl(r.pnl)}</td>
+                </tr>`).join('')}
+            </tbody>
+        </table>`;
+
+    document.getElementById('export-badge').innerHTML = `
+        <div class="${isBalanced ? 'badge-balanced' : 'badge-unbalanced'}" style="margin-top:10px">
+            ${isBalanced ? '✓ 总盈亏 = 0，验证通过' : `✗ 总盈亏 = ${formatPnl(totalPnl)}，请检查`}
+        </div>`;
+
+    // Reset image state
+    document.getElementById('export-image').style.display = 'none';
+    document.getElementById('export-card').style.display = 'block';
+    document.getElementById('btn-generate-img').style.display = 'flex';
+
+    document.getElementById('export-modal').classList.remove('hidden');
+    document.body.style.overflow = 'hidden';
+}
+
+function generateImage() {
+    const card = document.getElementById('export-card');
+    document.getElementById('btn-generate-img').textContent = '生成中...';
+    html2canvas(card, {
+        scale: 2,
+        backgroundColor: '#ffffff',
+        useCORS: true,
+        logging: false
+    }).then(canvas => {
+        const img = document.getElementById('export-image');
+        img.src = canvas.toDataURL('image/png');
+        img.style.display = 'block';
+        card.style.display = 'none';
+        document.getElementById('btn-generate-img').style.display = 'none';
+        showToast('长按图片保存到相册');
+    }).catch(() => {
+        showToast('生成图片失败，请截图保存');
+        document.getElementById('btn-generate-img').textContent = '生成图片';
+    });
 }
 
 // ── iOS swipe-left delete ──────────────────────────────────────
@@ -343,16 +377,17 @@ function renderChipModalBody(idx) {
                 <p style="font-size:11px;color:var(--text3);text-align:center">直接输入本局最终持有的筹码总分</p>
             </div>`;
     }
-    // PnL preview (always shown)
+    // PnL preview — only show meaningful data when chips entered
     const chipTotal = calcChipTotal(p.n10, p.n20, p.n50, p.n100);
     const invested = calcInvested(p.buyIns);
     const pnl = calcPnl(chipTotal, invested);
+    const hasData = chipTotal > 0 || p.buyIns > 0;
     const pnlClass = pnl > 0 ? 'positive' : pnl < 0 ? 'negative' : '';
     body.innerHTML += `
         <div class="pnl-preview-row" id="mc-pnl">
             <span>持筹<strong>${chipTotal}</strong></span>
-            <span>投入<strong>${invested}</strong></span>
-            <span class="${pnlClass}">盈亏<strong>${formatPnl(pnl)}</strong></span>
+            <span>投入<strong>${hasData ? invested : 1000}</strong></span>
+            <span class="${hasData ? pnlClass : ''}">盈亏<strong>${hasData ? formatPnl(pnl) : '0'}</strong></span>
         </div>`;
 }
 
@@ -415,12 +450,13 @@ function syncChipModal(idx) {
     const chipTotal = calcChipTotal(p.n10, p.n20, p.n50, p.n100);
     const invested = calcInvested(p.buyIns);
     const pnl = calcPnl(chipTotal, invested);
+    const hasData = chipTotal > 0 || p.buyIns > 0;
     const pnlClass = pnl > 0 ? 'positive' : pnl < 0 ? 'negative' : '';
     const pnlEl = document.getElementById('mc-pnl');
     if (pnlEl) pnlEl.innerHTML = `
         <span>持筹<strong>${chipTotal}</strong></span>
-        <span>投入<strong>${invested}</strong></span>
-        <span class="${pnlClass}">盈亏<strong>${formatPnl(pnl)}</strong></span>`;
+        <span>投入<strong>${hasData ? invested : 1000}</strong></span>
+        <span class="${hasData ? pnlClass : ''}">盈亏<strong>${hasData ? formatPnl(pnl) : '0'}</strong></span>`;
 }
 
 // ── Chip adjustments ───────────────────────────────────────────
@@ -524,12 +560,6 @@ function saveName() {
     closeNameModal();
 }
 
-// ── Confirm settlement ─────────────────────────────────────────
-async function confirmSettle() {
-    const hasData = players.some(p => calcChipTotal(p.n10, p.n20, p.n50, p.n100) > 0);
-    if (!hasData) { showToast('请先输入筹码数量'); return; }
-    await gameRef.child('status').set('settled');
-}
 
 // ── Reset ──────────────────────────────────────────────────────
 function showResetModal() {
@@ -564,8 +594,19 @@ function showToast(msg) {
 
 // ── Event listeners ────────────────────────────────────────────
 document.getElementById('btn-add-player').addEventListener('click', addPlayer);
-document.getElementById('btn-confirm').addEventListener('click', confirmSettle);
 document.getElementById('btn-reset-soft').addEventListener('click', showResetModal);
+document.getElementById('btn-export').addEventListener('click', openExportModal);
+document.getElementById('btn-generate-img').addEventListener('click', generateImage);
+document.getElementById('btn-close-export').addEventListener('click', () => {
+    document.getElementById('export-modal').classList.add('hidden');
+    document.body.style.overflow = '';
+});
+document.getElementById('export-modal').addEventListener('click', e => {
+    if (e.target === e.currentTarget) {
+        document.getElementById('export-modal').classList.add('hidden');
+        document.body.style.overflow = '';
+    }
+});
 document.getElementById('btn-chip-done').addEventListener('click', closeChipModal);
 document.getElementById('chip-modal').addEventListener('click', e => { if (e.target === e.currentTarget) closeChipModal(); });
 document.getElementById('btn-close-modal').addEventListener('click', closeAvatarModal);
