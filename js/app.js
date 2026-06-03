@@ -106,24 +106,28 @@ function renderPlayers() {
                         ${getAvatarSvg(p.avatarId)}
                         ${settled ? '' : '<div class="avatar-edit-hint">换</div>'}
                     </div>
-                    <div class="player-info">
+                    <!-- name col -->
+                    <div class="player-name-col">
                         <div class="player-name-row">
                             <span class="player-name">${escHtml(p.name)}</span>
                             ${settled ? '' : `
                             <button class="btn-edit-name" onclick="event.stopPropagation();openNameModal(${i})" aria-label="编辑名字">
-                                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                                    <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
                                     <path d="M18.5 2.5a2.12 2.12 0 0 1 3 3L12 15l-4 1 1-4Z"/>
                                 </svg>
                             </button>`}
                         </div>
-                        <div class="pnl-inline ${isConfirmed ? pnlClass : 'neutral'}">
-                            ${isConfirmed ? formatPnl(pnl) + ' 分' : '点击录入筹码 →'}
+                    </div>
+                    <!-- pnl + chevron — right side -->
+                    <div class="player-pnl-col">
+                        <span class="pnl-inline ${isConfirmed ? pnlClass : 'placeholder'}">
+                            ${isConfirmed ? formatPnl(pnl) + ' 分' : '录入筹码'}
+                        </span>
+                        <div class="card-chevron">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="9 18 15 12 9 6"/></svg>
                         </div>
                     </div>
-                    ${settled ? '' : `
-                    <div class="card-chevron">
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="9 18 15 12 9 6"/></svg>
-                    </div>`}
                 </div>
             </div>
         </div>`;
@@ -356,7 +360,7 @@ function renderChipModal(idx) {
             <div style="font-size:12px;color:var(--text3)">1底 = 1000分</div>
         </div>
         <button class="mode-toggle-btn" id="btn-mode-toggle" onclick="toggleChipMode(${idx})">
-            切换
+            ${chipInputMode === 'stepper' ? '直接输入' : '按筹码输入'}
         </button>`;
     renderChipModalBody(idx);
 }
@@ -559,8 +563,8 @@ function updateCardPnl(idx) {
     const isConfirmed = players[idx]?.confirmed === true;
     const el = document.querySelector(`.player-card[data-idx="${idx}"] .pnl-inline`);
     if (!el) return;
-    el.textContent = isConfirmed ? formatPnl(pnl) + ' 分' : '点击录入筹码 →';
-    el.className = 'pnl-inline ' + (isConfirmed ? (pnl > 0 ? 'positive' : pnl < 0 ? 'negative' : 'neutral') : 'neutral');
+    el.textContent = isConfirmed ? formatPnl(pnl) + ' 分' : '录入筹码';
+    el.className = 'pnl-inline ' + (isConfirmed ? (pnl > 0 ? 'positive' : pnl < 0 ? 'negative' : 'neutral') : 'placeholder');
 }
 
 // ── Add / remove ───────────────────────────────────────────────
@@ -586,7 +590,7 @@ function openAvatarModal(idx) {
     AVATARS.forEach((av, i) => {
         const div = document.createElement('div');
         div.className = 'avatar-item' + (players[idx].avatarId === i ? ' selected' : '');
-        div.innerHTML = av.svg;
+        div.innerHTML = getAvatarSvg(i);
         div.style.background = av.bg;
         div.addEventListener('click', () => {
             gameRef.child('players/' + pendingAvatarIdx + '/avatarId').set(i);
