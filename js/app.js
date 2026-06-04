@@ -37,6 +37,21 @@ function defaultPlayers(count) {
     }));
 }
 
+// Coerce a raw Firebase player object into a complete, well-typed shape.
+// Old/partial DB records may lack fields — default them so logic never sees undefined.
+function normalizePlayer(raw) {
+    return {
+        name: raw.name ?? '玩家',
+        avatarId: raw.avatarId ?? 0,
+        n10: raw.n10 || 0,
+        n20: raw.n20 || 0,
+        n50: raw.n50 || 0,
+        n100: raw.n100 || 0,
+        buyIns: raw.buyIns || 0,
+        confirmed: raw.confirmed === true,
+    };
+}
+
 // ── Firebase ───────────────────────────────────────────────────
 gameRef.on('value', snap => {
     const data = snap.val();
@@ -45,9 +60,18 @@ gameRef.on('value', snap => {
         gameRef.set({ status: 'waiting', players: defaultPlayers(3) });
         return;
     }
-    players = Object.keys(data.players)
+    const incoming = Object.keys(data.players)
         .sort((a, b) => Number(a) - Number(b))
-        .map(k => data.players[k]);
+        .map(k => normalizePlayer(data.players[k]));
+
+    // While a chip modal is open, the player being edited is owned by local
+    // state — don't let a (possibly stale, mid-debounce) remote echo clobber
+    // the in-progress edits. Other players still sync live.
+    if (chipModalIdx >= 0 && players[chipModalIdx] && incoming[chipModalIdx]) {
+        incoming[chipModalIdx] = players[chipModalIdx];
+    }
+
+    players = incoming;
     render();
     if (chipModalIdx >= 0 && players[chipModalIdx]) syncChipModal(chipModalIdx);
 });
@@ -138,24 +162,31 @@ function renderPlayers() {
 }
 
 function renderFloatBar() {
-    const total = players.reduce((sum, p) =>
+    // Only count confirmed players — unconfirmed ones haven't submitted yet
+    const confirmed = players.filter(p => p.confirmed === true);
+    const total = confirmed.reduce((sum, p) =>
         sum + calcPnl(calcChipTotal(p.n10, p.n20, p.n50, p.n100), calcInvested(p.buyIns)), 0);
-    const hasAnyData = players.some(p => calcChipTotal(p.n10, p.n20, p.n50, p.n100) > 0);
+    const hasAnyData = confirmed.length > 0;
 
     const pnlEl = document.getElementById('total-pnl');
-    const badge = document.getElementById('balance-indicator');
+    const tag = document.getElementById('balance-tag');
 
     if (!hasAnyData) {
         pnlEl.textContent = '— 分';
         pnlEl.className = 'float-bar-value neutral';
-        badge.classList.add('hidden');
-    } else {
-        pnlEl.textContent = formatPnl(total) + ' 分';
-        pnlEl.className = 'float-bar-value ' + (total === 0 ? 'positive' : 'negative');
-        badge.classList.remove('hidden');
-        badge.className = 'float-bar-badge ' + (total === 0 ? 'balance-ok' : 'balance-warn');
-        badge.textContent = total === 0 ? '持平 ✓' : `差额 ${formatPnl(total)}`;
+        tag.classList.add('hidden');
+        return;
     }
+
+    pnlEl.textContent = formatPnl(total) + ' 分';
+    // Balanced only when EVERY player has confirmed AND the sum ties out to 0.
+    const allConfirmed = players.length > 0 && players.every(p => p.confirmed === true);
+    const balanced = total === 0 && allConfirmed;
+    pnlEl.className = 'float-bar-value ' + (balanced ? 'balanced' : total > 0 ? 'positive' : 'negative');
+
+    tag.classList.remove('hidden');
+    tag.textContent = balanced ? '已持平' : '未持平';
+    tag.className = 'balance-tag ' + (balanced ? 'ok' : 'warn');
 }
 
 // ── Export results ─────────────────────────────────────────────
@@ -353,7 +384,8 @@ function renderChipModal(idx) {
         <div style="flex:1;min-width:0">
             <div class="chip-modal-name" onclick="openNameModal(${idx})">
                 ${escHtml(p.name)}
-                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;opacity:.4">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--brand)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0">
+                    <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
                     <path d="M18.5 2.5a2.12 2.12 0 0 1 3 3L12 15l-4 1 1-4Z"/>
                 </svg>
             </div>
@@ -391,7 +423,7 @@ function renderChipModalBody(idx) {
             </div>`).join('');
         const buyIn = `
             <div class="stepper-row buyin-row">
-                <div class="chip-dot" style="background:var(--gold);font-size:9px">底</div>
+                <div class="chip-dot" style="background:#C8894B;font-size:9px">底</div>
                 <div class="stepper-label">借底次数<span>每借一底 = 额外1000分投入</span></div>
                 <div class="stepper-ctrl">
                     <button class="stepper-btn" onclick="adjustChip(${idx},'buyIns',-1)">−</button>
@@ -415,7 +447,7 @@ function renderChipModalBody(idx) {
                         style="width:130px;text-align:right"
                         oninput="previewDirectInput(${idx})">
                 </div>
-                <div class="direct-input-row" style="background:var(--gold-lt);border-color:rgba(193,154,0,.2)">
+                <div class="direct-input-row buyin-row">
                     <span style="font-size:13px;color:var(--text2);flex:1">借底次数</span>
                     <input class="direct-input-field" id="direct-buyin" type="number"
                         inputmode="numeric" placeholder="0" value="${p.buyIns || ''}"
@@ -439,9 +471,9 @@ function renderChipModalBody(idx) {
 }
 
 function toggleChipMode(idx) {
-    // Save direct input before switching
+    // Save direct input into local state before switching modes
     if (chipInputMode === 'direct') {
-        applyDirectInput(idx);
+        applyDirectInputLocal(idx);
     }
     chipInputMode = chipInputMode === 'stepper' ? 'direct' : 'stepper';
     renderChipModalBody(idx);
@@ -460,24 +492,25 @@ function previewDirectInput(idx) {
         <span>持筹<strong>${chipTotal}</strong></span>
         <span>投入<strong>${invested}</strong></span>
         <span class="${pnlClass}">盈亏<strong>${formatPnl(pnl)}</strong></span>`;
+    // Realtime update float bar while previewing direct input
+    renderFloatBar();
 }
 
-function applyDirectInput(idx) {
+// Read the typed total + buy-ins from the direct-input fields, decompose into
+// denominations, and write into local state. Caller is responsible for the
+// Firebase write (the atomic close handles it).
+function applyDirectInputLocal(idx) {
     const totalEl = document.getElementById('direct-chip-total');
     const buyInEl = document.getElementById('direct-buyin');
-    const chipTotal = Math.max(0, parseInt(totalEl?.value) || 0);
+    if (!totalEl) return;
+    const chipTotal = Math.max(0, parseInt(totalEl.value) || 0);
     const newBuyIns = Math.max(0, parseInt(buyInEl?.value) || 0);
-    // Decompose chipTotal into denominations (best-fit)
     let rem = chipTotal;
     const n100 = Math.floor(rem / 100); rem -= n100 * 100;
     const n50  = Math.floor(rem / 50);  rem -= n50  * 50;
     const n20  = Math.floor(rem / 20);  rem -= n20  * 20;
     const n10  = Math.floor(rem / 10);
     players[idx] = { ...players[idx], n100, n50, n20, n10, buyIns: newBuyIns };
-    clearTimeout(writeTimers[idx]);
-    writeTimers[idx] = setTimeout(() => {
-        gameRef.child('players/' + idx).update({ n100, n50, n20, n10, buyIns: newBuyIns });
-    }, 400);
 }
 
 // ── Modal animation helper ─────────────────────────────────────
@@ -485,13 +518,19 @@ function closeModal(id, callback) {
     const overlay = document.getElementById(id);
     const sheet = overlay.querySelector('.modal-sheet');
     if (sheet) {
-        sheet.style.animation = 'slideDown .2s cubic-bezier(.4,0,1,1) both';
+        const DUR = 180;
+        // Fade the backdrop AND slide the sheet together, so it never feels "stuck".
+        overlay.style.transition = `opacity ${DUR}ms ease`;
+        overlay.style.opacity = '0';
+        sheet.style.animation = `slideDown ${DUR}ms cubic-bezier(.4,0,1,1) both`;
         setTimeout(() => {
             overlay.classList.add('hidden');
             sheet.style.animation = '';
+            overlay.style.transition = '';
+            overlay.style.opacity = '';
             document.body.style.overflow = '';
             if (callback) callback();
-        }, 200);
+        }, DUR);
     } else {
         overlay.classList.add('hidden');
         document.body.style.overflow = '';
@@ -499,11 +538,36 @@ function closeModal(id, callback) {
     }
 }
 
-function closeChipModal() {
-    if (chipInputMode === 'direct') applyDirectInput(chipModalIdx);
-    if (chipModalIdx >= 0) {
-        gameRef.child('players/' + chipModalIdx + '/confirmed').set(true);
+// confirm=true  → 点"完成":标记该玩家已确认,数据计入总盈亏
+// confirm=false → 点蒙层/取消:仅保存已填数据,不算确认(卡片仍显示"录入筹码")
+function closeChipModal(confirm) {
+    const idx = chipModalIdx;
+    if (idx < 0 || !players[idx]) {
+        closeModal('chip-modal', () => { chipModalIdx = -1; });
+        return;
     }
+
+    // In direct-input mode, commit the typed total into local denominations first.
+    if (chipInputMode === 'direct') applyDirectInputLocal(idx);
+
+    const p = players[idx];
+    // Build ONE atomic payload so chips + confirmed land together — no partial
+    // state for the listener to echo back as a stale -1000.
+    const payload = {
+        n10: p.n10 || 0, n20: p.n20 || 0, n50: p.n50 || 0,
+        n100: p.n100 || 0, buyIns: p.buyIns || 0,
+    };
+    if (confirm) {
+        p.confirmed = true;
+        payload.confirmed = true;
+    }
+
+    // Cancel any pending debounced per-field write; this atomic write supersedes it.
+    clearTimeout(writeTimers[idx]);
+    gameRef.child('players/' + idx).update(payload);
+
+    renderPlayers();
+    renderFloatBar();
     closeModal('chip-modal', () => { chipModalIdx = -1; });
 }
 
@@ -536,7 +600,7 @@ function adjustChip(idx, key, delta) {
     if (el) el.value = next;
     syncChipModal(idx);
     updateCardPnl(idx);
-    renderSummary();
+    renderFloatBar();
     clearTimeout(writeTimers[idx]);
     writeTimers[idx] = setTimeout(() => {
         gameRef.child('players/' + idx).update({ [key]: next });
@@ -548,7 +612,7 @@ function setChip(idx, key, rawVal) {
     players[idx][key] = next;
     syncChipModal(idx);
     updateCardPnl(idx);
-    renderSummary();
+    renderFloatBar();
     clearTimeout(writeTimers[idx]);
     writeTimers[idx] = setTimeout(() => {
         gameRef.child('players/' + idx).update({ [key]: next });
@@ -573,7 +637,7 @@ function addPlayer() {
     const idx = players.length;
     gameRef.child('players/' + idx).set({
         name: '玩家' + (idx + 1), avatarId: idx % AVATARS.length,
-        n10: 0, n20: 0, n50: 0, n100: 0, buyIns: 0
+        n10: 0, n20: 0, n50: 0, n100: 0, buyIns: 0, confirmed: false
     });
 }
 function removePlayer(idx) {
@@ -664,8 +728,8 @@ document.getElementById('export-modal').addEventListener('click', e => {
         document.body.style.overflow = '';
     }
 });
-document.getElementById('btn-chip-done').addEventListener('click', closeChipModal);
-document.getElementById('chip-modal').addEventListener('click', e => { if (e.target === e.currentTarget) closeChipModal(); });
+document.getElementById('btn-chip-done').addEventListener('click', () => closeChipModal(true));
+document.getElementById('chip-modal').addEventListener('click', e => { if (e.target === e.currentTarget) closeChipModal(false); });
 document.getElementById('btn-close-modal').addEventListener('click', closeAvatarModal);
 document.getElementById('avatar-modal').addEventListener('click', e => { if (e.target === e.currentTarget) closeAvatarModal(); });
 document.getElementById('btn-close-name-modal').addEventListener('click', closeNameModal);

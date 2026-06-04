@@ -2,35 +2,61 @@
 
 /* ─── Design tokens ─── */
 :root {
-  --bg:           #F5F4F2;
-  --surface:      #FFFFFF;
-  --surface2:     #FAFAF8;
-  --green:        #4A6B5E;
-  --green-dk:     #375249;
-  --green-lt:     #EAF2EE;
-  --gold:         #C19A00;
-  --gold-lt:      #FFF8DC;
-  --red:          #A4262C;
-  --red-lt:       #FDE7E9;
-  /* Vivid P&L value colors — separate from muted brand green */
-  --pnl-win:  #16A34A;
-  --pnl-lose: #DC2626;
-  --n10:          #F5F5F3;
-  --n20:          #E8E8E4;
-  --n40:          #D1D1CC;
-  --n60:          #A8A8A2;
-  --n80:          #5C5C58;
-  --text:         #1C1B1A;
-  --text2:        #605E5A;
-  --text3:        #A09D98;
+  /* ── Semantic source of truth (warm "cat-café" system) ── */
+  /* Surfaces */
+  --bg:            #F5F1EA;   /* warm cream */
+  --surface:       #FFFFFF;
+  --surface-sunken:#FAF7F1;
+  --line:          #ECE6DC;
+
+  /* Brand — warm amber */
+  /* ── 主色 ── 当前:猫爪灰黑(试用)。要返回琥珀版,改回下面注释里的三个值即可:
+     琥珀版 → --brand:#C8894B; --brand-strong:#B5763A; --brand-soft:#F3E7D7; */
+  --brand:         #424343;
+  --brand-strong:  #2E2F2F;
+  --brand-soft:    #EAE8E5;
+  /* Derived from --brand so shadows track the theme automatically (one knob) */
+  --brand-shadow:  color-mix(in srgb, var(--brand) 26%, transparent);
+
+  /* P&L semantics — earthy, clear */
+  --win:           #3E8E4F;
+  --lose:          #C8453A;
+  --flat:          #A09A8E;
+
+  /* Ink (text layers) */
+  --ink-1:         #2B2722;
+  --ink-2:         #6B6358;
+  --ink-3:         #A8A095;
+
+  /* Neutrals (warm-tinted) */
+  --n10:           #F4F1EB;
+  --n20:           #E9E3D9;
+  --n40:           #D4CCBF;
+  --n60:           #ABA395;
+  --n80:           #5C564C;
+
+  /* ── Back-compat aliases (old literal names → semantic) ── */
+  --surface2:  var(--surface-sunken);
+  --green:     var(--brand);
+  --green-dk:  var(--brand-strong);
+  --green-lt:  var(--brand-soft);
+  --gold:      var(--brand);
+  --gold-lt:   var(--brand-soft);
+  --red:       var(--lose);
+  --red-lt:    #F7E4E1;
+  --pnl-win:   var(--win);
+  --pnl-lose:  var(--lose);
+  --text:      var(--ink-1);
+  --text2:     var(--ink-2);
+  --text3:     var(--ink-3);
   --r4:    4px;
   --r8:    8px;
   --r12:   12px;
   --r16:   16px;
   --rfull: 9999px;
-  --sh2: 0 1px 2px rgba(0,0,0,.10), 0 0 1px rgba(0,0,0,.06);
-  --sh4: 0 2px 6px rgba(0,0,0,.09), 0 0 1px rgba(0,0,0,.05);
-  --sh8: 0 4px 12px rgba(0,0,0,.10), 0 1px 3px rgba(0,0,0,.06);
+  --sh2: 0 1px 2px rgba(74,56,30,.10), 0 0 1px rgba(74,56,30,.06);
+  --sh4: 0 2px 8px rgba(74,56,30,.08), 0 0 1px rgba(74,56,30,.05);
+  --sh8: 0 6px 16px rgba(74,56,30,.10), 0 1px 3px rgba(74,56,30,.06);
   --font: 'Noto Sans SC','Segoe UI Variable','Segoe UI','PingFang SC','Microsoft YaHei',system-ui,sans-serif;
 }
 
@@ -41,6 +67,7 @@ body{
   background:var(--bg);
   color:var(--text);
   min-height:100dvh;
+  padding-top:56px;
   padding-bottom:calc(80px + env(safe-area-inset-bottom));
 }
 
@@ -52,29 +79,30 @@ body{
   padding-top:14px;
 }
 
-/* ─── Header ─── */
+/* ─── Header — fixed, never scrolls away ─── */
 .app-header{
-  position:sticky;top:0;z-index:20;
+  position:fixed;top:0;left:0;right:0;z-index:20;
   display:flex;align-items:center;justify-content:space-between;
   height:56px;
   padding:0 16px;
-  margin:0 -12px;
-  background:rgba(245,244,242,.88);
+  background:rgba(245,241,234,.92);
   backdrop-filter:blur(14px);
   -webkit-backdrop-filter:blur(14px);
-  border-bottom:1px solid rgba(0,0,0,.07);
+  border-bottom:1px solid var(--line);
 }
 .app-title{display:flex;align-items:center;gap:10px}
 .app-title-icon{
   width:36px;height:36px;
-  background:var(--green);
+  background:#fff;
   border-radius:var(--r8);
   display:flex;align-items:center;justify-content:center;
   flex-shrink:0;
-  box-shadow:0 2px 6px rgba(74,107,94,.3);
+  overflow:hidden;
+  box-shadow:var(--sh2);
 }
+.app-title-icon img{width:100%;height:100%;object-fit:cover;display:block}
 .app-title-icon svg{width:22px;height:22px}
-.app-title-text{font-size:17px;font-weight:500;letter-spacing:.2px;color:var(--text)}
+.app-title-text{font-size:17px;font-weight:600;letter-spacing:.2px;color:var(--ink-1)}
 .header-actions{display:flex;gap:2px}
 .btn-icon{
   width:40px;height:40px;
@@ -144,6 +172,10 @@ body{
   display:flex;align-items:center;justify-content:center;
 }
 .avatar-circle svg{width:100%;height:100%;display:block}
+.avatar-circle img,.avatar-img{
+  width:100%;height:100%;object-fit:cover;display:block;
+  user-select:none;-webkit-user-drag:none;
+}
 .emoji-avatar{
   font-size:22px;
   line-height:1;
@@ -165,9 +197,9 @@ body{
 .player-info{flex:1;min-width:0}
 .player-name-row{display:flex;align-items:center;gap:0;margin-bottom:3px;flex-wrap:nowrap}
 .player-name{font-size:17px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;line-height:1.4}
-/* icon-only edit button — flush with text baseline */
+/* icon-only edit button — amber pencil, flush with text baseline */
 .btn-edit-name{
-  background:none;border:none;color:var(--n60);
+  background:none;border:none;color:var(--brand);
   padding:0 0 0 5px;margin:0;
   cursor:pointer;
   display:inline-flex;align-items:center;justify-content:center;
@@ -202,20 +234,25 @@ body{
   margin-left:2px;
 }
 
-/* ─── Add player ─── */
+/* ─── Add player — airy dashed amber ─── */
 .btn-add-player{
-  display:flex;align-items:center;justify-content:center;gap:6px;
-  width:100%;height:44px;
-  background:var(--surface);
-  border:1.5px dashed var(--n40);
-  border-radius:var(--r12);
-  font-family:var(--font);font-size:14px;font-weight:600;color:var(--text2);
-  cursor:pointer;margin-bottom:6px;
+  display:flex;align-items:center;justify-content:center;gap:8px;
+  width:100%;height:56px;
+  background:transparent;
+  border:1.5px dashed var(--brand);
+  border-radius:var(--r16);
+  font-family:var(--font);font-size:15px;font-weight:600;color:var(--brand);
+  cursor:pointer;margin-bottom:8px;
   -webkit-tap-highlight-color:transparent;
-  transition:border-color .12s,color .12s,background .12s;
+  transition:background .12s,filter .12s;
 }
-.btn-add-player:active{background:var(--green-lt);border-color:var(--green);color:var(--green)}
-.hint-text{font-size:11px;color:var(--text3);text-align:center;margin-top:4px;margin-bottom:14px}
+.btn-add-player svg{
+  width:20px;height:20px;
+  stroke-width:2;
+  border-radius:50%;
+}
+.btn-add-player:active{background:var(--brand-soft)}
+.hint-text{font-size:12px;color:var(--ink-3);text-align:center;margin-top:4px;margin-bottom:14px}
 
 /* ─── Summary ─── */
 .summary-bar{
@@ -243,9 +280,9 @@ body{
 .btn:active{filter:brightness(.92);transform:scale(.98)}
 .btn:disabled{opacity:.4;cursor:not-allowed;filter:none;transform:none}
 .btn-primary{
-  height:48px;background:var(--green);color:#fff;
+  height:48px;background:var(--brand);color:#fff;
   border-radius:var(--r12);font-size:16px;
-  box-shadow:0 3px 8px rgba(74,107,94,.25);
+  box-shadow:0 3px 8px var(--brand-shadow);
 }
 .btn-secondary{
   height:48px;background:var(--n10);color:var(--text2);
@@ -268,16 +305,27 @@ body{
   border:1px solid var(--n20);
   border-radius:var(--r8);
 }
-.stepper-row.buyin-row{background:var(--gold-lt);border-color:rgba(193,154,0,.2)}
+/* 借底卡片:非筹码,用暖琥珀色调与筹码行区分;两种输入模式共用此样式 */
+.stepper-row.buyin-row,.direct-input-row.buyin-row{
+  background:#FAF1E3;border-color:#EADCC4;
+}
+.stepper-row.buyin-row{margin-top:6px}
 .chip-dot{
   width:26px;height:26px;border-radius:50%;
   display:flex;align-items:center;justify-content:center;
   font-size:9px;font-weight:700;color:#fff;flex-shrink:0;
+  position:relative;
 }
-.chip-dot.c100{background:#B52E2E}
-.chip-dot.c50{background:#C19A00}
-.chip-dot.c20{background:#005EA6}
-.chip-dot.c10{background:#767676}
+/* poker-chip edge marks — dashed ring near the rim (denomination chips only) */
+.chip-dot.c100::before,.chip-dot.c50::before,.chip-dot.c20::before,.chip-dot.c10::before{
+  content:'';position:absolute;inset:2px;border-radius:50%;
+  border:1.5px dashed rgba(255,255,255,.7);
+}
+.chip-dot.c100{background:#1C1B1A}        /* 100 黑 */
+.chip-dot.c50 {background:#2E7D4F}        /* 50 绿 */
+.chip-dot.c20 {background:#B23A2E}        /* 20 红 */
+.chip-dot.c10 {background:#F4EEE2;color:#C0392B}  /* 10 白(红字) */
+.chip-dot.c10::before{border-color:rgba(192,57,42,.5)}
 .stepper-label{flex:1;font-size:14px;font-weight:500}
 .stepper-label span{display:block;font-size:11px;color:var(--text3);font-weight:400;margin-top:1px}
 .stepper-ctrl{display:flex;align-items:stretch;border-radius:var(--r8);overflow:hidden;border:1px solid var(--n20)}
@@ -294,13 +342,18 @@ body{
 .stepper-btn:last-child{border-left:1px solid var(--n20)}
 /* Tappable count — opens keyboard */
 .stepper-count{
-  width:48px;text-align:center;
+  width:52px;height:40px;line-height:40px;
+  text-align:center;text-align-last:center;
   font-size:18px;font-weight:700;color:var(--text);
   background:var(--surface);border:none;outline:none;
   font-family:var(--font);
-  -webkit-appearance:none;appearance:none;
-  padding:0;cursor:text;
+  -webkit-appearance:none;appearance:none;-moz-appearance:textfield;
+  padding:0;margin:0;cursor:text;box-sizing:border-box;
+  display:block;
 }
+/* kill the number-input spinner so the digit stays centered between − and ＋ */
+.stepper-count::-webkit-outer-spin-button,
+.stepper-count::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
 .stepper-count:focus{background:var(--green-lt);color:var(--green)}
 
 /* ─── Chip modal PnL preview ─── */
@@ -315,8 +368,8 @@ body{
 }
 .pnl-preview-row span{display:flex;flex-direction:column;align-items:center;gap:2px}
 .pnl-preview-row strong{font-size:16px;font-weight:700;color:var(--text)}
-.pnl-preview-row .positive strong{color:var(--green)}
-.pnl-preview-row .negative strong{color:var(--red)}
+.pnl-preview-row .positive strong{color:var(--win)}
+.pnl-preview-row .negative strong{color:var(--lose)}
 
 /* Input mode toggle */
 .mode-toggle{
@@ -333,7 +386,7 @@ body{
   -webkit-tap-highlight-color:transparent;
   transition:background .12s,color .12s;
 }
-.mode-toggle-btn:active,.mode-toggle-btn.active{background:var(--green-lt);color:var(--green);border-color:rgba(74,107,94,.3)}
+.mode-toggle-btn:active,.mode-toggle-btn.active{background:var(--brand-soft);color:var(--brand);border-color:var(--brand)}
 .direct-input-wrap{
   display:flex;flex-direction:column;gap:10px;margin-bottom:14px;
 }
@@ -383,8 +436,8 @@ body{
   padding:10px 14px;border-radius:var(--r8);
   font-size:13px;font-weight:600;margin-top:10px;
 }
-.badge-balanced{background:var(--green-lt);color:var(--green)}
-.badge-unbalanced{background:var(--red-lt);color:var(--red)}
+.badge-balanced{background:#E6F2E9;color:var(--win)}
+.badge-unbalanced{background:var(--red-lt);color:var(--lose)}
 
 /* ─── Modals ─── */
 .modal-overlay{
@@ -416,14 +469,14 @@ body{
 .modal-header .btn-icon{width:40px;height:40px;border-radius:var(--r8)}
 
 /* ─── Avatar grid ─── */
-.avatar-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+.avatar-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:9px}
 .avatar-item{
   aspect-ratio:1;border-radius:50%;overflow:hidden;cursor:pointer;
   border:2.5px solid transparent;
   transition:transform .12s,border-color .12s;
   -webkit-tap-highlight-color:transparent;
 }
-.avatar-item svg{width:100%;height:100%;display:block}
+.avatar-item svg,.avatar-item img{width:100%;height:100%;object-fit:cover;display:block}
 .avatar-item:active{transform:scale(1.06)}
 .avatar-item.selected{border-color:var(--green);box-shadow:0 0 0 3px var(--green-lt)}
 
@@ -445,10 +498,10 @@ body{
   padding: 10px 12px;
   /* iOS home indicator safe area */
   padding-bottom: max(20px, env(safe-area-inset-bottom));
-  background: rgba(245,244,242,.96);
+  background: rgba(245,241,234,.94);
   backdrop-filter: blur(14px);
   -webkit-backdrop-filter: blur(14px);
-  border-top: 1px solid rgba(0,0,0,.08);
+  border-top: 1px solid var(--line);
   /* WeChat WebView GPU layer fix */
   -webkit-transform: translateZ(0);
   transform: translateZ(0);
@@ -464,51 +517,56 @@ body{
 .float-bar-pnl {
   flex: 1;
   display: flex;
-  align-items: center;
-  gap: 8px;
+  align-items: baseline;
+  gap: 7px;
 }
 .float-bar-label {
-  font-size: 12px;
-  color: var(--text3);
+  font-size: 13px;
+  color: var(--ink-3);
   font-weight: 500;
   white-space: nowrap;
 }
 .float-bar-value {
-  font-size: 18px;
-  font-weight: 600;
-  color: var(--text);
-  letter-spacing: -.5px;
-}
-.float-bar-value.positive { color: var(--pnl-win); }
-.float-bar-value.negative { color: var(--pnl-lose); }
-.float-bar-value.neutral  { color: var(--text3); }
-.float-bar-badge {
-  font-size: 11px;
+  font-size: 20px;
   font-weight: 700;
+  color: var(--ink-1);
+  letter-spacing: -.3px;
+}
+.float-bar-value.positive { color: var(--win); }
+.float-bar-value.negative { color: var(--lose); }
+.float-bar-value.balanced { color: var(--win); }
+.float-bar-value.neutral  { color: var(--ink-3); }
+/* Balance status pill */
+.balance-tag {
+  align-self: center;
+  font-size: 11px;
+  font-weight: 600;
   padding: 3px 8px;
   border-radius: var(--rfull);
   white-space: nowrap;
 }
+.balance-tag.ok   { background: var(--brand-soft); color: var(--win); background: #E6F2E9; }
+.balance-tag.warn { background: var(--brand-soft); color: var(--brand-strong); }
 .btn-export {
   display: flex;
   align-items: center;
   gap: 6px;
   height: 44px;
   padding: 0 18px;
-  background: var(--green);
+  background: var(--brand);
   color: #fff;
   border: none;
-  border-radius: var(--r8);
+  border-radius: var(--r12);
   font-family: var(--font);
   font-size: 14px;
-  font-weight: 700;
+  font-weight: 600;
   cursor: pointer;
   flex-shrink: 0;
-  box-shadow: 0 2px 8px rgba(74,107,94,.28);
+  box-shadow: 0 2px 8px var(--brand-shadow);
   -webkit-tap-highlight-color: transparent;
   transition: filter .1s;
 }
-.btn-export:active { filter: brightness(.88); }
+.btn-export:active { filter: brightness(.92); }
 
 /* ─── Export modal ─── */
 .export-modal-sheet {
@@ -570,8 +628,8 @@ body{
   font-size: 13px;
 }
 .export-table tr:last-child td { border-bottom: none; }
-.export-table tr.win td:last-child { color: var(--green); font-weight: 700; }
-.export-table tr.lose td:last-child { color: var(--red); font-weight: 700; }
+.export-table tr.win td:last-child { color: var(--win); font-weight: 700; }
+.export-table tr.lose td:last-child { color: var(--lose); font-weight: 700; }
 .export-name-cell {
   display: flex;
   align-items: center;
@@ -626,16 +684,15 @@ body{
 .chip-modal-name {
   display: inline-flex;
   align-items: center;
-  gap: 4px;
+  gap: 5px;
   font-size: 16px;
   font-weight: 600;
   color: var(--text);
   cursor: pointer;
   padding: 2px 0;
-  border-bottom: 1px dashed var(--n40);
   margin-bottom: 2px;
 }
-.chip-modal-name:active { color: var(--green); border-color: var(--green); }
+.chip-modal-name:active { color: var(--brand); }
 
 /* btn-edit-name defined above near .player-name */
 
@@ -643,10 +700,10 @@ body{
 /* Override the reset modal to use consistent height/spacing */
 #reset-modal .modal-sheet > .btn,
 #reset-modal .modal-sheet > button {
-  height: 40px !important;
-  font-size: 14px !important;
-  border-radius: var(--r8) !important;
-  margin-bottom: 8px !important;
+  height: 48px !important;
+  font-size: 15px !important;
+  border-radius: var(--r12) !important;
+  margin-bottom: 10px !important;
 }
 #reset-modal .modal-sheet > button:last-child { margin-bottom: 0 !important; }
 
