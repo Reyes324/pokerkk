@@ -141,28 +141,25 @@
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
             </button>
         </div>
-        <!-- The card to be captured as image -->
-        <div id="export-card">
-            <div class="export-card-header">
-                <div class="export-card-logo">
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
-                        <path d="M4 10 Q4 4 8 3 L8 8 Q10 6 12 6 Q14 6 16 8 L16 3 Q20 4 20 10 Q20 16 12 20 Q4 16 4 10Z" fill="white" opacity=".9"/>
-                        <path d="M8 3 L8 1 L10 3Z" fill="white"/>
-                        <path d="M16 3 L14 1 L16 3Z" fill="white"/>
-                        <path d="M12 12 Q10 10 10 9 Q10 7.5 12 7.5 Q14 7.5 14 9 Q14 10 12 12Z" fill="#107C10"/>
-                        <rect x="11" y="12" width="2" height="2" fill="#107C10"/>
-                        <rect x="10" y="14" width="4" height="1" fill="#107C10"/>
-                    </svg>
-                    猫店德州结算
+        <div class="export-modal-body">
+            <!-- The card to be captured as image -->
+            <div id="export-card">
+                <div class="export-card-header">
+                    <div class="export-card-logo">
+                        <img src="img/paw.png" alt="猫爪">
+                        猫店德州结算
+                    </div>
+                    <div class="export-card-date" id="export-date"></div>
                 </div>
-                <div class="export-card-date" id="export-date"></div>
+                <div id="export-table-wrap"></div>
+                <div id="export-badge"></div>
             </div>
-            <div id="export-table-wrap"></div>
-            <div id="export-badge"></div>
+            <p class="export-hint">长按图片保存到相册</p>
+            <img id="export-image" style="display:none;width:100%;border-radius:12px" alt="结算结果">
         </div>
-        <p class="export-hint">长按图片保存到相册</p>
-        <img id="export-image" style="display:none;width:100%;border-radius:12px;margin-bottom:12px" alt="结算结果">
-        <button class="btn btn-primary" id="btn-generate-img">生成图片</button>
+        <div class="export-modal-footer">
+            <button class="btn btn-primary" id="btn-generate-img">生成图片</button>
+        </div>
     </div>
 </div>
 

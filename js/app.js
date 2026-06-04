@@ -23,7 +23,10 @@ const gameRef = db.ref('currentGame');
 let players = [];
 let isLoading = true; // true until first Firebase response
 let chipModalIdx = -1;
+let chipModalSnapshot = null;
 let chipInputMode = 'stepper'; // 'stepper' | 'direct'
+let stepperSnapshot = null;    // denomination values saved when entering direct mode
+let directBaseTotal = 0;       // pre-filled total when entering direct mode (for change detection)
 let pendingAvatarIdx = -1;
 let pendingNameIdx = -1;
 let pendingDeleteIdx = -1;
@@ -191,7 +194,7 @@ function renderFloatBar() {
 
 // ── Export results ─────────────────────────────────────────────
 function openExportModal() {
-    const sorted = players.map(p => {
+    const sorted = players.filter(p => p.confirmed === true).map(p => {
         const chipTotal = calcChipTotal(p.n10, p.n20, p.n50, p.n100);
         const invested = calcInvested(p.buyIns);
         return { ...p, chipTotal, invested, pnl: calcPnl(chipTotal, invested) };
@@ -231,8 +234,7 @@ function openExportModal() {
     document.getElementById('export-card').style.display = 'block';
     document.getElementById('btn-generate-img').style.display = 'flex';
 
-    document.getElementById('export-modal').classList.remove('hidden');
-    document.body.style.overflow = 'hidden';
+    openModal('export-modal');
 }
 
 function generateImage() {
@@ -359,17 +361,16 @@ function setupLongPress() {
 function showDeleteConfirm(idx) {
     pendingDeleteIdx = idx;
     document.getElementById('delete-modal-text').textContent = `删除「${players[idx].name}」？`;
-    document.getElementById('delete-modal').classList.remove('hidden');
-    document.body.style.overflow = 'hidden';
+    openModal('delete-modal');
 }
 
 // ── Chip half-sheet ────────────────────────────────────────────
 function openChipModal(idx) {
     chipModalIdx = idx;
     chipInputMode = 'stepper';
+    chipModalSnapshot = { ...players[idx] };
     renderChipModal(idx);
-    document.getElementById('chip-modal').classList.remove('hidden');
-    document.body.style.overflow = 'hidden';
+    openModal('chip-modal');
 }
 
 function renderChipModal(idx) {
@@ -424,7 +425,7 @@ function renderChipModalBody(idx) {
         const buyIn = `
             <div class="stepper-row buyin-row">
                 <div class="chip-dot" style="background:#C8894B;font-size:9px">底</div>
-                <div class="stepper-label">借底次数<span>每借一底 = 额外1000分投入</span></div>
+                <div class="stepper-label">借了几底<span>每借一底 = 额外1000分投入</span></div>
                 <div class="stepper-ctrl">
                     <button class="stepper-btn" onclick="adjustChip(${idx},'buyIns',-1)">−</button>
                     <input class="stepper-count" id="mc-buyIns" type="number" inputmode="numeric"
@@ -441,14 +442,14 @@ function renderChipModalBody(idx) {
         body.innerHTML = `
             <div class="direct-input-wrap">
                 <div class="direct-input-row">
-                    <span style="font-size:13px;color:var(--text2);flex:1">最终持筹总分</span>
+                    <span style="font-size:13px;color:var(--text2);flex:1">最终剩余持筹</span>
                     <input class="direct-input-field" id="direct-chip-total" type="number"
                         inputmode="numeric" placeholder="0" value="${chipTotal || ''}"
                         style="width:130px;text-align:right"
                         oninput="previewDirectInput(${idx})">
                 </div>
                 <div class="direct-input-row buyin-row">
-                    <span style="font-size:13px;color:var(--text2);flex:1">借底次数</span>
+                    <span style="font-size:13px;color:var(--text2);flex:1">借了几底</span>
                     <input class="direct-input-field" id="direct-buyin" type="number"
                         inputmode="numeric" placeholder="0" value="${p.buyIns || ''}"
                         style="width:80px;text-align:right"
@@ -471,11 +472,29 @@ function renderChipModalBody(idx) {
 }
 
 function toggleChipMode(idx) {
-    // Save direct input into local state before switching modes
-    if (chipInputMode === 'direct') {
-        applyDirectInputLocal(idx);
+    if (chipInputMode === 'stepper') {
+        // Stepper → Direct: snapshot current denominations, pre-fill total
+        const p = players[idx];
+        stepperSnapshot = { n10: p.n10||0, n20: p.n20||0, n50: p.n50||0, n100: p.n100||0 };
+        directBaseTotal = calcChipTotal(p.n10, p.n20, p.n50, p.n100);
+        chipInputMode = 'direct';
+    } else {
+        // Direct → Stepper
+        const totalEl = document.getElementById('direct-chip-total');
+        const currentTotal = Math.max(0, parseInt(totalEl?.value) || 0);
+        const buyInEl = document.getElementById('direct-buyin');
+        const currentBuyIns = Math.max(0, parseInt(buyInEl?.value) || 0);
+        if (stepperSnapshot && currentTotal === directBaseTotal) {
+            // Unmodified: restore original denominations
+            players[idx] = { ...players[idx], ...stepperSnapshot, buyIns: currentBuyIns };
+        } else {
+            // Modified: clear denominations, user counts again from scratch
+            players[idx] = { ...players[idx], n10: 0, n20: 0, n50: 0, n100: 0, buyIns: currentBuyIns };
+        }
+        stepperSnapshot = null;
+        directBaseTotal = 0;
+        chipInputMode = 'stepper';
     }
-    chipInputMode = chipInputMode === 'stepper' ? 'direct' : 'stepper';
     renderChipModalBody(idx);
 }
 
@@ -514,6 +533,26 @@ function applyDirectInputLocal(idx) {
 }
 
 // ── Modal animation helper ─────────────────────────────────────
+function openModal(id) {
+    const overlay = document.getElementById(id);
+    const sheet = overlay.querySelector('.modal-sheet');
+    overlay.classList.remove('hidden');
+    document.body.style.overflow = 'hidden';
+    if (sheet) {
+        const DUR = 220;
+        overlay.style.opacity = '0';
+        sheet.style.animation = 'none';
+        sheet.offsetHeight; // force reflow to restart animation
+        sheet.style.animation = `slideUp ${DUR}ms cubic-bezier(.4,0,.2,1) both`;
+        overlay.style.transition = `opacity ${DUR}ms ease`;
+        requestAnimationFrame(() => { overlay.style.opacity = '1'; });
+        setTimeout(() => {
+            overlay.style.transition = '';
+            overlay.style.opacity = '';
+        }, DUR);
+    }
+}
+
 function closeModal(id, callback) {
     const overlay = document.getElementById(id);
     const sheet = overlay.querySelector('.modal-sheet');
@@ -538,37 +577,38 @@ function closeModal(id, callback) {
     }
 }
 
-// confirm=true  → 点"完成":标记该玩家已确认,数据计入总盈亏
-// confirm=false → 点蒙层/取消:仅保存已填数据,不算确认(卡片仍显示"录入筹码")
+// confirm=true  → 点"完成":写入 Firebase，标记已确认
+// confirm=false → 点蒙层/取消:丢弃本地修改，还原快照
 function closeChipModal(confirm) {
     const idx = chipModalIdx;
     if (idx < 0 || !players[idx]) {
-        closeModal('chip-modal', () => { chipModalIdx = -1; });
+        closeModal('chip-modal', () => { chipModalIdx = -1; chipModalSnapshot = null; stepperSnapshot = null; directBaseTotal = 0; });
         return;
     }
 
-    // In direct-input mode, commit the typed total into local denominations first.
-    if (chipInputMode === 'direct') applyDirectInputLocal(idx);
-
-    const p = players[idx];
-    // Build ONE atomic payload so chips + confirmed land together — no partial
-    // state for the listener to echo back as a stale -1000.
-    const payload = {
-        n10: p.n10 || 0, n20: p.n20 || 0, n50: p.n50 || 0,
-        n100: p.n100 || 0, buyIns: p.buyIns || 0,
-    };
-    if (confirm) {
-        p.confirmed = true;
-        payload.confirmed = true;
-    }
-
-    // Cancel any pending debounced per-field write; this atomic write supersedes it.
     clearTimeout(writeTimers[idx]);
-    gameRef.child('players/' + idx).update(payload);
+
+    if (confirm) {
+        // In direct-input mode, commit the typed total into local denominations first.
+        if (chipInputMode === 'direct') applyDirectInputLocal(idx);
+
+        const p = players[idx];
+        p.confirmed = true;
+        const payload = {
+            n10: p.n10 || 0, n20: p.n20 || 0, n50: p.n50 || 0,
+            n100: p.n100 || 0, buyIns: p.buyIns || 0, confirmed: true,
+        };
+        gameRef.child('players/' + idx).update(payload);
+    } else {
+        // Discard edits — restore to the snapshot taken when the modal opened.
+        if (chipModalSnapshot) {
+            players[idx] = { ...chipModalSnapshot };
+        }
+    }
 
     renderPlayers();
     renderFloatBar();
-    closeModal('chip-modal', () => { chipModalIdx = -1; });
+    closeModal('chip-modal', () => { chipModalIdx = -1; chipModalSnapshot = null; stepperSnapshot = null; directBaseTotal = 0; });
 }
 
 function syncChipModal(idx) {
@@ -601,10 +641,6 @@ function adjustChip(idx, key, delta) {
     syncChipModal(idx);
     updateCardPnl(idx);
     renderFloatBar();
-    clearTimeout(writeTimers[idx]);
-    writeTimers[idx] = setTimeout(() => {
-        gameRef.child('players/' + idx).update({ [key]: next });
-    }, 400);
 }
 
 function setChip(idx, key, rawVal) {
@@ -613,10 +649,6 @@ function setChip(idx, key, rawVal) {
     syncChipModal(idx);
     updateCardPnl(idx);
     renderFloatBar();
-    clearTimeout(writeTimers[idx]);
-    writeTimers[idx] = setTimeout(() => {
-        gameRef.child('players/' + idx).update({ [key]: next });
-    }, 600);
 }
 
 function updateCardPnl(idx) {
@@ -633,7 +665,7 @@ function updateCardPnl(idx) {
 
 // ── Add / remove ───────────────────────────────────────────────
 function addPlayer() {
-    if (players.length >= 8) { showToast('最多支持8位玩家'); return; }
+    if (players.length >= 15) { showToast('最多支持15位玩家'); return; }
     const idx = players.length;
     gameRef.child('players/' + idx).set({
         name: '玩家' + (idx + 1), avatarId: idx % AVATARS.length,
@@ -662,8 +694,7 @@ function openAvatarModal(idx) {
         });
         grid.appendChild(div);
     });
-    document.getElementById('avatar-modal').classList.remove('hidden');
-    document.body.style.overflow = 'hidden';
+    openModal('avatar-modal');
 }
 function closeAvatarModal() { closeModal('avatar-modal'); }
 
@@ -672,8 +703,7 @@ function openNameModal(idx) {
     pendingNameIdx = idx;
     const inp = document.getElementById('name-modal-input');
     inp.value = players[idx].name;
-    document.getElementById('name-modal').classList.remove('hidden');
-    document.body.style.overflow = 'hidden';
+    openModal('name-modal');
     setTimeout(() => inp.focus(), 150);
 }
 function closeNameModal() { closeModal('name-modal'); }
@@ -687,8 +717,7 @@ function saveName() {
 
 // ── Reset ──────────────────────────────────────────────────────
 function showResetModal() {
-    document.getElementById('reset-modal').classList.remove('hidden');
-    document.body.style.overflow = 'hidden';
+    openModal('reset-modal');
 }
 function closeResetModal() { closeModal('reset-modal'); }
 function resetSoft() {
@@ -718,15 +747,9 @@ document.getElementById('btn-add-player').addEventListener('click', addPlayer);
 document.getElementById('btn-reset-soft').addEventListener('click', showResetModal);
 document.getElementById('btn-export').addEventListener('click', openExportModal);
 document.getElementById('btn-generate-img').addEventListener('click', generateImage);
-document.getElementById('btn-close-export').addEventListener('click', () => {
-    document.getElementById('export-modal').classList.add('hidden');
-    document.body.style.overflow = '';
-});
+document.getElementById('btn-close-export').addEventListener('click', () => closeModal('export-modal'));
 document.getElementById('export-modal').addEventListener('click', e => {
-    if (e.target === e.currentTarget) {
-        document.getElementById('export-modal').classList.add('hidden');
-        document.body.style.overflow = '';
-    }
+    if (e.target === e.currentTarget) closeModal('export-modal');
 });
 document.getElementById('btn-chip-done').addEventListener('click', () => closeChipModal(true));
 document.getElementById('chip-modal').addEventListener('click', e => { if (e.target === e.currentTarget) closeChipModal(false); });
@@ -738,15 +761,13 @@ document.getElementById('name-modal-input').addEventListener('keydown', e => { i
 document.getElementById('name-modal').addEventListener('click', e => { if (e.target === e.currentTarget) closeNameModal(); });
 document.getElementById('btn-delete-confirm').addEventListener('click', () => {
     if (pendingDeleteIdx >= 0) removePlayer(pendingDeleteIdx);
-    document.getElementById('delete-modal').classList.add('hidden');
-    document.body.style.overflow = '';
-    pendingDeleteIdx = -1;
+    closeModal('delete-modal', () => { pendingDeleteIdx = -1; });
 });
 document.getElementById('btn-delete-cancel').addEventListener('click', () => {
-    document.getElementById('delete-modal').classList.add('hidden');
-    document.body.style.overflow = '';
-    pendingDeleteIdx = -1;
-    document.querySelectorAll('.long-press-active').forEach(el => el.classList.remove('long-press-active'));
+    closeModal('delete-modal', () => {
+        pendingDeleteIdx = -1;
+        document.querySelectorAll('.long-press-active').forEach(el => el.classList.remove('long-press-active'));
+    });
 });
 document.getElementById('btn-reset-soft-confirm').addEventListener('click', resetSoft);
 document.getElementById('btn-reset-hard').addEventListener('click', resetHard);

@@ -61,7 +61,7 @@ currentGame/
   players/
     0/ { name, avatarId, n10, n20, n50, n100, buyIns }
     1/ ...
-    ...（最多8人）
+    ...（最多15人）
   results/ { results, totalPnl, isBalanced }
 ```
 
@@ -83,7 +83,7 @@ poker-settle/
 ## 核心功能
 
 ### 玩家管理
-- 默认3个玩家（玩家1/2/3），最多8人
+- 默认3个玩家（玩家1/2/3），最多15人
 - 点击"＋添加玩家"按钮添加
 - **左滑**玩家卡片 → 显示红色删除按钮（iOS风格）
 - **长按**玩家卡片 → 弹出删除确认
