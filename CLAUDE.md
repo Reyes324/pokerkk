@@ -59,7 +59,7 @@ pnl       = chipTotal - invested
 currentGame/
   status: "waiting" | "settled"
   players/
-    0/ { name, avatarId, avatarRef?, n10, n20, n50, n100, buyIns, confirmed, editingBy? }
+    0/ { name, avatarId, avatarRef?, n10, n20, n50, n100, buyIns, confirmed, editing?:{deviceId:true} }
     1/ ...
     ...（最多15人）
   results/ { results, totalPnl, isBalanced }

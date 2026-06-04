@@ -62,23 +62,30 @@ function normalizePlayer(raw) {
         n100: raw.n100 || 0,
         buyIns: raw.buyIns || 0,
         confirmed: raw.confirmed === true,
-        editingBy: raw.editingBy || null,
+        // Set of devices currently editing this row: { deviceId: true }.
+        // A set (not a single value) so EVERY concurrent editor sees the warning,
+        // not just whoever's id happened to be stored last.
+        editing: raw.editing || {},
         avatarRef: raw.avatarRef || null, // points into sharedAvatars; takes precedence over avatarId
     };
 }
 
+// "Someone else is editing this row" — true if the editing set has any device
+// that isn't me. When I'm the only editor, nobody (including me) sees the tag.
 function isEditingByOther(idx) {
-    return players[idx]?.editingBy && players[idx].editingBy !== deviceId;
+    const editing = players[idx]?.editing;
+    if (!editing) return false;
+    return Object.keys(editing).some(id => id !== deviceId);
 }
 
 function setEditingBy(idx) {
-    const ref = gameRef.child('players/' + idx + '/editingBy');
-    ref.set(deviceId);
+    const ref = gameRef.child('players/' + idx + '/editing/' + deviceId);
+    ref.set(true);
     ref.onDisconnect().remove();
 }
 
 function clearEditingBy(idx) {
-    const ref = gameRef.child('players/' + idx + '/editingBy');
+    const ref = gameRef.child('players/' + idx + '/editing/' + deviceId);
     ref.onDisconnect().cancel();
     ref.remove();
 }
@@ -99,8 +106,8 @@ gameRef.on('value', snap => {
     // state — don't let a (possibly stale, mid-debounce) remote echo clobber
     // the in-progress edits. Other players still sync live.
     if (chipModalIdx >= 0 && players[chipModalIdx] && incoming[chipModalIdx]) {
-        // Keep local chip edits but take editingBy from Firebase so we see others editing
-        incoming[chipModalIdx] = { ...players[chipModalIdx], editingBy: incoming[chipModalIdx].editingBy };
+        // Keep local chip edits but take the editing set from Firebase so we see others editing
+        incoming[chipModalIdx] = { ...players[chipModalIdx], editing: incoming[chipModalIdx].editing };
     }
 
     players = incoming;
@@ -992,7 +999,7 @@ document.getElementById('btn-avatar-delete').addEventListener('click', () => {
     closeModal('avatar-action-modal', () => { deleteSharedAvatar(photoId); });
 });
 document.getElementById('btn-avatar-action-cancel').addEventListener('click', () => {
-    // Just dismiss the action sheet — picker stays open, so don't clear editingBy here.
+    // Just dismiss the action sheet — picker stays open, so don't clear the editing flag here.
     closeModal('avatar-action-modal');
 });
 document.getElementById('avatar-action-modal').addEventListener('click', e => {
