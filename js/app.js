@@ -35,9 +35,11 @@ let chipInputMode = 'stepper'; // 'stepper' | 'direct'
 let stepperSnapshot = null;    // denomination values saved when entering direct mode
 let directBaseTotal = 0;       // pre-filled total when entering direct mode (for change detection)
 let pendingAvatarIdx = -1;
+let pendingAvatarActionId = null; // photoId being managed in the action sheet
 let pendingNameIdx = -1;
 let pendingDeleteIdx = -1;
 const writeTimers = {};
+let sharedAvatars = {}; // shared photo library: { photoId: { data } } — any player can pick any photo
 
 function defaultPlayers(count) {
     return Array.from({ length: count }, (_, i) => ({
@@ -60,6 +62,7 @@ function normalizePlayer(raw) {
         buyIns: raw.buyIns || 0,
         confirmed: raw.confirmed === true,
         editingBy: raw.editingBy || null,
+        avatarRef: raw.avatarRef || null, // points into sharedAvatars; takes precedence over avatarId
     };
 }
 
@@ -104,8 +107,34 @@ gameRef.on('value', snap => {
     if (chipModalIdx >= 0 && players[chipModalIdx]) syncChipModal(chipModalIdx);
 });
 
+// Shared avatar library lives in a separate path so the heavy base64 never
+// pollutes the game sync hot path — players only reference a tiny photoId.
+db.ref('sharedAvatars').on('value', snap => {
+    sharedAvatars = snap.val() || {};
+    renderPlayers();
+    if (chipModalIdx >= 0 && players[chipModalIdx]) renderChipModal(chipModalIdx);
+    // Live-refresh the open picker grid (e.g. someone else uploaded/deleted a photo)
+    if (!document.getElementById('avatar-modal').classList.contains('hidden') && pendingAvatarIdx >= 0) {
+        renderAvatarGrid(pendingAvatarIdx);
+    }
+});
+
 // Show skeleton immediately on load
 renderPlayers();
+
+// ── Avatar helpers ─────────────────────────────────────────────
+// A player's avatar is a shared photo (if avatarRef resolves) else a cat.
+// If avatarRef points to a deleted photo, it gracefully falls back to the cat.
+function getPlayerPhoto(p) {
+    return (p.avatarRef && sharedAvatars[p.avatarRef]?.data) || null;
+}
+function getAvatarContent(p) {
+    const photo = getPlayerPhoto(p);
+    return photo ? `<img src="${photo}" alt="">` : getAvatarSvg(p.avatarId);
+}
+function getAvatarBgFor(p) {
+    return getPlayerPhoto(p) ? '#f0ede8' : getAvatarBg(p.avatarId);
+}
 
 // ── Render ─────────────────────────────────────────────────────
 function render() {
@@ -154,9 +183,9 @@ function renderPlayers() {
                  ${settled ? '' : `onclick="openChipModal(${i})"`}>
                 <div class="player-card-main">
                     <div class="avatar-circle ${settled ? '' : 'clickable'}"
-                         style="background:${getAvatarBg(p.avatarId)}"
+                         style="background:${getAvatarBgFor(p)}"
                          ${settled ? '' : `onclick="event.stopPropagation();openAvatarModal(${i})"`}>
-                        ${getAvatarSvg(p.avatarId)}
+                        ${getAvatarContent(p)}
                         ${settled ? '' : '<div class="avatar-edit-hint">换</div>'}
                     </div>
                     <!-- name col -->
@@ -205,27 +234,38 @@ function renderFloatBar() {
         pnlEl.textContent = '— 分';
         pnlEl.className = 'float-bar-value neutral';
         tag.classList.add('hidden');
+        const exportBtn = document.getElementById('btn-export');
+        if (exportBtn) { exportBtn.disabled = true; exportBtn.style.opacity = '0.4'; exportBtn.style.cursor = 'not-allowed'; exportBtn.style.boxShadow = 'none'; }
         return;
     }
 
     pnlEl.textContent = formatPnl(total) + ' 分';
-    // Balanced only when EVERY player has confirmed AND the sum ties out to 0.
-    const allConfirmed = players.length > 0 && players.every(p => p.confirmed === true);
-    const balanced = total === 0 && allConfirmed;
+    const balanced = total === 0;
     pnlEl.className = 'float-bar-value ' + (balanced ? 'balanced' : total > 0 ? 'positive' : 'negative');
 
     tag.classList.remove('hidden');
     tag.textContent = balanced ? '已持平' : '未持平';
     tag.className = 'balance-tag ' + (balanced ? 'ok' : 'warn');
+
+    const exportBtn = document.getElementById('btn-export');
+    if (exportBtn) {
+        exportBtn.disabled = !balanced;
+        exportBtn.style.opacity = balanced ? '' : '0.4';
+        exportBtn.style.cursor = balanced ? '' : 'not-allowed';
+        exportBtn.style.boxShadow = balanced ? '' : 'none';
+    }
 }
 
 // ── Export results ─────────────────────────────────────────────
 function openExportModal() {
-    const sorted = players.filter(p => p.confirmed === true).map(p => {
-        const chipTotal = calcChipTotal(p.n10, p.n20, p.n50, p.n100);
-        const invested = calcInvested(p.buyIns);
-        return { ...p, chipTotal, invested, pnl: calcPnl(chipTotal, invested) };
-    }).sort((a, b) => b.pnl - a.pnl);
+    const sorted = players
+        .filter(p => p.confirmed === true)
+        .map(r => {
+            const chipTotal = calcChipTotal(r.n10, r.n20, r.n50, r.n100);
+            const invested = calcInvested(r.buyIns);
+            return { ...r, chipTotal, invested, pnl: calcPnl(chipTotal, invested) };
+        })
+        .sort((a, b) => b.pnl - a.pnl);
     const totalPnl = sorted.reduce((s, r) => s + r.pnl, 0);
     const isBalanced = totalPnl === 0;
 
@@ -241,7 +281,7 @@ function openExportModal() {
             <tbody>${sorted.map(r => `
                 <tr class="${r.pnl > 0 ? 'win' : r.pnl < 0 ? 'lose' : ''}">
                     <td class="export-name-cell">
-                        <div class="avatar-circle sm" style="background:${getAvatarBg(r.avatarId)}">${getAvatarSvg(r.avatarId)}</div>
+                        <div class="avatar-circle sm" style="background:${getAvatarBgFor(r)}">${getAvatarContent(r)}</div>
                         ${escHtml(r.name)}
                     </td>
                     <td>${r.chipTotal}</td>
@@ -405,9 +445,9 @@ function renderChipModal(idx) {
     const p = players[idx];
     // Header — tap avatar to change, tap name to edit
     document.getElementById('chip-modal-header').innerHTML = `
-        <div class="avatar-circle clickable" style="background:${getAvatarBg(p.avatarId)}"
+        <div class="avatar-circle clickable" style="background:${getAvatarBgFor(p)}"
              onclick="openAvatarModal(${idx})">
-            ${getAvatarSvg(p.avatarId)}
+            ${getAvatarContent(p)}
             <div class="avatar-edit-hint">换</div>
         </div>
         <div style="flex:1;min-width:0">
@@ -598,12 +638,13 @@ function closeModal(id, callback) {
             sheet.style.animation = '';
             overlay.style.transition = '';
             overlay.style.opacity = '';
-            document.body.style.overflow = '';
+            // Keep scroll locked if another modal (e.g. picker under the action sheet) is still open
+            document.body.style.overflow = document.querySelector('.modal-overlay:not(.hidden)') ? 'hidden' : '';
             if (callback) callback();
         }, DUR);
     } else {
         overlay.classList.add('hidden');
-        document.body.style.overflow = '';
+        document.body.style.overflow = document.querySelector('.modal-overlay:not(.hidden)') ? 'hidden' : '';
         if (callback) callback();
     }
 }
@@ -710,33 +751,141 @@ function addPlayer() {
 function removePlayer(idx) {
     clearTimeout(writeTimers[idx]);
     delete writeTimers[idx];
+    // Shared avatars are index-independent — deleting a player needs no avatar shuffle.
+    // The player's avatarRef leaves with them; the shared photo stays in the library.
     gameRef.child('players').set(players.filter((_, i) => i !== idx));
 }
 
 // ── Avatar modal ───────────────────────────────────────────────
 function openAvatarModal(idx) {
     pendingAvatarIdx = idx;
+    if (chipModalIdx < 0) setEditingBy(idx);
+    renderAvatarGrid(idx);
+    const tag = document.getElementById('avatar-modal-editing-tag');
+    if (tag) tag.classList.toggle('hidden', !isEditingByOther(idx));
+    openModal('avatar-modal');
+}
+
+// Build the picker grid: [+ upload] [shared photos…] [25 cats]
+function renderAvatarGrid(idx) {
+    const p = players[idx];
     const grid = document.getElementById('modal-avatar-grid');
     grid.innerHTML = '';
+
+    // 1) Upload cell — always just a "+" entry, adds to the shared library
+    const uploadCell = document.createElement('div');
+    uploadCell.className = 'avatar-upload-cell';
+    uploadCell.innerHTML = `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--brand)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg><span class="upload-hint">上传照片</span>`;
+    uploadCell.addEventListener('click', () => triggerFilePick('new'));
+    grid.appendChild(uploadCell);
+
+    // 2) Shared uploaded photos — anyone can pick; corner icon manages
+    Object.keys(sharedAvatars).forEach(photoId => {
+        const data = sharedAvatars[photoId]?.data;
+        if (!data) return;
+        const cell = document.createElement('div');
+        cell.className = 'avatar-photo-item' + (p.avatarRef === photoId ? ' selected' : '');
+        cell.innerHTML = `
+            <img src="${data}" alt="">
+            <button class="avatar-manage-btn" onclick="event.stopPropagation();openAvatarActionModal('${photoId}')" aria-label="管理照片">
+                <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><circle cx="5" cy="12" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="19" cy="12" r="1.6"/></svg>
+            </button>`;
+        cell.addEventListener('click', () => {
+            gameRef.child('players/' + pendingAvatarIdx + '/avatarRef').set(photoId);
+            applyAvatarSelectionLocal(pendingAvatarIdx, { avatarRef: photoId });
+            closeAvatarModal();
+        });
+        grid.appendChild(cell);
+    });
+
+    // 3) Built-in cat avatars
     AVATARS.forEach((av, i) => {
         const div = document.createElement('div');
-        div.className = 'avatar-item' + (players[idx].avatarId === i ? ' selected' : '');
+        div.className = 'avatar-item' + (!p.avatarRef && p.avatarId === i ? ' selected' : '');
         div.innerHTML = getAvatarSvg(i);
         div.style.background = av.bg;
         div.addEventListener('click', () => {
-            gameRef.child('players/' + pendingAvatarIdx + '/avatarId').set(i);
+            // Selecting a cat clears any shared-photo reference
+            gameRef.child('players/' + pendingAvatarIdx).update({ avatarId: i, avatarRef: null });
+            applyAvatarSelectionLocal(pendingAvatarIdx, { avatarId: i, avatarRef: null });
             closeAvatarModal();
         });
         grid.appendChild(div);
     });
-    const tag = document.getElementById('avatar-modal-editing-tag');
-    if (tag) tag.classList.toggle('hidden', !isEditingByOther(idx));
-    if (chipModalIdx < 0) setEditingBy(idx);
-    openModal('avatar-modal');
 }
+
 function closeAvatarModal() {
     if (chipModalIdx < 0 && pendingAvatarIdx >= 0) clearEditingBy(pendingAvatarIdx);
     closeModal('avatar-modal');
+}
+
+// Mirror an avatar change into local state. The game listener preserves the
+// locally-owned player while a chip modal is open, so a Firebase-only write
+// wouldn't refresh the open chip-modal header — patch local + re-render.
+function applyAvatarSelectionLocal(idx, patch) {
+    if (players[idx]) Object.assign(players[idx], patch);
+    if (chipModalIdx === idx) renderChipModal(idx);
+}
+
+// mode: 'new' (add to library + assign to current player) | 'replace' (overwrite pendingAvatarActionId)
+function triggerFilePick(mode) {
+    const fileInput = document.getElementById('avatar-upload-input');
+    fileInput.dataset.mode = mode;
+    fileInput.value = '';
+    fileInput.click();
+}
+
+function openAvatarActionModal(photoId) {
+    pendingAvatarActionId = photoId;
+    openModal('avatar-action-modal');
+}
+
+// Delete a shared photo. Any player using it falls back to their cat avatar.
+function deleteSharedAvatar(photoId) {
+    players.forEach((p, i) => {
+        if (p.avatarRef === photoId) {
+            gameRef.child('players/' + i + '/avatarRef').remove();
+            applyAvatarSelectionLocal(i, { avatarRef: null });
+        }
+    });
+    db.ref('sharedAvatars/' + photoId).remove();
+    showToast('已删除照片');
+}
+
+// Compress to 160×160 JPEG, then either add to library or replace an existing photo.
+function processAvatarFile(file, mode) {
+    const reader = new FileReader();
+    reader.onload = e => {
+        const img = new Image();
+        img.onload = () => {
+            const canvas = document.createElement('canvas');
+            canvas.width = canvas.height = 160;
+            const ctx = canvas.getContext('2d');
+            const size = Math.min(img.naturalWidth, img.naturalHeight);
+            const sx = (img.naturalWidth - size) / 2;
+            const sy = (img.naturalHeight - size) / 2;
+            ctx.drawImage(img, sx, sy, size, size, 0, 0, 160, 160);
+            const dataUrl = canvas.toDataURL('image/jpeg', 0.7);
+
+            if (mode === 'replace' && pendingAvatarActionId) {
+                db.ref('sharedAvatars/' + pendingAvatarActionId).set({ data: dataUrl });
+                showToast('照片已更新');
+            } else {
+                const ref = db.ref('sharedAvatars').push();
+                ref.set({ data: dataUrl });
+                // Auto-select the freshly uploaded photo for the current player
+                if (pendingAvatarIdx >= 0) {
+                    gameRef.child('players/' + pendingAvatarIdx + '/avatarRef').set(ref.key);
+                    applyAvatarSelectionLocal(pendingAvatarIdx, { avatarRef: ref.key });
+                }
+                if (chipModalIdx < 0 && pendingAvatarIdx >= 0) clearEditingBy(pendingAvatarIdx);
+                closeAvatarModal();
+                showToast('头像已上传');
+            }
+        };
+        img.src = e.target.result;
+    };
+    reader.readAsDataURL(file);
 }
 
 // ── Name modal ─────────────────────────────────────────────────
@@ -774,6 +923,7 @@ function resetSoft() {
 }
 function resetHard() {
     gameRef.set({ status: 'waiting', players: defaultPlayers(3) });
+    db.ref('sharedAvatars').remove();
     closeResetModal();
     showToast('已完全重置');
 }
@@ -820,3 +970,31 @@ document.getElementById('btn-reset-soft-confirm').addEventListener('click', rese
 document.getElementById('btn-reset-hard').addEventListener('click', resetHard);
 document.getElementById('btn-cancel-reset').addEventListener('click', closeResetModal);
 document.getElementById('reset-modal').addEventListener('click', e => { if (e.target === e.currentTarget) closeResetModal(); });
+document.getElementById('btn-avatar-reupload').addEventListener('click', () => {
+    // Trigger file input synchronously within the user gesture (iOS requires this),
+    // then close the action sheet. The picker stays open underneath.
+    triggerFilePick('replace');
+    closeModal('avatar-action-modal');
+});
+document.getElementById('btn-avatar-delete').addEventListener('click', () => {
+    const photoId = pendingAvatarActionId;
+    closeModal('avatar-action-modal', () => { deleteSharedAvatar(photoId); });
+});
+document.getElementById('btn-avatar-action-cancel').addEventListener('click', () => {
+    // Just dismiss the action sheet — picker stays open, so don't clear editingBy here.
+    closeModal('avatar-action-modal');
+});
+document.getElementById('avatar-action-modal').addEventListener('click', e => {
+    if (e.target !== e.currentTarget) return;
+    closeModal('avatar-action-modal');
+});
+document.getElementById('avatar-upload-input').addEventListener('change', e => {
+    const file = e.target.files[0];
+    if (!file) return;
+    processAvatarFile(file, e.target.dataset.mode || 'new');
+});
+// iOS WKWebView may reload the page after camera use (memory pressure).
+// pageshow with persisted=true means it was restored from bfcache — re-attach Firebase.
+window.addEventListener('pageshow', e => {
+    if (e.persisted) window.location.reload();
+});

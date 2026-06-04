@@ -294,6 +294,11 @@ body{
   border:1.5px solid rgba(164,38,44,.22);
   border-radius:var(--r8);font-size:14px;
 }
+.btn-danger-action{
+  height:48px;background:var(--red-lt);color:var(--red);
+  border:1.5px solid rgba(164,38,44,.22);
+  border-radius:var(--r12);font-size:16px;
+}
 .btn-sm{height:38px;font-size:14px;border-radius:var(--r8)}
 
 /* ─── Steppers ─── */
@@ -470,6 +475,20 @@ body{
 
 /* ─── Avatar grid ─── */
 .avatar-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:9px}
+/* Avatar picker: fixed handle+header, scrollable grid when photos are many */
+.avatar-modal-sheet{
+  max-height:80dvh;
+  display:flex;flex-direction:column;
+  overflow:hidden;
+  padding-bottom:0;
+}
+.avatar-modal-sheet .modal-handle,
+.avatar-modal-sheet .modal-header{flex-shrink:0}
+.avatar-modal-sheet .avatar-grid{
+  flex:1;overflow-y:auto;align-content:start;
+  -webkit-overflow-scrolling:touch;
+  padding:3px 4px max(20px,calc(8px+env(safe-area-inset-bottom)));
+}
 .avatar-item{
   aspect-ratio:1;border-radius:50%;overflow:hidden;cursor:pointer;
   border:2.5px solid transparent;
@@ -479,6 +498,36 @@ body{
 .avatar-item svg,.avatar-item img{width:100%;height:100%;object-fit:cover;display:block}
 .avatar-item:active{transform:scale(1.06)}
 .avatar-item.selected{border-color:var(--green);box-shadow:0 0 0 3px var(--green-lt)}
+/* Upload entry — always a "+" cell that adds to the shared library */
+.avatar-upload-cell{
+  aspect-ratio:1;border-radius:50%;overflow:hidden;cursor:pointer;
+  border:2px dashed var(--brand);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  gap:3px;background:var(--n10);
+  transition:transform .12s;
+  -webkit-tap-highlight-color:transparent;
+}
+.avatar-upload-cell:active{transform:scale(1.06)}
+.avatar-upload-cell .upload-hint{font-size:9px;color:var(--text3);pointer-events:none;line-height:1}
+/* Shared uploaded photo — selectable like a cat, with a corner manage button */
+.avatar-photo-item{
+  aspect-ratio:1;border-radius:50%;cursor:pointer;position:relative;
+  border:2.5px solid transparent;
+  transition:transform .12s,border-color .12s;
+  -webkit-tap-highlight-color:transparent;
+}
+.avatar-photo-item img{width:100%;height:100%;object-fit:cover;display:block;border-radius:50%}
+.avatar-photo-item:active{transform:scale(1.06)}
+.avatar-photo-item.selected{border-color:var(--green);box-shadow:0 0 0 3px var(--green-lt)}
+.avatar-manage-btn{
+  position:absolute;top:0;right:0;
+  width:18px;height:18px;border-radius:50%;
+  background:#fff;border:1px solid var(--n20);color:var(--text2);
+  display:flex;align-items:center;justify-content:center;
+  cursor:pointer;padding:0;
+  box-shadow:0 1px 4px rgba(0,0,0,.15);
+}
+.avatar-manage-btn svg{pointer-events:none}
 
 /* ─── Input ─── */
 .input-field{

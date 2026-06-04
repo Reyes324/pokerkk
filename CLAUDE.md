@@ -59,11 +59,16 @@ pnl       = chipTotal - invested
 currentGame/
   status: "waiting" | "settled"
   players/
-    0/ { name, avatarId, n10, n20, n50, n100, buyIns }
+    0/ { name, avatarId, avatarRef?, n10, n20, n50, n100, buyIns, confirmed, editingBy? }
     1/ ...
     ...（最多15人）
   results/ { results, totalPnl, isBalanced }
+
+sharedAvatars/            # 独立顶层路径，与 currentGame 分离
+  {pushId}/ { data }      # 用户上传照片，160×160 JPEG 的 base64；全员共享
 ```
+- `avatarRef` 指向 `sharedAvatars` 的 pushId，存在则优先于 `avatarId`（猫）渲染；失效时回退到猫
+- 头像 base64 只存 `sharedAvatars/`，玩家对象只引用轻量 id，避免拖慢筹码实时同步
 
 ### 文件结构
 ```
@@ -100,7 +105,14 @@ poker-settle/
   - 直接输入已修改 → 步进器：清空面额，用户重新按面额录入
 
 ### 头像与名字
-- 点击头像 → 打开头像选择器（12个动漫头像）
+- 点击头像 → 打开头像选择器（半页，标题栏固定、网格区可滚动）
+- 选择器布局：`[+ 上传] [共享照片…] [25只猫]`
+- **共享头像库**：上传的照片进入全局共享库，任何玩家都能点选任意一张（不绑定某个玩家）
+- 第一格「+ 上传」始终是上传入口，点击调起相册/拍照；上传成功后自动选中并加入库供他人使用
+- 每张共享照片右上角有「⋯」管理小图标 → action sheet（重新上传 / 删除照片）；点照片本身 = 选中
+- 删除某张共享照片时，正在使用它的玩家自动回退到猫头像（avatarRef 失效则按 avatarId 渲染）
+- 共享照片存入 Firebase `sharedAvatars/{photoId}` 独立路径，仅 base64 数据放这里；玩家对象里只存一个轻量 `avatarRef`（photoId），不污染筹码实时同步
+- 完全重置时清空共享照片库；重置筹码不影响
 - 点击"编辑"按钮 → 弹窗修改名字
 
 ### 结算
@@ -125,6 +137,18 @@ poker-settle/
 - **Toast**：居中显示（页面中央，非底部）
 - **删除**：左滑或长按，无常驻删除按钮
 - **半页弹窗动画**：所有弹窗通过 `openModal()` / `closeModal()` 统一管理，打开/关闭均有 sheet slideUp/slideDown + overlay fade 动画
+
+### 按钮设计系统
+
+| Class | Height | 用途 |
+|---|---|---|
+| `.btn-primary` | 48px | 主操作（完成、保存、生成） |
+| `.btn-secondary` | 48px | 次要操作（重置、取消中等级） |
+| `.btn-danger-action` | 48px | **并列 action sheet 中的破坏性操作**（与 secondary 等高，仅颜色区分） |
+| `.btn-danger` | 40px | 独立破坏性操作（删除确认、完全重置） |
+| `.btn-sm` | 38px | 最低优先级取消按钮 |
+
+> `.btn-danger-action` 适用场景：action sheet 中有多个平行选项时，破坏性操作需与非破坏性操作等高，用颜色区分而非高度降级。
 
 ---
 
