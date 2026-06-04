@@ -148,8 +148,11 @@ body{
   transition:transform .22s cubic-bezier(.4,0,.2,1),box-shadow .15s;
   cursor:pointer;
   -webkit-tap-highlight-color:transparent;
-  user-select:none;
+  /* Long-press must not select text or pop the iOS callout menu */
+  user-select:none;-webkit-user-select:none;
+  -webkit-touch-callout:none;
 }
+.player-card *{-webkit-user-select:none;user-select:none;}
 .player-card:active{box-shadow:var(--sh2)}
 .swipe-row.swiped .player-card{transform:translateX(-80px)}
 .player-card.long-press-active{
@@ -217,22 +220,22 @@ body{
 .player-name-col{flex:1;min-width:0}
 .player-pnl-col{
   flex-shrink:0;
-  display:flex;align-items:center;gap:2px;
+  display:flex;align-items:center;gap:4px;
   padding-left:10px;
 }
 
 /* P&L value — vivid colors, larger */
-.pnl-inline{font-size:15px;font-weight:600;letter-spacing:-.2px}
+.pnl-inline{font-size:15px;font-weight:600;letter-spacing:-.2px;line-height:1}
 .pnl-inline.positive{color:var(--pnl-win)}
 .pnl-inline.negative{color:var(--pnl-lose)}
 .pnl-inline.neutral{color:var(--text3)}
 .pnl-inline.placeholder{font-size:15px;font-weight:400;color:var(--n60)}
-/* chevron — subtle, right of pnl */
+/* chevron — subtle, right of pnl; spacing comes from the col's gap only */
 .card-chevron{
   display:flex;align-items:center;
   color:var(--n40);flex-shrink:0;
-  margin-left:2px;
 }
+.card-chevron svg{display:block}
 
 /* ─── Add player — airy dashed amber ─── */
 .btn-add-player{
@@ -249,7 +252,7 @@ body{
 .btn-add-player svg{
   width:20px;height:20px;
   stroke-width:2;
-  border-radius:50%;
+  display:block;flex-shrink:0;
 }
 .btn-add-player:active{background:var(--brand-soft)}
 .hint-text{font-size:12px;color:var(--ink-3);text-align:center;margin-top:4px;margin-bottom:14px}
@@ -290,16 +293,17 @@ body{
   border-radius:var(--r12);font-size:16px;
 }
 .btn-danger{
-  height:40px;background:var(--red-lt);color:var(--red);
-  border:1.5px solid rgba(164,38,44,.22);
-  border-radius:var(--r8);font-size:14px;
-}
-.btn-danger-action{
   height:48px;background:var(--red-lt);color:var(--red);
   border:1.5px solid rgba(164,38,44,.22);
   border-radius:var(--r12);font-size:16px;
 }
-.btn-sm{height:38px;font-size:14px;border-radius:var(--r8)}
+/* Cancel / dismiss — lowest hierarchy, but same 48px tap height as the rest.
+   Lighter than secondary (no fill, no border) so it reads as subordinate. */
+.btn-ghost{
+  height:48px;background:transparent;color:var(--text3);
+  border:none;border-radius:var(--r12);font-size:16px;font-weight:600;
+}
+.btn-ghost:active{filter:none;background:var(--n10)}
 
 /* ─── Steppers ─── */
 .stepper-rows{display:flex;flex-direction:column;gap:6px;margin-bottom:14px}
@@ -487,18 +491,35 @@ body{
 .avatar-modal-sheet .avatar-grid{
   flex:1;overflow-y:auto;align-content:start;
   -webkit-overflow-scrolling:touch;
-  padding:3px 4px max(20px,calc(8px+env(safe-area-inset-bottom)));
+  padding:4px 4px max(20px,calc(8px+env(safe-area-inset-bottom)));
+  scrollbar-width:none;          /* Firefox: hide scrollbar */
+  -ms-overflow-style:none;       /* IE/Edge */
 }
-.avatar-item{
-  aspect-ratio:1;border-radius:50%;overflow:hidden;cursor:pointer;
-  border:2.5px solid transparent;
-  transition:transform .12s,border-color .12s;
+.avatar-modal-sheet .avatar-grid::-webkit-scrollbar{display:none} /* WebKit: hide scrollbar */
+/* All picker cells share one circle size; image fills the full cell (no inset
+   border) so cats / uploaded photos / upload-entry render at identical diameter.
+   Selection is a box-shadow ring that doesn't affect layout. */
+.avatar-item,.avatar-photo-item{
+  aspect-ratio:1;border-radius:50%;overflow:hidden;cursor:pointer;position:relative;
+  transition:transform .12s,box-shadow .12s;
   -webkit-tap-highlight-color:transparent;
 }
-.avatar-item svg,.avatar-item img{width:100%;height:100%;object-fit:cover;display:block}
-.avatar-item:active{transform:scale(1.06)}
-.avatar-item.selected{border-color:var(--green);box-shadow:0 0 0 3px var(--green-lt)}
-/* Upload entry — always a "+" cell that adds to the shared library */
+.avatar-item svg,.avatar-item img,.avatar-photo-item img{
+  width:100%;height:100%;object-fit:cover;display:block;border-radius:50%;
+}
+.avatar-item:active,.avatar-photo-item:active{transform:scale(1.06)}
+/* Selection ring drawn INSIDE the cell (::after) so it never extends past the
+   cell — an outer box-shadow ring gets clipped by the scroll container's top/side
+   edges. White inset gap gives the iOS-style ring-with-gap look. */
+.avatar-item.selected::after,.avatar-photo-item.selected::after{
+  content:"";position:absolute;inset:0;border-radius:50%;
+  border:2.5px solid var(--green);
+  box-shadow:inset 0 0 0 2px var(--surface);
+  pointer-events:none;
+}
+/* photo-item keeps overflow visible so the corner manage button isn't clipped */
+.avatar-photo-item{overflow:visible}
+/* Upload entry — always a "+" cell, same diameter as the others */
 .avatar-upload-cell{
   aspect-ratio:1;border-radius:50%;overflow:hidden;cursor:pointer;
   border:2px dashed var(--brand);
@@ -509,23 +530,14 @@ body{
 }
 .avatar-upload-cell:active{transform:scale(1.06)}
 .avatar-upload-cell .upload-hint{font-size:9px;color:var(--text3);pointer-events:none;line-height:1}
-/* Shared uploaded photo — selectable like a cat, with a corner manage button */
-.avatar-photo-item{
-  aspect-ratio:1;border-radius:50%;cursor:pointer;position:relative;
-  border:2.5px solid transparent;
-  transition:transform .12s,border-color .12s;
-  -webkit-tap-highlight-color:transparent;
-}
-.avatar-photo-item img{width:100%;height:100%;object-fit:cover;display:block;border-radius:50%}
-.avatar-photo-item:active{transform:scale(1.06)}
-.avatar-photo-item.selected{border-color:var(--green);box-shadow:0 0 0 3px var(--green-lt)}
 .avatar-manage-btn{
-  position:absolute;top:0;right:0;
-  width:18px;height:18px;border-radius:50%;
-  background:#fff;border:1px solid var(--n20);color:var(--text2);
+  position:absolute;top:-1px;right:-1px;z-index:2;
+  width:20px;height:20px;border-radius:50%;
+  background:#fff;color:var(--text2);
+  border:1px solid var(--n20);
   display:flex;align-items:center;justify-content:center;
   cursor:pointer;padding:0;
-  box-shadow:0 1px 4px rgba(0,0,0,.15);
+  box-shadow:0 1px 4px rgba(0,0,0,.18);
 }
 .avatar-manage-btn svg{pointer-events:none}
 

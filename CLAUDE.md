@@ -137,18 +137,20 @@ poker-settle/
 - **Toast**：居中显示（页面中央，非底部）
 - **删除**：左滑或长按，无常驻删除按钮
 - **半页弹窗动画**：所有弹窗通过 `openModal()` / `closeModal()` 统一管理，打开/关闭均有 sheet slideUp/slideDown + overlay fade 动画
+- **半页弹窗关闭**：所有半页都支持点击蒙层关闭（含删除确认）
 
 ### 按钮设计系统
 
-| Class | Height | 用途 |
-|---|---|---|
-| `.btn-primary` | 48px | 主操作（完成、保存、生成） |
-| `.btn-secondary` | 48px | 次要操作（重置、取消中等级） |
-| `.btn-danger-action` | 48px | **并列 action sheet 中的破坏性操作**（与 secondary 等高，仅颜色区分） |
-| `.btn-danger` | 40px | 独立破坏性操作（删除确认、完全重置） |
-| `.btn-sm` | 38px | 最低优先级取消按钮 |
+半页弹窗内的全宽按钮**统一 48px 高度**，只用颜色/样式区分层级，不用高度区分（48px 是舒适的触控目标，避免误触）：
 
-> `.btn-danger-action` 适用场景：action sheet 中有多个平行选项时，破坏性操作需与非破坏性操作等高，用颜色区分而非高度降级。
+| Class | Height | 样式 | 用途 |
+|---|---|---|---|
+| `.btn-primary` | 48px | 品牌色填充 | 主操作（完成、保存、生成） |
+| `.btn-secondary` | 48px | 描边 | 中性操作（重置筹码、重新上传） |
+| `.btn-danger` | 48px | 浅红底+红字 | 破坏性操作（删除、完全重置、确认删除） |
+| `.btn-ghost` | 48px | 透明无边框、灰字 | 取消/关闭（最低层级，但同高便于点击） |
+
+> 已废弃 `.btn-danger-action`（并入 48px 的 `.btn-danger`）和 `.btn-sm`（取消按钮改用 `.btn-ghost`）。原则：层级靠颜色和填充表达，不靠按钮高度降级。
 
 ---
 

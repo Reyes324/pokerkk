@@ -40,6 +40,7 @@ let pendingNameIdx = -1;
 let pendingDeleteIdx = -1;
 const writeTimers = {};
 let sharedAvatars = {}; // shared photo library: { photoId: { data } } — any player can pick any photo
+let sharedAvatarsLoaded = false; // true once Firebase returns the library at least once
 
 function defaultPlayers(count) {
     return Array.from({ length: count }, (_, i) => ({
@@ -111,6 +112,7 @@ gameRef.on('value', snap => {
 // pollutes the game sync hot path — players only reference a tiny photoId.
 db.ref('sharedAvatars').on('value', snap => {
     sharedAvatars = snap.val() || {};
+    sharedAvatarsLoaded = true;
     renderPlayers();
     if (chipModalIdx >= 0 && players[chipModalIdx]) renderChipModal(chipModalIdx);
     // Live-refresh the open picker grid (e.g. someone else uploaded/deleted a photo)
@@ -128,11 +130,18 @@ renderPlayers();
 function getPlayerPhoto(p) {
     return (p.avatarRef && sharedAvatars[p.avatarRef]?.data) || null;
 }
+// A player references a photo, but the shared library hasn't loaded yet — show a
+// neutral placeholder rather than flashing the cat then correcting to the photo.
+function isPhotoPending(p) {
+    return p.avatarRef && !sharedAvatars[p.avatarRef]?.data && !sharedAvatarsLoaded;
+}
 function getAvatarContent(p) {
+    if (isPhotoPending(p)) return '';
     const photo = getPlayerPhoto(p);
     return photo ? `<img src="${photo}" alt="">` : getAvatarSvg(p.avatarId);
 }
 function getAvatarBgFor(p) {
+    if (isPhotoPending(p)) return 'var(--n10)';
     return getPlayerPhoto(p) ? '#f0ede8' : getAvatarBg(p.avatarId);
 }
 
@@ -960,12 +969,14 @@ document.getElementById('btn-delete-confirm').addEventListener('click', () => {
     if (pendingDeleteIdx >= 0) removePlayer(pendingDeleteIdx);
     closeModal('delete-modal', () => { pendingDeleteIdx = -1; });
 });
-document.getElementById('btn-delete-cancel').addEventListener('click', () => {
+function cancelDeleteModal() {
     closeModal('delete-modal', () => {
         pendingDeleteIdx = -1;
         document.querySelectorAll('.long-press-active').forEach(el => el.classList.remove('long-press-active'));
     });
-});
+}
+document.getElementById('btn-delete-cancel').addEventListener('click', cancelDeleteModal);
+document.getElementById('delete-modal').addEventListener('click', e => { if (e.target === e.currentTarget) cancelDeleteModal(); });
 document.getElementById('btn-reset-soft-confirm').addEventListener('click', resetSoft);
 document.getElementById('btn-reset-hard').addEventListener('click', resetHard);
 document.getElementById('btn-cancel-reset').addEventListener('click', closeResetModal);
