@@ -536,6 +536,18 @@ body{
 .float-bar-value.negative { color: var(--lose); }
 .float-bar-value.balanced { color: var(--win); }
 .float-bar-value.neutral  { color: var(--ink-3); }
+/* Concurrent editing indicator */
+.editing-tag {
+  font-size: 10px;
+  font-weight: 600;
+  padding: 2px 7px;
+  border-radius: var(--rfull);
+  background: var(--red-lt);
+  color: var(--lose);
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
 /* Balance status pill */
 .balance-tag {
   align-self: center;

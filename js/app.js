@@ -19,6 +19,13 @@ firebase.initializeApp(FIREBASE_CONFIG);
 const db = firebase.database();
 const gameRef = db.ref('currentGame');
 
+// ── Device identity ────────────────────────────────────────────
+const deviceId = (() => {
+    let id = sessionStorage.getItem('pokerkk-device');
+    if (!id) { id = Math.random().toString(36).slice(2); sessionStorage.setItem('pokerkk-device', id); }
+    return id;
+})();
+
 // ── State ──────────────────────────────────────────────────────
 let players = [];
 let isLoading = true; // true until first Firebase response
@@ -52,7 +59,24 @@ function normalizePlayer(raw) {
         n100: raw.n100 || 0,
         buyIns: raw.buyIns || 0,
         confirmed: raw.confirmed === true,
+        editingBy: raw.editingBy || null,
     };
+}
+
+function isEditingByOther(idx) {
+    return players[idx]?.editingBy && players[idx].editingBy !== deviceId;
+}
+
+function setEditingBy(idx) {
+    const ref = gameRef.child('players/' + idx + '/editingBy');
+    ref.set(deviceId);
+    ref.onDisconnect().remove();
+}
+
+function clearEditingBy(idx) {
+    const ref = gameRef.child('players/' + idx + '/editingBy');
+    ref.onDisconnect().cancel();
+    ref.remove();
 }
 
 // ── Firebase ───────────────────────────────────────────────────
@@ -71,7 +95,8 @@ gameRef.on('value', snap => {
     // state — don't let a (possibly stale, mid-debounce) remote echo clobber
     // the in-progress edits. Other players still sync live.
     if (chipModalIdx >= 0 && players[chipModalIdx] && incoming[chipModalIdx]) {
-        incoming[chipModalIdx] = players[chipModalIdx];
+        // Keep local chip edits but take editingBy from Firebase so we see others editing
+        incoming[chipModalIdx] = { ...players[chipModalIdx], editingBy: incoming[chipModalIdx].editingBy };
     }
 
     players = incoming;
@@ -114,6 +139,7 @@ function renderPlayers() {
         const pnl = calcPnl(chipTotal, invested);
         const isConfirmed = p.confirmed === true;
         const pnlClass = pnl > 0 ? 'positive' : pnl < 0 ? 'negative' : 'neutral';
+        const otherEditing = isEditingByOther(i);
         const settled = false;
 
         return `
@@ -148,9 +174,10 @@ function renderPlayers() {
                     </div>
                     <!-- pnl + chevron — right side -->
                     <div class="player-pnl-col">
-                        <span class="pnl-inline ${isConfirmed ? pnlClass : 'placeholder'}">
-                            ${isConfirmed ? formatPnl(pnl) + ' 分' : '录入筹码'}
-                        </span>
+                        ${otherEditing
+                            ? '<span class="editing-tag">有人录入中</span>'
+                            : `<span class="pnl-inline ${isConfirmed ? pnlClass : 'placeholder'}">${isConfirmed ? formatPnl(pnl) + ' 分' : '录入筹码'}</span>`
+                        }
                         <div class="card-chevron">
                             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="9 18 15 12 9 6"/></svg>
                         </div>
@@ -369,6 +396,7 @@ function openChipModal(idx) {
     chipModalIdx = idx;
     chipInputMode = 'stepper';
     chipModalSnapshot = { ...players[idx] };
+    setEditingBy(idx);
     renderChipModal(idx);
     openModal('chip-modal');
 }
@@ -390,7 +418,10 @@ function renderChipModal(idx) {
                     <path d="M18.5 2.5a2.12 2.12 0 0 1 3 3L12 15l-4 1 1-4Z"/>
                 </svg>
             </div>
-            <div style="font-size:12px;color:var(--text3)">1底 = 1000分</div>
+            <div style="display:flex;align-items:center;gap:6px;margin-top:2px">
+                <span style="font-size:12px;color:var(--text3)">1底 = 1000分</span>
+                <span class="editing-tag${isEditingByOther(idx) ? '' : ' hidden'}" id="chip-modal-editing-tag">有人录入中</span>
+            </div>
         </div>
         <button class="mode-toggle-btn" id="btn-mode-toggle" onclick="toggleChipMode(${idx})">
             ${chipInputMode === 'stepper' ? '直接输入' : '按筹码输入'}
@@ -608,6 +639,7 @@ function closeChipModal(confirm) {
 
     renderPlayers();
     renderFloatBar();
+    clearEditingBy(idx);
     closeModal('chip-modal', () => { chipModalIdx = -1; chipModalSnapshot = null; stepperSnapshot = null; directBaseTotal = 0; });
 }
 
@@ -627,6 +659,9 @@ function syncChipModal(idx) {
         <span>持筹<strong>${chipTotal}</strong></span>
         <span>投入<strong>${invested}</strong></span>
         <span class="${pnlClass}">盈亏<strong>${formatPnl(pnl)}</strong></span>`;
+    // Update editing tag in chip modal header
+    const tag = document.getElementById('chip-modal-editing-tag');
+    if (tag) tag.classList.toggle('hidden', !isEditingByOther(idx));
 }
 
 // ── Chip adjustments ───────────────────────────────────────────
@@ -694,19 +729,31 @@ function openAvatarModal(idx) {
         });
         grid.appendChild(div);
     });
+    const tag = document.getElementById('avatar-modal-editing-tag');
+    if (tag) tag.classList.toggle('hidden', !isEditingByOther(idx));
+    if (chipModalIdx < 0) setEditingBy(idx);
     openModal('avatar-modal');
 }
-function closeAvatarModal() { closeModal('avatar-modal'); }
+function closeAvatarModal() {
+    if (chipModalIdx < 0 && pendingAvatarIdx >= 0) clearEditingBy(pendingAvatarIdx);
+    closeModal('avatar-modal');
+}
 
 // ── Name modal ─────────────────────────────────────────────────
 function openNameModal(idx) {
     pendingNameIdx = idx;
     const inp = document.getElementById('name-modal-input');
     inp.value = players[idx].name;
+    const tag = document.getElementById('name-modal-editing-tag');
+    if (tag) tag.classList.toggle('hidden', !isEditingByOther(idx));
+    if (chipModalIdx < 0) setEditingBy(idx);
     openModal('name-modal');
     setTimeout(() => inp.focus(), 150);
 }
-function closeNameModal() { closeModal('name-modal'); }
+function closeNameModal() {
+    if (chipModalIdx < 0 && pendingNameIdx >= 0) clearEditingBy(pendingNameIdx);
+    closeModal('name-modal');
+}
 function saveName() {
     const name = document.getElementById('name-modal-input').value.trim();
     if (!name) { showToast('名字不能为空'); return; }
