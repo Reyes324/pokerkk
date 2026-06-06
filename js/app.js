@@ -966,7 +966,9 @@ function showResetModal() {
 }
 function closeResetModal() { closeModal('reset-modal'); }
 function resetSoft() {
-    gameRef.set({ status: 'waiting', players: players.map(p => ({ ...p, n10: 0, n20: 0, n50: 0, n100: 0, buyIns: 0, confirmed: false })) });
+    // Use child() writes to preserve rounds/ and aggregations/ paths
+    gameRef.child('status').set('waiting');
+    gameRef.child('players').set(players.map(p => ({ ...p, n10: 0, n20: 0, n50: 0, n100: 0, buyIns: 0, confirmed: false })));
     closeResetModal();
     showToast('已重置筹码，可以开始新一局');
 }
@@ -1192,25 +1194,24 @@ function hideActionBar() {
 // ── Swipe-delete for records ───────────────────────────────────
 function setupRecordSwipeDelete() {
     document.querySelectorAll('#records-content .swipe-delete-btn[data-del-round]').forEach(btn => {
-        btn.addEventListener('click', e => {
-            e.stopPropagation();
-            showRoundDeleteConfirm(btn.dataset.delRound);
-        });
+        btn.addEventListener('click', e => { e.stopPropagation(); showRoundDeleteConfirm(btn.dataset.delRound); });
     });
     document.querySelectorAll('#records-content .record-row').forEach(row => {
         const card = row.querySelector('.player-card');
-        const delBtn = row.querySelector('.swipe-delete-btn');
         if (!card) return;
-        let startX = 0, startY = 0, currentX = 0, tracking = false, dirLocked = false, isH = false;
+        const id = card.dataset.roundId;
+        let startX = 0, startY = 0, currentX = 0, tracking = false, dirLocked = false, isH = false, pressTimer = null;
         card.addEventListener('touchstart', e => {
             startX = e.touches[0].clientX; startY = e.touches[0].clientY;
             currentX = 0; tracking = true; dirLocked = false; isH = false;
             card.style.transition = 'none';
+            pressTimer = setTimeout(() => { card.classList.add('long-press-active'); showRoundDeleteConfirm(id); }, 600);
         }, { passive: true });
         card.addEventListener('touchmove', e => {
             if (!tracking) return;
             const dx = e.touches[0].clientX - startX, dy = e.touches[0].clientY - startY;
             if (!dirLocked) { if (Math.abs(dx) < 5 && Math.abs(dy) < 5) return; dirLocked = true; isH = Math.abs(dx) > Math.abs(dy); }
+            if (Math.abs(dx) > 8 || Math.abs(dy) > 8) { clearTimeout(pressTimer); pressTimer = null; }
             if (!isH) return;
             e.preventDefault();
             currentX = Math.max(-80, Math.min(0, dx));
@@ -1218,17 +1219,50 @@ function setupRecordSwipeDelete() {
         }, { passive: false });
         card.addEventListener('touchend', () => {
             if (!tracking) return; tracking = false;
+            clearTimeout(pressTimer); pressTimer = null; card.classList.remove('long-press-active');
             card.style.transition = 'transform .22s cubic-bezier(.4,0,.2,1)';
             if (currentX < -40) { card.style.transform = 'translateX(-80px)'; row.classList.add('swiped'); }
             else { card.style.transform = 'translateX(0)'; row.classList.remove('swiped'); }
+        });
+        card.addEventListener('touchcancel', () => {
+            tracking = false; clearTimeout(pressTimer); pressTimer = null; card.classList.remove('long-press-active');
         });
     });
 }
 function setupAggSwipeDelete() {
     document.querySelectorAll('#records-content .swipe-delete-btn[data-del-agg]').forEach(btn => {
-        btn.addEventListener('click', e => {
-            e.stopPropagation();
-            showAggDeleteConfirm(btn.dataset.delAgg);
+        btn.addEventListener('click', e => { e.stopPropagation(); showAggDeleteConfirm(btn.dataset.delAgg); });
+    });
+    document.querySelectorAll('#records-content .swipe-row[data-agg-id]').forEach(row => {
+        const card = row.querySelector('.player-card');
+        if (!card) return;
+        const id = row.dataset.aggId;
+        let startX = 0, startY = 0, currentX = 0, tracking = false, dirLocked = false, isH = false, pressTimer = null;
+        card.addEventListener('touchstart', e => {
+            startX = e.touches[0].clientX; startY = e.touches[0].clientY;
+            currentX = 0; tracking = true; dirLocked = false; isH = false;
+            card.style.transition = 'none';
+            pressTimer = setTimeout(() => { card.classList.add('long-press-active'); showAggDeleteConfirm(id); }, 600);
+        }, { passive: true });
+        card.addEventListener('touchmove', e => {
+            if (!tracking) return;
+            const dx = e.touches[0].clientX - startX, dy = e.touches[0].clientY - startY;
+            if (!dirLocked) { if (Math.abs(dx) < 5 && Math.abs(dy) < 5) return; dirLocked = true; isH = Math.abs(dx) > Math.abs(dy); }
+            if (Math.abs(dx) > 8 || Math.abs(dy) > 8) { clearTimeout(pressTimer); pressTimer = null; }
+            if (!isH) return;
+            e.preventDefault();
+            currentX = Math.max(-80, Math.min(0, dx));
+            card.style.transform = 'translateX(' + currentX + 'px)';
+        }, { passive: false });
+        card.addEventListener('touchend', () => {
+            if (!tracking) return; tracking = false;
+            clearTimeout(pressTimer); pressTimer = null; card.classList.remove('long-press-active');
+            card.style.transition = 'transform .22s cubic-bezier(.4,0,.2,1)';
+            if (currentX < -40) { card.style.transform = 'translateX(-80px)'; row.classList.add('swiped'); }
+            else { card.style.transform = 'translateX(0)'; row.classList.remove('swiped'); }
+        });
+        card.addEventListener('touchcancel', () => {
+            tracking = false; clearTimeout(pressTimer); pressTimer = null; card.classList.remove('long-press-active');
         });
     });
 }

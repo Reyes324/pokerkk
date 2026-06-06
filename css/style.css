@@ -757,6 +757,9 @@ body{
   margin-bottom: 10px;
 }
 
+/* delete-modal must sit above records-page (z-index 100) and any other modal */
+#delete-modal { z-index: 200; }
+
 /* ─── Toast — centered ─── */
 .toast{
   position:fixed;
