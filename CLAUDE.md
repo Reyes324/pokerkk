@@ -139,6 +139,55 @@ poker-settle/
 - **半页弹窗动画**：所有弹窗通过 `openModal()` / `closeModal()` 统一管理，打开/关闭均有 sheet slideUp/slideDown + overlay fade 动画
 - **半页弹窗关闭**：所有半页都支持点击蒙层关闭（含删除确认）
 
+### 半页弹窗结构规范
+
+所有包含列表（或内容可能超出屏幕）的半页，**必须使用三段式可滚动结构**：
+
+```
+modal-sheet.has-scroll-body
+├── .modal-handle          ← 固定，flex-shrink:0
+├── .modal-header          ← 固定，flex-shrink:0（标题 + 关闭按钮）
+├── .modal-scroll-body     ← 可滚动区（flex:1, overflow-y:auto，隐藏滚动条）
+└── .modal-footer          ← 固定（仅在有底部按钮时添加）
+```
+
+**HTML 模板**（有底部按钮）：
+```html
+<div class="modal-sheet has-scroll-body">
+    <div class="modal-handle"></div>
+    <div class="modal-header">
+        <span>标题</span>
+        <button class="btn-icon" id="btn-close-xxx">✕</button>
+    </div>
+    <div id="xxx-body" class="modal-scroll-body">
+        <!-- 列表内容 -->
+    </div>
+    <div class="modal-footer">
+        <button class="btn btn-primary" style="margin-bottom:8px">主操作</button>
+        <button class="btn btn-ghost">取消</button>
+    </div>
+</div>
+```
+
+**无底部按钮时**，省略 `.modal-footer`，`.modal-scroll-body` 自带 safe-area bottom padding。
+
+**已应用此结构的半页**：`end-round-modal`、`round-detail-modal`、`summary-result-modal`、`agg-detail-modal`。
+
+**不需要此结构的半页**：内容固定短小（如 `delete-modal`、`reset-modal`、`name-modal`）。
+
+### 二级页面（Push 导航）
+
+记录页（`records-page`）使用 Push 导航，从右侧滑入/滑出，**不是**底部弹起的半页：
+- overlay 加 `push` class：`class="modal-overlay push hidden"`
+- `openModal()` / `closeModal()` 检测到 `.push` 后自动用 `slideInRight`（300ms）/ `slideOutRight`（260ms）
+- overlay `background:transparent`（无暗色遮罩），`.modal-sheet.full` 带左侧阴影
+
+### 导航文字按钮（`.btn-nav-text`）
+
+用于二级页面右上角的「选择」/「完成」等文字操作按钮（非图标）：
+- 44px 触控高度，15px/600，品牌色，无背景无边框
+- 区别于 `.btn-icon`（图标专用）和 `.btn`（全宽底部按钮）
+
 ### 按钮设计系统
 
 半页弹窗内的全宽按钮**统一 48px 高度**，只用颜色/样式区分层级，不用高度区分（48px 是舒适的触控目标，避免误触）：
