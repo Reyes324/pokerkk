@@ -835,14 +835,34 @@ body{
 .btn-export-icon:active{background:var(--n20)}
 .btn-export-icon:disabled{opacity:.4;cursor:not-allowed}
 
-/* ─── Records full-screen page ─── */
-#records-page{align-items:stretch}
+/* ─── Records full-screen page — push navigation ─── */
+#records-page{
+  align-items:stretch;
+  background:transparent; /* no dark backdrop — it's a push, not a modal */
+}
 #records-page .modal-sheet.full{
   height:100%;border-radius:0;
   display:flex;flex-direction:column;
   overflow:hidden;padding:0;
   padding-top:max(0px, env(safe-area-inset-top));
+  box-shadow:-4px 0 24px rgba(0,0,0,.12); /* left shadow for depth */
 }
+
+/* Nav-bar text button (iOS-style: "选择" / "完成") */
+.btn-nav-text{
+  background:none;border:none;
+  font-family:var(--font);
+  font-size:15px;font-weight:600;
+  color:var(--brand);
+  min-width:44px;height:44px;
+  padding:0 4px;
+  display:flex;align-items:center;justify-content:center;
+  cursor:pointer;
+  -webkit-tap-highlight-color:transparent;
+  transition:opacity .12s;
+  white-space:nowrap;
+}
+.btn-nav-text:active{opacity:.5}
 .records-header{
   display:grid;
   grid-template-columns:40px 1fr 40px;
@@ -929,4 +949,12 @@ body{
 @keyframes slideDown {
   from{opacity:1;transform:translateY(0)}
   to{opacity:0;transform:translateY(24px)}
+}
+@keyframes slideInRight {
+  from{transform:translateX(100%)}
+  to{transform:translateX(0)}
+}
+@keyframes slideOutRight {
+  from{transform:translateX(0)}
+  to{transform:translateX(100%)}
 }

@@ -638,44 +638,59 @@ function applyDirectInputLocal(idx) {
 }
 
 // ── Modal animation helper ─────────────────────────────────────
+// push=true  → slide in/out from right (二级页面)
+// push=false → slide up/down from bottom (半页 sheet)
 function openModal(id) {
     const overlay = document.getElementById(id);
     const sheet = overlay.querySelector('.modal-sheet');
+    const isPush = overlay.classList.contains('push');
     overlay.classList.remove('hidden');
     document.body.style.overflow = 'hidden';
     if (sheet) {
-        const DUR = 220;
-        overlay.style.opacity = '0';
         sheet.style.animation = 'none';
-        sheet.offsetHeight; // force reflow to restart animation
-        sheet.style.animation = `slideUp ${DUR}ms cubic-bezier(.4,0,.2,1) both`;
-        overlay.style.transition = `opacity ${DUR}ms ease`;
-        requestAnimationFrame(() => { overlay.style.opacity = '1'; });
-        setTimeout(() => {
-            overlay.style.transition = '';
-            overlay.style.opacity = '';
-        }, DUR);
+        sheet.offsetHeight; // force reflow
+        if (isPush) {
+            const DUR = 300;
+            sheet.style.animation = `slideInRight ${DUR}ms cubic-bezier(.25,0,.25,1) both`;
+        } else {
+            const DUR = 220;
+            overlay.style.opacity = '0';
+            sheet.style.animation = `slideUp ${DUR}ms cubic-bezier(.4,0,.2,1) both`;
+            overlay.style.transition = `opacity ${DUR}ms ease`;
+            requestAnimationFrame(() => { overlay.style.opacity = '1'; });
+            setTimeout(() => { overlay.style.transition = ''; overlay.style.opacity = ''; }, DUR);
+        }
     }
 }
 
 function closeModal(id, callback) {
     const overlay = document.getElementById(id);
     const sheet = overlay.querySelector('.modal-sheet');
+    const isPush = overlay.classList.contains('push');
     if (sheet) {
-        const DUR = 180;
-        // Fade the backdrop AND slide the sheet together, so it never feels "stuck".
-        overlay.style.transition = `opacity ${DUR}ms ease`;
-        overlay.style.opacity = '0';
-        sheet.style.animation = `slideDown ${DUR}ms cubic-bezier(.4,0,1,1) both`;
-        setTimeout(() => {
-            overlay.classList.add('hidden');
-            sheet.style.animation = '';
-            overlay.style.transition = '';
-            overlay.style.opacity = '';
-            // Keep scroll locked if another modal (e.g. picker under the action sheet) is still open
-            document.body.style.overflow = document.querySelector('.modal-overlay:not(.hidden)') ? 'hidden' : '';
-            if (callback) callback();
-        }, DUR);
+        if (isPush) {
+            const DUR = 260;
+            sheet.style.animation = `slideOutRight ${DUR}ms cubic-bezier(.4,0,1,1) both`;
+            setTimeout(() => {
+                overlay.classList.add('hidden');
+                sheet.style.animation = '';
+                document.body.style.overflow = document.querySelector('.modal-overlay:not(.hidden)') ? 'hidden' : '';
+                if (callback) callback();
+            }, DUR);
+        } else {
+            const DUR = 180;
+            overlay.style.transition = `opacity ${DUR}ms ease`;
+            overlay.style.opacity = '0';
+            sheet.style.animation = `slideDown ${DUR}ms cubic-bezier(.4,0,1,1) both`;
+            setTimeout(() => {
+                overlay.classList.add('hidden');
+                sheet.style.animation = '';
+                overlay.style.transition = '';
+                overlay.style.opacity = '';
+                document.body.style.overflow = document.querySelector('.modal-overlay:not(.hidden)') ? 'hidden' : '';
+                if (callback) callback();
+            }, DUR);
+        }
     } else {
         overlay.classList.add('hidden');
         document.body.style.overflow = document.querySelector('.modal-overlay:not(.hidden)') ? 'hidden' : '';
