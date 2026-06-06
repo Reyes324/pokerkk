@@ -1050,11 +1050,7 @@ function confirmEndRound() {
     });
     gameRef.child('rounds').push({ timestamp: now, results });
     closeModal('end-round-modal', () => {
-        // Soft-reset chips but keep names/avatars
-        gameRef.child('players').set(
-            players.map(p => ({ ...p, n10: 0, n20: 0, n50: 0, n100: 0, buyIns: 0, confirmed: false }))
-        );
-        showToast('本局已存档，开始下一局');
+        showToast('本局已存档');
     });
 }
 
