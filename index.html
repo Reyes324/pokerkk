@@ -197,7 +197,7 @@
 
 <!-- ── End-round confirm half-sheet ── -->
 <div id="end-round-modal" class="modal-overlay hidden">
-    <div class="modal-sheet">
+    <div class="modal-sheet has-scroll-body">
         <div class="modal-handle"></div>
         <div class="modal-header">
             <span>结束本局</span>
@@ -205,9 +205,11 @@
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
             </button>
         </div>
-        <div id="end-round-modal-body"></div>
-        <button class="btn btn-primary" id="btn-confirm-end-round" style="margin-bottom:8px">确认存档，开始下一局</button>
-        <button class="btn btn-ghost" id="btn-cancel-end-round">取消</button>
+        <div id="end-round-modal-body" class="modal-scroll-body"></div>
+        <div class="modal-footer">
+            <button class="btn btn-primary" id="btn-confirm-end-round" style="margin-bottom:8px">确认存档，开始下一局</button>
+            <button class="btn btn-ghost" id="btn-cancel-end-round">取消</button>
+        </div>
     </div>
 </div>
 
@@ -236,7 +238,7 @@
 
 <!-- ── Round detail half-sheet ── -->
 <div id="round-detail-modal" class="modal-overlay hidden">
-    <div class="modal-sheet">
+    <div class="modal-sheet has-scroll-body">
         <div class="modal-handle"></div>
         <div class="modal-header">
             <div>
@@ -247,13 +249,13 @@
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
             </button>
         </div>
-        <div id="round-detail-body"></div>
+        <div id="round-detail-body" class="modal-scroll-body"></div>
     </div>
 </div>
 
 <!-- ── Aggregation result half-sheet ── -->
 <div id="summary-result-modal" class="modal-overlay hidden">
-    <div class="modal-sheet">
+    <div class="modal-sheet has-scroll-body">
         <div class="modal-handle"></div>
         <div class="modal-header">
             <div>
@@ -264,15 +266,17 @@
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
             </button>
         </div>
-        <div id="summary-result-body" style="margin-bottom:16px"></div>
-        <button class="btn btn-primary" id="btn-save-aggregation" style="margin-bottom:8px">保存汇总记录</button>
-        <button class="btn btn-secondary" id="btn-export-summary">导出图片</button>
+        <div id="summary-result-body" class="modal-scroll-body"></div>
+        <div class="modal-footer">
+            <button class="btn btn-primary" id="btn-save-aggregation" style="margin-bottom:8px">保存汇总记录</button>
+            <button class="btn btn-secondary" id="btn-export-summary">导出图片</button>
+        </div>
     </div>
 </div>
 
 <!-- ── Aggregation detail half-sheet ── -->
 <div id="agg-detail-modal" class="modal-overlay hidden">
-    <div class="modal-sheet">
+    <div class="modal-sheet has-scroll-body">
         <div class="modal-handle"></div>
         <div class="modal-header">
             <div>
@@ -283,7 +287,7 @@
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
             </button>
         </div>
-        <div id="agg-detail-body"></div>
+        <div id="agg-detail-body" class="modal-scroll-body"></div>
     </div>
 </div>
 

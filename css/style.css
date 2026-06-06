@@ -499,6 +499,32 @@ body{
 /* All picker cells share one circle size; image fills the full cell (no inset
    border) so cats / uploaded photos / upload-entry render at identical diameter.
    Selection is a box-shadow ring that doesn't affect layout. */
+
+/* ── Generic scrollable-body half-sheet ─────────────────────────────────────
+   Usage: add has-scroll-body to .modal-sheet; wrap scrollable content in
+   .modal-scroll-body; wrap bottom buttons in .modal-footer
+   ────────────────────────────────────────────────────────────────────────── */
+.modal-sheet.has-scroll-body{
+  max-height:82dvh;
+  display:flex;flex-direction:column;
+  overflow:hidden;
+  padding-bottom:0;
+}
+.modal-sheet.has-scroll-body .modal-handle,
+.modal-sheet.has-scroll-body .modal-header{flex-shrink:0}
+.modal-sheet.has-scroll-body .modal-scroll-body{
+  flex:1;overflow-y:auto;
+  -webkit-overflow-scrolling:touch;
+  padding-bottom:max(16px,calc(4px + env(safe-area-inset-bottom)));
+  scrollbar-width:none;
+  -ms-overflow-style:none;
+}
+.modal-sheet.has-scroll-body .modal-scroll-body::-webkit-scrollbar{display:none}
+.modal-sheet.has-scroll-body .modal-footer{
+  flex-shrink:0;
+  padding-top:12px;
+  padding-bottom:max(20px,calc(8px + env(safe-area-inset-bottom)));
+}
 .avatar-item,.avatar-photo-item{
   aspect-ratio:1;border-radius:50%;overflow:hidden;cursor:pointer;position:relative;
   transition:transform .12s,box-shadow .12s;
