@@ -995,10 +995,10 @@ function formatDateTime(date) {
     return M + '月' + D + '日 ' + H + ':' + min;
 }
 function formatDateWeekday(date) {
-    const M = String(date.getMonth() + 1).padStart(2, '0');
-    const D = String(date.getDate()).padStart(2, '0');
+    const M = date.getMonth() + 1;
+    const D = date.getDate();
     const weekdays = ['周日','周一','周二','周三','周四','周五','周六'];
-    return M + '-' + D + ' ' + weekdays[date.getDay()];
+    return M + '月' + D + '日 ' + weekdays[date.getDay()];
 }
 
 // ── End round ──────────────────────────────────────────────────
@@ -1064,7 +1064,7 @@ function renderRecordsPage() {
     // Select button only on rounds tab
     const selBtn = document.getElementById('btn-records-select');
     if (selBtn) {
-        selBtn.classList.toggle('hidden', recordsTab !== 'rounds');
+        selBtn.style.visibility = recordsTab === 'rounds' ? '' : 'hidden';
         selBtn.textContent = isSelectMode ? '完成' : '选择';
     }
     if (recordsTab === 'rounds') renderRoundsTab();
@@ -1094,7 +1094,7 @@ function renderRoundsTab() {
             ? '<div class="checkbox ' + (checked ? 'checked' : '') + '" data-check="' + id + '"></div>'
             : '';
         const topHtml = top
-            ? '<span style="font-size:12px;color:var(--win);font-weight:600">' + escHtml(top.name) + ' ' + formatPnl(top.pnl) + '</span>'
+            ? '<span style="font-size:12px;color:var(--win);font-weight:500">' + escHtml(top.name) + ' ' + formatPnl(top.pnl) + '</span>'
             : '';
         return '<div class="swipe-row record-row" data-round-id="' + id + '">' +
             '<div class="swipe-delete-btn" data-del-round="' + id + '">' +
@@ -1104,7 +1104,7 @@ function renderRoundsTab() {
             '<div class="player-card-main">' +
             checkHtml +
             '<div class="player-name-col">' +
-            '<div style="font-size:15px;font-weight:600;color:var(--ink-1)">第 ' + (i + 1) + ' 局</div>' +
+            '<div style="font-size:15px;font-weight:500;color:var(--ink-1)">第 ' + (i + 1) + ' 局</div>' +
             '<div style="font-size:12px;color:var(--ink-3);margin-top:2px">' + timeStr + ' · ' + playerList.length + '人</div>' +
             '</div>' +
             '<div class="player-pnl-col" style="flex-direction:column;align-items:flex-end;gap:3px">' +
@@ -1132,7 +1132,7 @@ function renderAggregationsTab() {
             '<div class="player-card" onclick="openAggDetailModal(\'' + id + '\')">' +
             '<div class="player-card-main">' +
             '<div class="player-name-col">' +
-            '<div style="font-size:15px;font-weight:600;color:var(--ink-1)">' + escHtml(agg.label) + '</div>' +
+            '<div style="font-size:15px;font-weight:500;color:var(--ink-1)">' + escHtml(agg.label) + '</div>' +
             '<div style="font-size:12px;color:var(--ink-3);margin-top:2px">共 ' + agg.roundCount + ' 局 · ' + pCount + '人</div>' +
             '</div>' +
             '<div class="card-chevron"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="9 18 15 12 9 6"/></svg></div>' +

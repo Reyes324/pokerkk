@@ -844,13 +844,19 @@ body{
   padding-top:max(0px, env(safe-area-inset-top));
 }
 .records-header{
-  display:flex;align-items:center;justify-content:space-between;
+  display:grid;
+  grid-template-columns:40px 1fr 40px;
+  align-items:center;
   height:56px;padding:0 8px;
   border-bottom:1px solid var(--line);
   flex-shrink:0;
   background:var(--surface);
 }
-.records-header-title{font-size:17px;font-weight:600;color:var(--ink-1)}
+.records-header-title{
+  font-size:17px;font-weight:600;color:var(--ink-1);
+  text-align:center;
+  justify-self:center;
+}
 
 /* ─── Segmented control ─── */
 .seg-control{
