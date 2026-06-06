@@ -169,7 +169,7 @@ body{
 
 /* ─── Avatar ─── */
 .avatar-circle{
-  width:40px;height:40px;
+  width:56px;height:56px;
   border-radius:50%;overflow:hidden;
   flex-shrink:0;position:relative;
   display:flex;align-items:center;justify-content:center;
@@ -180,7 +180,7 @@ body{
   user-select:none;-webkit-user-drag:none;
 }
 .emoji-avatar{
-  font-size:22px;
+  font-size:28px;
   line-height:1;
   user-select:none;
   display:block;
