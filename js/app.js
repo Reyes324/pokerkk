@@ -265,11 +265,6 @@ function renderFloatBar() {
     const hasAnyData = confirmed.length > 0;
     const balanced = total === 0;
 
-    // Round label: "第N局" where N = saved rounds + 1
-    const roundNum = Object.keys(rounds).length + 1;
-    const roundLabel = document.getElementById('round-label');
-    if (roundLabel) roundLabel.textContent = '第' + roundNum + '局';
-
     const pnlEl = document.getElementById('total-pnl');
     const tag = document.getElementById('balance-tag');
     const endBtn = document.getElementById('btn-end-round');
@@ -997,7 +992,7 @@ function formatDateTime(date) {
     const D = date.getDate();
     const H = String(date.getHours()).padStart(2, '0');
     const min = String(date.getMinutes()).padStart(2, '0');
-    return M + '-' + D + ' ' + H + ':' + min;
+    return M + '月' + D + '日 ' + H + ':' + min;
 }
 function formatDateWeekday(date) {
     const M = String(date.getMonth() + 1).padStart(2, '0');
@@ -1019,7 +1014,10 @@ function renderEndRoundModal() {
         const pnl = calcPnl(calcChipTotal(p.n10, p.n20, p.n50, p.n100), calcInvested(p.buyIns));
         const cls = pnl > 0 ? 'positive' : pnl < 0 ? 'negative' : 'neutral';
         return '<div style="display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid var(--n10)">' +
+            '<div style="display:flex;align-items:center;gap:8px">' +
+            '<div class="avatar-circle sm" style="background:' + getAvatarBgFor(p) + ';flex-shrink:0">' + getAvatarContent(p) + '</div>' +
             '<span style="font-size:15px;color:var(--ink-1)">' + escHtml(p.name) + '</span>' +
+            '</div>' +
             '<span class="pnl-inline ' + cls + '">' + formatPnl(pnl) + ' 分</span>' +
             '</div>';
     }).join('');
@@ -1251,7 +1249,7 @@ function openRoundDetailModal(roundId) {
     document.getElementById('round-detail-time').textContent = formatDateTime(new Date(round.timestamp));
     document.getElementById('round-detail-body').innerHTML = playerList.map(p => {
         const cls = p.pnl > 0 ? 'positive' : p.pnl < 0 ? 'negative' : 'neutral';
-        return '<div style="display:flex;justify-content:space-between;align-items:center;padding:12px 0;border-bottom:1px solid var(--n10)">' +
+        return '<div style="display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid var(--n10)">' +
             '<span style="font-size:15px;color:var(--ink-1)">' + escHtml(p.name) + '</span>' +
             '<span class="pnl-inline ' + cls + '">' + formatPnl(p.pnl) + ' 分</span></div>';
     }).join('');

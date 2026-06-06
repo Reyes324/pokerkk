@@ -809,15 +809,6 @@ body{
 }
 
 /* ─── Float bar additions ─── */
-.float-bar-round-tag{
-  font-size:11px;font-weight:700;
-  color:var(--ink-3);
-  background:var(--n10);
-  border:1px solid var(--n20);
-  border-radius:var(--rfull);
-  padding:2px 8px;
-  white-space:nowrap;flex-shrink:0;
-}
 .float-bar-btns{display:flex;align-items:center;gap:8px;flex-shrink:0}
 .btn-end-round{
   height:36px;padding:0 14px;
