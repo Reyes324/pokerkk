@@ -38,9 +38,18 @@ let pendingAvatarIdx = -1;
 let pendingAvatarActionId = null; // photoId being managed in the action sheet
 let pendingNameIdx = -1;
 let pendingDeleteIdx = -1;
+let pendingDeleteRoundId = null;
+let pendingDeleteAggId = null;
 const writeTimers = {};
 let sharedAvatars = {}; // shared photo library: { photoId: { data } } — any player can pick any photo
 let sharedAvatarsLoaded = false; // true once Firebase returns the library at least once
+
+// ── Multi-round state ───────────────────────────────────────────
+let rounds = {};       // { pushId: { timestamp, results: {pushId: {name, pnl}} } }
+let aggregations = {}; // { pushId: { timestamp, label, roundCount, players: {pushId: {name, total}} } }
+let recordsTab = 'rounds'; // 'rounds' | 'aggregations'
+let isSelectMode = false;
+let selectedRoundIds = new Set();
 
 function defaultPlayers(count) {
     return Array.from({ length: count }, (_, i) => ({
@@ -113,6 +122,18 @@ gameRef.on('value', snap => {
     players = incoming;
     render();
     if (chipModalIdx >= 0 && players[chipModalIdx]) syncChipModal(chipModalIdx);
+});
+
+// Rounds and aggregations — separate paths so they don't pollute the hot sync
+gameRef.child('rounds').on('value', snap => {
+    rounds = snap.val() || {};
+    renderFloatBar();
+    renderHeader();
+    renderRecordsPageIfOpen();
+});
+gameRef.child('aggregations').on('value', snap => {
+    aggregations = snap.val() || {};
+    renderRecordsPageIfOpen();
 });
 
 // Shared avatar library lives in a separate path so the heavy base64 never
@@ -242,34 +263,36 @@ function renderFloatBar() {
     const total = confirmed.reduce((sum, p) =>
         sum + calcPnl(calcChipTotal(p.n10, p.n20, p.n50, p.n100), calcInvested(p.buyIns)), 0);
     const hasAnyData = confirmed.length > 0;
+    const balanced = total === 0;
+
+    // Round label: "第N局" where N = saved rounds + 1
+    const roundNum = Object.keys(rounds).length + 1;
+    const roundLabel = document.getElementById('round-label');
+    if (roundLabel) roundLabel.textContent = '第' + roundNum + '局';
 
     const pnlEl = document.getElementById('total-pnl');
     const tag = document.getElementById('balance-tag');
+    const endBtn = document.getElementById('btn-end-round');
+    const exportBtn = document.getElementById('btn-export');
 
     if (!hasAnyData) {
         pnlEl.textContent = '— 分';
         pnlEl.className = 'float-bar-value neutral';
         tag.classList.add('hidden');
-        const exportBtn = document.getElementById('btn-export');
-        if (exportBtn) { exportBtn.disabled = true; exportBtn.style.opacity = '0.4'; exportBtn.style.cursor = 'not-allowed'; exportBtn.style.boxShadow = 'none'; }
+        if (endBtn) { endBtn.disabled = true; }
+        if (exportBtn) { exportBtn.disabled = true; }
         return;
     }
 
     pnlEl.textContent = formatPnl(total) + ' 分';
-    const balanced = total === 0;
     pnlEl.className = 'float-bar-value ' + (balanced ? 'balanced' : total > 0 ? 'positive' : 'negative');
 
     tag.classList.remove('hidden');
     tag.textContent = balanced ? '已持平' : '未持平';
     tag.className = 'balance-tag ' + (balanced ? 'ok' : 'warn');
 
-    const exportBtn = document.getElementById('btn-export');
-    if (exportBtn) {
-        exportBtn.disabled = !balanced;
-        exportBtn.style.opacity = balanced ? '' : '0.4';
-        exportBtn.style.cursor = balanced ? '' : 'not-allowed';
-        exportBtn.style.boxShadow = balanced ? '' : 'none';
-    }
+    if (endBtn) endBtn.disabled = !(balanced && hasAnyData);
+    if (exportBtn) exportBtn.disabled = !balanced;
 }
 
 // ── Export results ─────────────────────────────────────────────
@@ -940,6 +963,8 @@ function resetSoft() {
 function resetHard() {
     gameRef.set({ status: 'waiting', players: defaultPlayers(3) });
     db.ref('sharedAvatars').remove();
+    gameRef.child('rounds').remove();
+    gameRef.child('aggregations').remove();
     closeResetModal();
     showToast('已完全重置');
 }
@@ -953,6 +978,339 @@ function showToast(msg) {
     t.textContent = msg;
     t.classList.add('show');
     setTimeout(() => t.classList.remove('show'), 2500);
+}
+
+// ── Multi-round feature ────────────────────────────────────────
+
+// Header badge
+function renderHeader() {
+    const badge = document.getElementById('rounds-badge');
+    if (!badge) return;
+    const count = Object.keys(rounds).length;
+    badge.textContent = count;
+    badge.classList.toggle('hidden', count === 0);
+}
+
+// Date/time helpers
+function formatDateTime(date) {
+    const M = date.getMonth() + 1;
+    const D = date.getDate();
+    const H = String(date.getHours()).padStart(2, '0');
+    const min = String(date.getMinutes()).padStart(2, '0');
+    return M + '-' + D + ' ' + H + ':' + min;
+}
+function formatDateWeekday(date) {
+    const M = String(date.getMonth() + 1).padStart(2, '0');
+    const D = String(date.getDate()).padStart(2, '0');
+    const weekdays = ['周日','周一','周二','周三','周四','周五','周六'];
+    return M + '-' + D + ' ' + weekdays[date.getDay()];
+}
+
+// ── End round ──────────────────────────────────────────────────
+function openEndRoundModal() {
+    renderEndRoundModal();
+    openModal('end-round-modal');
+}
+function renderEndRoundModal() {
+    const confirmed = players.filter(p => p.confirmed);
+    const roundNum = Object.keys(rounds).length + 1;
+    const timeStr = formatDateTime(new Date());
+    const rows = confirmed.map(p => {
+        const pnl = calcPnl(calcChipTotal(p.n10, p.n20, p.n50, p.n100), calcInvested(p.buyIns));
+        const cls = pnl > 0 ? 'positive' : pnl < 0 ? 'negative' : 'neutral';
+        return '<div style="display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid var(--n10)">' +
+            '<span style="font-size:15px;color:var(--ink-1)">' + escHtml(p.name) + '</span>' +
+            '<span class="pnl-inline ' + cls + '">' + formatPnl(pnl) + ' 分</span>' +
+            '</div>';
+    }).join('');
+    document.getElementById('end-round-modal-body').innerHTML =
+        '<p style="font-size:13px;color:var(--ink-3);margin-bottom:12px">第 ' + roundNum + ' 局 · ' + timeStr + '</p>' +
+        '<div style="margin-bottom:16px">' + rows + '</div>';
+}
+function confirmEndRound() {
+    const confirmed = players.filter(p => p.confirmed);
+    const now = Date.now();
+    const results = {};
+    confirmed.forEach((p, i) => {
+        const pnl = calcPnl(calcChipTotal(p.n10, p.n20, p.n50, p.n100), calcInvested(p.buyIns));
+        results['p' + i] = { name: p.name, pnl };
+    });
+    gameRef.child('rounds').push({ timestamp: now, results });
+    closeModal('end-round-modal', () => {
+        // Soft-reset chips but keep names/avatars
+        gameRef.child('players').set(
+            players.map(p => ({ ...p, n10: 0, n20: 0, n50: 0, n100: 0, buyIns: 0, confirmed: false }))
+        );
+        showToast('本局已存档，开始下一局');
+    });
+}
+
+// ── Records page ───────────────────────────────────────────────
+function openRecordsPage() {
+    recordsTab = 'rounds';
+    isSelectMode = false;
+    selectedRoundIds = new Set();
+    renderRecordsPage();
+    openModal('records-page');
+}
+function renderRecordsPageIfOpen() {
+    const page = document.getElementById('records-page');
+    if (!page || page.classList.contains('hidden')) return;
+    renderRecordsPage();
+    renderHeader();
+}
+function renderRecordsPage() {
+    // Seg control active state
+    document.getElementById('seg-rounds').classList.toggle('active', recordsTab === 'rounds');
+    document.getElementById('seg-agg').classList.toggle('active', recordsTab === 'aggregations');
+    // Select button only on rounds tab
+    const selBtn = document.getElementById('btn-records-select');
+    if (selBtn) {
+        selBtn.classList.toggle('hidden', recordsTab !== 'rounds');
+        selBtn.textContent = isSelectMode ? '完成' : '选择';
+    }
+    if (recordsTab === 'rounds') renderRoundsTab();
+    else renderAggregationsTab();
+}
+function switchRecordsTab(tab) {
+    recordsTab = tab;
+    isSelectMode = false;
+    selectedRoundIds = new Set();
+    renderRecordsPage();
+}
+
+function renderRoundsTab() {
+    const content = document.getElementById('records-content');
+    const entries = Object.entries(rounds).sort((a, b) => a[1].timestamp - b[1].timestamp);
+    if (entries.length === 0) {
+        content.innerHTML = '<p style="text-align:center;color:var(--ink-3);margin-top:48px;font-size:14px">暂无对局记录<br><span style="font-size:12px">结束本局后将自动保存</span></p>';
+        hideActionBar();
+        return;
+    }
+    content.innerHTML = entries.map(([id, round], i) => {
+        const playerList = round.results ? Object.values(round.results) : [];
+        const top = playerList.reduce((b, p) => (!b || p.pnl > b.pnl) ? p : b, null);
+        const timeStr = formatDateTime(new Date(round.timestamp));
+        const checked = selectedRoundIds.has(id);
+        const checkHtml = isSelectMode
+            ? '<div class="checkbox ' + (checked ? 'checked' : '') + '" data-check="' + id + '"></div>'
+            : '';
+        const topHtml = top
+            ? '<span style="font-size:12px;color:var(--win);font-weight:600">' + escHtml(top.name) + ' ' + formatPnl(top.pnl) + '</span>'
+            : '';
+        return '<div class="swipe-row record-row" data-round-id="' + id + '">' +
+            '<div class="swipe-delete-btn" data-del-round="' + id + '">' +
+            '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">' +
+            '<polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4h6v2"/></svg>删除</div>' +
+            '<div class="player-card" data-round-id="' + id + '" onclick="onRoundRowClick(\'' + id + '\')">' +
+            '<div class="player-card-main">' +
+            checkHtml +
+            '<div class="player-name-col">' +
+            '<div style="font-size:15px;font-weight:600;color:var(--ink-1)">第 ' + (i + 1) + ' 局</div>' +
+            '<div style="font-size:12px;color:var(--ink-3);margin-top:2px">' + timeStr + ' · ' + playerList.length + '人</div>' +
+            '</div>' +
+            '<div class="player-pnl-col" style="flex-direction:column;align-items:flex-end;gap:3px">' +
+            topHtml +
+            '<div class="card-chevron"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="9 18 15 12 9 6"/></svg></div>' +
+            '</div></div></div></div>';
+    }).join('');
+    setupRecordSwipeDelete();
+    updateActionBar();
+}
+
+function renderAggregationsTab() {
+    const content = document.getElementById('records-content');
+    const entries = Object.entries(aggregations).sort((a, b) => b[1].timestamp - a[1].timestamp);
+    if (entries.length === 0) {
+        content.innerHTML = '<p style="text-align:center;color:var(--ink-3);margin-top:48px;font-size:14px">暂无汇总记录<br><span style="font-size:12px">在对局 Tab 选择多局后进行加总</span></p>';
+        return;
+    }
+    content.innerHTML = entries.map(([id, agg]) => {
+        const pCount = agg.players ? Object.keys(agg.players).length : 0;
+        return '<div class="swipe-row" data-agg-id="' + id + '">' +
+            '<div class="swipe-delete-btn" data-del-agg="' + id + '">' +
+            '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">' +
+            '<polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4h6v2"/></svg>删除</div>' +
+            '<div class="player-card" onclick="openAggDetailModal(\'' + id + '\')">' +
+            '<div class="player-card-main">' +
+            '<div class="player-name-col">' +
+            '<div style="font-size:15px;font-weight:600;color:var(--ink-1)">' + escHtml(agg.label) + '</div>' +
+            '<div style="font-size:12px;color:var(--ink-3);margin-top:2px">共 ' + agg.roundCount + ' 局 · ' + pCount + '人</div>' +
+            '</div>' +
+            '<div class="card-chevron"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="9 18 15 12 9 6"/></svg></div>' +
+            '</div></div></div>';
+    }).join('');
+    setupAggSwipeDelete();
+}
+
+// ── Multi-select ───────────────────────────────────────────────
+function toggleSelectMode() {
+    isSelectMode = !isSelectMode;
+    if (!isSelectMode) selectedRoundIds = new Set();
+    renderRecordsPage();
+}
+function onRoundRowClick(id) {
+    if (isSelectMode) {
+        if (selectedRoundIds.has(id)) selectedRoundIds.delete(id);
+        else selectedRoundIds.add(id);
+        // Update checkboxes without full re-render
+        document.querySelectorAll('.checkbox[data-check]').forEach(el => {
+            el.classList.toggle('checked', selectedRoundIds.has(el.dataset.check));
+        });
+        updateActionBar();
+    } else {
+        openRoundDetailModal(id);
+    }
+}
+function updateActionBar() {
+    const bar = document.getElementById('records-action-bar');
+    const btn = document.getElementById('btn-do-aggregate');
+    if (!bar || !btn) return;
+    if (isSelectMode) {
+        bar.classList.remove('hidden');
+        const n = selectedRoundIds.size;
+        btn.textContent = n >= 2 ? '加总 (' + n + '局)' : '加总';
+        btn.disabled = n < 2;
+    } else {
+        bar.classList.add('hidden');
+    }
+}
+function hideActionBar() {
+    const bar = document.getElementById('records-action-bar');
+    if (bar) bar.classList.add('hidden');
+}
+
+// ── Swipe-delete for records ───────────────────────────────────
+function setupRecordSwipeDelete() {
+    document.querySelectorAll('#records-content .swipe-delete-btn[data-del-round]').forEach(btn => {
+        btn.addEventListener('click', e => {
+            e.stopPropagation();
+            showRoundDeleteConfirm(btn.dataset.delRound);
+        });
+    });
+    document.querySelectorAll('#records-content .record-row').forEach(row => {
+        const card = row.querySelector('.player-card');
+        const delBtn = row.querySelector('.swipe-delete-btn');
+        if (!card) return;
+        let startX = 0, startY = 0, currentX = 0, tracking = false, dirLocked = false, isH = false;
+        card.addEventListener('touchstart', e => {
+            startX = e.touches[0].clientX; startY = e.touches[0].clientY;
+            currentX = 0; tracking = true; dirLocked = false; isH = false;
+            card.style.transition = 'none';
+        }, { passive: true });
+        card.addEventListener('touchmove', e => {
+            if (!tracking) return;
+            const dx = e.touches[0].clientX - startX, dy = e.touches[0].clientY - startY;
+            if (!dirLocked) { if (Math.abs(dx) < 5 && Math.abs(dy) < 5) return; dirLocked = true; isH = Math.abs(dx) > Math.abs(dy); }
+            if (!isH) return;
+            e.preventDefault();
+            currentX = Math.max(-80, Math.min(0, dx));
+            card.style.transform = 'translateX(' + currentX + 'px)';
+        }, { passive: false });
+        card.addEventListener('touchend', () => {
+            if (!tracking) return; tracking = false;
+            card.style.transition = 'transform .22s cubic-bezier(.4,0,.2,1)';
+            if (currentX < -40) { card.style.transform = 'translateX(-80px)'; row.classList.add('swiped'); }
+            else { card.style.transform = 'translateX(0)'; row.classList.remove('swiped'); }
+        });
+    });
+}
+function setupAggSwipeDelete() {
+    document.querySelectorAll('#records-content .swipe-delete-btn[data-del-agg]').forEach(btn => {
+        btn.addEventListener('click', e => {
+            e.stopPropagation();
+            showAggDeleteConfirm(btn.dataset.delAgg);
+        });
+    });
+}
+function showRoundDeleteConfirm(id) {
+    pendingDeleteRoundId = id;
+    pendingDeleteIdx = -1;
+    pendingDeleteAggId = null;
+    document.getElementById('delete-modal-text').textContent = '删除该局记录？';
+    document.getElementById('delete-modal-sub').textContent = '该局的盈亏数据将永久删除';
+    openModal('delete-modal');
+}
+function showAggDeleteConfirm(id) {
+    pendingDeleteAggId = id;
+    pendingDeleteIdx = -1;
+    pendingDeleteRoundId = null;
+    document.getElementById('delete-modal-text').textContent = '删除该汇总记录？';
+    document.getElementById('delete-modal-sub').textContent = '该汇总快照将永久删除';
+    openModal('delete-modal');
+}
+
+// ── Round detail ───────────────────────────────────────────────
+function openRoundDetailModal(roundId) {
+    const round = rounds[roundId];
+    if (!round) return;
+    const entries = Object.entries(rounds).sort((a, b) => a[1].timestamp - b[1].timestamp);
+    const idx = entries.findIndex(([id]) => id === roundId);
+    const playerList = round.results ? Object.values(round.results).sort((a, b) => b.pnl - a.pnl) : [];
+    document.getElementById('round-detail-title').textContent = '第 ' + (idx + 1) + ' 局';
+    document.getElementById('round-detail-time').textContent = formatDateTime(new Date(round.timestamp));
+    document.getElementById('round-detail-body').innerHTML = playerList.map(p => {
+        const cls = p.pnl > 0 ? 'positive' : p.pnl < 0 ? 'negative' : 'neutral';
+        return '<div style="display:flex;justify-content:space-between;align-items:center;padding:12px 0;border-bottom:1px solid var(--n10)">' +
+            '<span style="font-size:15px;color:var(--ink-1)">' + escHtml(p.name) + '</span>' +
+            '<span class="pnl-inline ' + cls + '">' + formatPnl(p.pnl) + ' 分</span></div>';
+    }).join('');
+    openModal('round-detail-modal');
+}
+
+// ── Aggregate ──────────────────────────────────────────────────
+function doAggregate() {
+    if (selectedRoundIds.size < 2) return;
+    const selected = Object.entries(rounds)
+        .filter(([id]) => selectedRoundIds.has(id))
+        .map(([, r]) => r);
+    const summary = calcNightSummary(selected);
+    document.getElementById('summary-result-info').textContent = '共 ' + summary.roundCount + ' 局';
+    document.getElementById('summary-result-body').innerHTML = summary.players.map(p => {
+        const cls = p.total > 0 ? 'positive' : p.total < 0 ? 'negative' : 'neutral';
+        return '<div style="display:flex;justify-content:space-between;align-items:center;padding:12px 0;border-bottom:1px solid var(--n10)">' +
+            '<span style="font-size:15px;color:var(--ink-1)">' + escHtml(p.name) + '</span>' +
+            '<span class="pnl-inline ' + cls + '">' + formatPnl(p.total) + ' 分</span></div>';
+    }).join('');
+    document.getElementById('summary-result-modal').dataset.summaryJson = JSON.stringify(summary);
+    openModal('summary-result-modal');
+}
+
+function saveAggregation() {
+    const modal = document.getElementById('summary-result-modal');
+    const summary = JSON.parse(modal.dataset.summaryJson || 'null');
+    if (!summary) return;
+    const now = new Date();
+    const players = {};
+    summary.players.forEach((p, i) => { players['p' + i] = { name: p.name, total: p.total }; });
+    gameRef.child('aggregations').push({
+        timestamp: now.getTime(),
+        label: formatDateWeekday(now),
+        roundCount: summary.roundCount,
+        players
+    });
+    closeModal('summary-result-modal', () => {
+        isSelectMode = false;
+        selectedRoundIds = new Set();
+        renderRecordsPage();
+        showToast('汇总已保存');
+    });
+}
+
+// ── Aggregation detail ─────────────────────────────────────────
+function openAggDetailModal(aggId) {
+    const agg = aggregations[aggId];
+    if (!agg) return;
+    const playerList = agg.players ? Object.values(agg.players).sort((a, b) => b.total - a.total) : [];
+    document.getElementById('agg-detail-title').textContent = agg.label;
+    document.getElementById('agg-detail-subtitle').textContent = '共 ' + agg.roundCount + ' 局';
+    document.getElementById('agg-detail-body').innerHTML = playerList.map(p => {
+        const cls = p.total > 0 ? 'positive' : p.total < 0 ? 'negative' : 'neutral';
+        return '<div style="display:flex;justify-content:space-between;align-items:center;padding:12px 0;border-bottom:1px solid var(--n10)">' +
+            '<span style="font-size:15px;color:var(--ink-1)">' + escHtml(p.name) + '</span>' +
+            '<span class="pnl-inline ' + cls + '">' + formatPnl(p.total) + ' 分</span></div>';
+    }).join('');
+    openModal('agg-detail-modal');
 }
 
 // ── Event listeners ────────────────────────────────────────────
@@ -973,14 +1331,39 @@ document.getElementById('btn-save-name').addEventListener('click', saveName);
 document.getElementById('name-modal-input').addEventListener('keydown', e => { if (e.key === 'Enter') saveName(); });
 document.getElementById('name-modal').addEventListener('click', e => { if (e.target === e.currentTarget) closeNameModal(); });
 document.getElementById('btn-delete-confirm').addEventListener('click', () => {
-    if (pendingDeleteIdx >= 0) removePlayer(pendingDeleteIdx);
-    closeModal('delete-modal', () => { pendingDeleteIdx = -1; });
+    if (pendingDeleteIdx >= 0) {
+        removePlayer(pendingDeleteIdx);
+        closeModal('delete-modal', () => { pendingDeleteIdx = -1; resetDeleteModalText(); });
+    } else if (pendingDeleteRoundId) {
+        const id = pendingDeleteRoundId;
+        closeModal('delete-modal', () => {
+            gameRef.child('rounds/' + id).remove();
+            pendingDeleteRoundId = null;
+            resetDeleteModalText();
+        });
+    } else if (pendingDeleteAggId) {
+        const id = pendingDeleteAggId;
+        closeModal('delete-modal', () => {
+            gameRef.child('aggregations/' + id).remove();
+            pendingDeleteAggId = null;
+            resetDeleteModalText();
+        });
+    } else {
+        closeModal('delete-modal');
+    }
 });
 function cancelDeleteModal() {
     closeModal('delete-modal', () => {
         pendingDeleteIdx = -1;
+        pendingDeleteRoundId = null;
+        pendingDeleteAggId = null;
+        resetDeleteModalText();
         document.querySelectorAll('.long-press-active').forEach(el => el.classList.remove('long-press-active'));
     });
+}
+function resetDeleteModalText() {
+    const sub = document.getElementById('delete-modal-sub');
+    if (sub) sub.textContent = '该玩家的筹码数据将被清除';
 }
 document.getElementById('btn-delete-cancel').addEventListener('click', cancelDeleteModal);
 document.getElementById('delete-modal').addEventListener('click', e => { if (e.target === e.currentTarget) cancelDeleteModal(); });
@@ -1016,3 +1399,26 @@ document.getElementById('avatar-upload-input').addEventListener('change', e => {
 window.addEventListener('pageshow', e => {
     if (e.persisted) window.location.reload();
 });
+
+// ── Multi-round event listeners ────────────────────────────────
+document.getElementById('btn-open-records').addEventListener('click', openRecordsPage);
+document.getElementById('btn-close-records').addEventListener('click', () => closeModal('records-page'));
+document.getElementById('btn-records-select').addEventListener('click', toggleSelectMode);
+document.getElementById('btn-do-aggregate').addEventListener('click', doAggregate);
+
+document.getElementById('btn-end-round').addEventListener('click', openEndRoundModal);
+document.getElementById('btn-close-end-round').addEventListener('click', () => closeModal('end-round-modal'));
+document.getElementById('btn-cancel-end-round').addEventListener('click', () => closeModal('end-round-modal'));
+document.getElementById('btn-confirm-end-round').addEventListener('click', confirmEndRound);
+document.getElementById('end-round-modal').addEventListener('click', e => { if (e.target === e.currentTarget) closeModal('end-round-modal'); });
+
+document.getElementById('btn-close-round-detail').addEventListener('click', () => closeModal('round-detail-modal'));
+document.getElementById('round-detail-modal').addEventListener('click', e => { if (e.target === e.currentTarget) closeModal('round-detail-modal'); });
+
+document.getElementById('btn-save-aggregation').addEventListener('click', saveAggregation);
+document.getElementById('btn-export-summary').addEventListener('click', () => showToast('长按截图保存到相册'));
+document.getElementById('btn-close-summary-result').addEventListener('click', () => closeModal('summary-result-modal'));
+document.getElementById('summary-result-modal').addEventListener('click', e => { if (e.target === e.currentTarget) closeModal('summary-result-modal'); });
+
+document.getElementById('btn-close-agg-detail').addEventListener('click', () => closeModal('agg-detail-modal'));
+document.getElementById('agg-detail-modal').addEventListener('click', e => { if (e.target === e.currentTarget) closeModal('agg-detail-modal'); });

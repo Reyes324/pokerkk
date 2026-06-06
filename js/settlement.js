@@ -36,3 +36,19 @@ function genRoomCode() {
     }
     return code;
 }
+
+// Aggregate P&L across selected rounds by player name (name-matched, absent = 0)
+function calcNightSummary(selectedRounds) {
+    const playerMap = {};
+    selectedRounds.forEach(round => {
+        if (!round.results) return;
+        Object.values(round.results).forEach(r => {
+            if (!playerMap[r.name]) playerMap[r.name] = 0;
+            playerMap[r.name] += r.pnl;
+        });
+    });
+    const players = Object.entries(playerMap)
+        .map(([name, total]) => ({ name, total }))
+        .sort((a, b) => b.total - a.total);
+    return { players, roundCount: selectedRounds.length };
+}
