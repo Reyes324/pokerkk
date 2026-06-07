@@ -8,8 +8,10 @@
 
 - **暖色调系统**：整体基于"猫咖暖米色"（Cat Café Warm），不是冷白，不是中性灰
 - **一致性优先**：同类场景（导航栏、底部栏、卡片）颜色、高度、毛玻璃效果必须统一
-- **触控友好**：所有可点击元素最小触控目标 44×44px
+- **触控友好**：所有可点击元素最小触控目标 44×44px，相邻元素间距 ≥ 8px
 - **层级用颜色表达，不用尺寸**：按钮统一 48px 高，靠填充色/边框/透明度区分重要程度
+- **无障碍优先**：icon-only 按钮必须有 `aria-label`；颜色不是唯一信息通道；支持 `prefers-reduced-motion`
+- **消除延迟**：所有可点击元素加 `touch-action: manipulation`；滚动容器加 `overscroll-behavior: contain`
 
 ---
 
@@ -275,7 +277,55 @@ border: 1px solid rgba(0,0,0,.04);
 
 ---
 
-## 十五、新增 / 修改规则
+## 十五、交互与无障碍规范
+
+### 触控优化
+```css
+/* 所有可点击元素必须加，消除 iOS 300ms 点击延迟 */
+touch-action: manipulation;
+-webkit-tap-highlight-color: transparent;
+
+/* 滚动容器加，防止误触系统下拉刷新 */
+overscroll-behavior: contain;
+```
+
+### 触控目标
+- 最小点击区域：**44×44px**（所有按钮、图标、列表行）
+- 相邻可点击元素间距：**≥ 8px**
+- 触控热区可以大于视觉大小（用 padding 撑开，不用 width/height）
+
+### 反馈状态
+| 状态 | 规范 |
+|---|---|
+| `:active`（按下） | `filter:brightness(.92); transform:scale(.98)`，过渡 100ms |
+| `:disabled`（不可用） | `opacity:.4; cursor:not-allowed`，不加 transition |
+| 长按激活 | `.long-press-active`，600ms 触发，视觉反馈（轻微高亮） |
+| 左滑露出删除 | 移动 > 40px 锁定，露出 80px 删除按钮 |
+
+### 动画时长
+| 场景 | 时长 | 缓动 |
+|---|---|---|
+| 微交互（按下、hover） | 100–150ms | `ease` |
+| 半页弹窗出现 | 220ms | `cubic-bezier(.4,0,.2,1)` |
+| 半页弹窗消失 | 180ms | `cubic-bezier(.4,0,1,1)` |
+| Push 页面进入 | 300ms | `cubic-bezier(.25,0,.25,1)` |
+| Push 页面退出 | 260ms | `cubic-bezier(.4,0,1,1)` |
+| 左滑收回 / 弹回 | 220ms | `cubic-bezier(.4,0,.2,1)` |
+
+遵循 `prefers-reduced-motion`：检测到用户关闭动画时，所有过渡时长设为 0。
+
+### 无障碍（Accessibility）
+- **icon-only 按钮必须加 `aria-label`**（关闭、返回、删除、导出等）：
+  ```html
+  <button class="btn-icon" aria-label="关闭">...</button>
+  ```
+- 表单输入框必须有对应 `<label>` 或 `aria-label`
+- 颜色不能是唯一的信息传递方式（盈亏同时用颜色 + 符号 +/- 表达）
+- 文字对比度：主文字（`--ink-1` on `--surface`）约 14:1 ✓；辅助文字（`--ink-3`）约 4.8:1 ✓
+
+---
+
+## 十六、新增 / 修改规则
 
 1. **新颜色**：先判断是否能用现有 token。如果确实需要新值，在 `:root` 里添加语义 token，同步更新本文件
 2. **新组件**：描述结构、使用场景、复用的 token；已有类似组件的直接继承
