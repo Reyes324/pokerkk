@@ -1101,6 +1101,9 @@ function renderRoundsTab() {
         hideActionBar();
         return;
     }
+    const AV = 26, OFF = 14, AVMAX = 4; // avatar px, offset px, max shown
+    const OPA = [1, 0.65, 0.42, 0.25]; // opacity per stack position
+
     content.innerHTML = entries.map(([id, round], i) => {
         const playerList = round.results ? Object.values(round.results) : [];
         const sorted = [...playerList].sort((a, b) => b.pnl - a.pnl);
@@ -1109,18 +1112,34 @@ function renderRoundsTab() {
         const checkHtml = isSelectMode
             ? '<div class="checkbox ' + (checked ? 'checked' : '') + '" data-check="' + id + '"></div>'
             : '';
-        const carouselHtml = sorted.length > 0
-            ? '<div class="round-carousel">' + sorted.map(p => {
-                const cls = p.pnl > 0 ? 'positive' : p.pnl < 0 ? 'negative' : 'neutral';
+
+        let carouselHtml = '';
+        if (sorted.length > 0) {
+            const visCount = Math.min(sorted.length, AVMAX);
+            const stackW = AV + (visCount - 1) * OFF;
+            const activeP = sorted[0];
+            const activeCls = activeP.pnl > 0 ? 'positive' : activeP.pnl < 0 ? 'negative' : 'neutral';
+            // Encode player data for JS to read (name + pnl only)
+            const pdata = JSON.stringify(sorted.map(p => [p.name, p.pnl]));
+
+            const avatarItems = sorted.map((p, idx) => {
                 const av = (p.avatarId != null || p.avatarRef) ? p : (players.find(lp => lp.name === p.name) || p);
-                return '<div class="round-carousel-slide">' +
-                    '<div class="avatar-circle sm" style="background:' + getAvatarBgFor(av) + ';flex-shrink:0">' + getAvatarContent(av) + '</div>' +
-                    '<div class="round-carousel-info">' +
-                    '<div class="round-carousel-name">' + escHtml(p.name) + '</div>' +
-                    '<div class="round-carousel-pnl ' + cls + '">' + formatPnl(p.pnl) + '分</div>' +
-                    '</div></div>';
-            }).join('') + '</div>'
-            : '';
+                const left = Math.min(idx, AVMAX - 1) * OFF;
+                const opa = idx < AVMAX ? OPA[idx] : 0;
+                const z = sorted.length - idx;
+                return '<div class="round-ava-item" style="left:' + left + 'px;opacity:' + opa + ';z-index:' + z + ';background:' + getAvatarBgFor(av) + '">' +
+                    getAvatarContent(av) + '</div>';
+            }).join('');
+
+            carouselHtml =
+                '<div class="round-carousel" data-pdata=\'' + pdata + '\'>' +
+                '<div class="round-ava-stack" style="width:' + stackW + 'px">' + avatarItems + '</div>' +
+                '<div class="round-pnl-text">' +
+                '<div class="round-carousel-name">' + escHtml(activeP.name) + '</div>' +
+                '<div class="round-carousel-pnl ' + activeCls + '">' + formatPnl(activeP.pnl) + '分</div>' +
+                '</div></div>';
+        }
+
         return '<div class="swipe-row record-row" data-round-id="' + id + '">' +
             '<div class="swipe-delete-btn" data-del-round="' + id + '">' +
             '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">' +
@@ -1283,67 +1302,72 @@ function setupCarousels() {
     if (window._carouselTimers) window._carouselTimers.forEach(clearInterval);
     window._carouselTimers = [];
 
-    // Horizontal stack: active on left, peeks visible as arcs on the right.
-    // x = translateX value; arcs appear because slides overflow the right edge and get clipped.
-    const STACK = [
-        { x: 0,    opacity: 1.0, z: 10 }, // active — fully visible
-        { x: 88,   opacity: 0.6, z: 9  }, // peek 1 — ~16px of left arc visible
-        { x: 96,   opacity: 0.35, z: 8  }, // peek 2 — ~8px arc visible
-        { x: 110,  opacity: 0,   z: 7  }, // hidden (off right edge)
-    ];
+    const AV = 26, OFF = 14, AVMAX = 4;
+    const OPA = [1, 0.65, 0.42, 0.25]; // opacity per stack position
     const ANIM_MS = 360;
-    const HOLD_MS = 2000;
-    const EXIT_X  = -110; // exit to the left
+    const HOLD_MS = 2200;
     const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
-    function applyPos(slide, pos, animate) {
-        const cfg = STACK[Math.min(pos, STACK.length - 1)];
-        slide.style.transition = animate
-            ? 'transform ' + ANIM_MS + 'ms cubic-bezier(.4,0,.2,1), opacity ' + ANIM_MS + 'ms ease'
+    function applyItem(item, pos, N, animate) {
+        const left = Math.min(pos, AVMAX - 1) * OFF;
+        const opa  = pos < AVMAX ? OPA[pos] : 0;
+        const z    = N - pos;
+        item.style.transition = animate
+            ? 'left ' + ANIM_MS + 'ms cubic-bezier(.4,0,.2,1), opacity ' + ANIM_MS + 'ms ease'
             : 'none';
-        slide.style.transform = 'translateX(' + cfg.x + 'px)';
-        slide.style.opacity = cfg.opacity;
-        slide.style.zIndex = cfg.z;
+        item.style.left    = left + 'px';
+        item.style.opacity = opa;
+        item.style.zIndex  = z;
     }
 
     document.querySelectorAll('.round-carousel').forEach(carousel => {
-        const slides = Array.from(carousel.querySelectorAll('.round-carousel-slide'));
-        const N = slides.length;
-        if (N === 0) return;
+        const stack   = carousel.querySelector('.round-ava-stack');
+        const pnlText = carousel.querySelector('.round-pnl-text');
+        if (!stack || !pnlText) return;
 
-        if (reducedMotion || N === 1) {
-            slides[0].style.opacity = '1';
-            slides[0].style.transform = 'translateX(0)';
-            return;
-        }
+        const items = Array.from(stack.querySelectorAll('.round-ava-item'));
+        const N = items.length;
+        if (N <= 1) return; // static, CSS already positioned correctly
 
+        // Player data: [[name, pnl], ...]  in same order as DOM items
+        const pdata = JSON.parse(carousel.dataset.pdata || '[]');
         let top = 0;
-        slides.forEach((s, i) => applyPos(s, i, false));
+
+        if (reducedMotion) return; // keep initial HTML positions, no animation
 
         function advance() {
             const exitIdx = top;
             top = (top + 1) % N;
 
-            // Active slide exits to the left
-            const exitSlide = slides[exitIdx];
-            exitSlide.style.transition = 'transform ' + ANIM_MS + 'ms cubic-bezier(.4,0,.2,1), opacity ' + ANIM_MS + 'ms ease';
-            exitSlide.style.transform = 'translateX(' + EXIT_X + 'px)';
-            exitSlide.style.opacity = '0';
+            // Exit: front avatar slides right into hidden zone, fades out
+            const exitItem = items[exitIdx];
+            exitItem.style.transition = 'left ' + ANIM_MS + 'ms cubic-bezier(.4,0,.2,1), opacity ' + ANIM_MS + 'ms ease';
+            exitItem.style.left    = (AVMAX * OFF) + 'px';
+            exitItem.style.opacity = '0';
+            exitItem.style.zIndex  = '0';
 
-            // All others shift left toward active position
-            slides.forEach((s, i) => {
+            // All others advance one step toward the front (shift left)
+            items.forEach((item, i) => {
                 if (i === exitIdx) return;
-                applyPos(s, (i - top + N) % N, true);
+                applyItem(item, (i - top + N) % N, N, true);
             });
 
-            // After exit animation completes, silently reposition old slide to right end of queue
+            // Swap text: fade out → update → fade in
+            pnlText.style.opacity = '0';
+            setTimeout(() => {
+                const [name, pnl] = pdata[top] || ['', 0];
+                const cls = pnl > 0 ? 'positive' : pnl < 0 ? 'negative' : 'neutral';
+                pnlText.querySelector('.round-carousel-name').textContent = name;
+                const pnlEl = pnlText.querySelector('.round-carousel-pnl');
+                pnlEl.textContent = formatPnl(pnl) + '分';
+                pnlEl.className = 'round-carousel-pnl ' + cls;
+                pnlText.style.opacity = '1';
+            }, 160);
+
+            // After exit anim ends, silently reposition exited avatar to back of queue
             setTimeout(() => {
                 const newPos = (exitIdx - top + N) % N;
-                const cfg = STACK[Math.min(newPos, STACK.length - 1)];
-                exitSlide.style.transition = 'none';
-                exitSlide.style.transform = 'translateX(' + cfg.x + 'px)';
-                exitSlide.style.opacity = cfg.opacity;
-                exitSlide.style.zIndex = cfg.z;
+                applyItem(exitItem, newPos, N, false);
             }, ANIM_MS + 20);
         }
 
