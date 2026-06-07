@@ -875,6 +875,7 @@ body{
   overflow:hidden;padding:0;
   padding-top:max(0px, env(safe-area-inset-top));
   box-shadow:-4px 0 24px rgba(0,0,0,.12); /* left shadow for depth */
+  background:var(--bg); /* match homepage warm cream */
 }
 
 /* Nav-bar text button (iOS-style: "选择" / "完成") */
@@ -899,7 +900,7 @@ body{
   height:56px;padding:0 8px;
   border-bottom:1px solid var(--line);
   flex-shrink:0;
-  background:var(--surface);
+  background:var(--bg);
 }
 .records-header-title{
   font-size:17px;font-weight:600;color:var(--ink-1);
