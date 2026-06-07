@@ -1296,9 +1296,11 @@ function openRoundDetailModal(roundId) {
     document.getElementById('round-detail-time').textContent = formatDateTime(new Date(round.timestamp));
     document.getElementById('round-detail-body').innerHTML = playerList.map(p => {
         const cls = p.pnl > 0 ? 'positive' : p.pnl < 0 ? 'negative' : 'neutral';
+        // Fall back to live player avatar when archived data has no avatar (old rounds)
+        const avatarSrc = (p.avatarId != null || p.avatarRef) ? p : (players.find(lp => lp.name === p.name) || p);
         return '<div style="display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid var(--n10)">' +
             '<div style="display:flex;align-items:center;gap:8px">' +
-            '<div class="avatar-circle sm" style="background:' + getAvatarBgFor(p) + ';flex-shrink:0">' + getAvatarContent(p) + '</div>' +
+            '<div class="avatar-circle sm" style="background:' + getAvatarBgFor(avatarSrc) + ';flex-shrink:0">' + getAvatarContent(avatarSrc) + '</div>' +
             '<span style="font-size:15px;color:var(--ink-1)">' + escHtml(p.name) + '</span>' +
             '</div>' +
             '<span class="pnl-inline ' + cls + '">' + formatPnl(p.pnl) + ' 分</span></div>';
@@ -1363,9 +1365,10 @@ function openAggDetailModal(aggId) {
     document.getElementById('agg-detail-subtitle').textContent = '共 ' + agg.roundCount + ' 局';
     document.getElementById('agg-detail-body').innerHTML = playerList.map(p => {
         const cls = p.total > 0 ? 'positive' : p.total < 0 ? 'negative' : 'neutral';
+        const avatarSrc = (p.avatarId != null || p.avatarRef) ? p : (players.find(lp => lp.name === p.name) || p);
         return '<div style="display:flex;justify-content:space-between;align-items:center;padding:12px 0;border-bottom:1px solid var(--n10)">' +
             '<div style="display:flex;align-items:center;gap:8px">' +
-            '<div class="avatar-circle sm" style="background:' + getAvatarBgFor(p) + ';flex-shrink:0">' + getAvatarContent(p) + '</div>' +
+            '<div class="avatar-circle sm" style="background:' + getAvatarBgFor(avatarSrc) + ';flex-shrink:0">' + getAvatarContent(avatarSrc) + '</div>' +
             '<span style="font-size:15px;color:var(--ink-1)">' + escHtml(p.name) + '</span>' +
             '</div>' +
             '<span class="pnl-inline ' + cls + '">' + formatPnl(p.total) + ' 分</span></div>';
