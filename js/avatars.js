@@ -9,10 +9,10 @@ const AVATARS = Array.from({ length: AV_COUNT }, (_, i) => ({
 }));
 
 function getAvatarSvg(avatarId) {
-    const a = AVATARS[avatarId % AVATARS.length];
+    const a = AVATARS[(avatarId || 0) % AVATARS.length];
     return `<img class="avatar-img" src="${a.img}?v=${AV_VER}" alt="" draggable="false">`;
 }
 
 function getAvatarBg(avatarId) {
-    return AVATARS[avatarId % AVATARS.length].bg;
+    return AVATARS[(avatarId || 0) % AVATARS.length].bg;
 }
