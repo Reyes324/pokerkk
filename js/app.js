@@ -1103,14 +1103,23 @@ function renderRoundsTab() {
     }
     content.innerHTML = entries.map(([id, round], i) => {
         const playerList = round.results ? Object.values(round.results) : [];
-        const top = playerList.reduce((b, p) => (!b || p.pnl > b.pnl) ? p : b, null);
+        const sorted = [...playerList].sort((a, b) => b.pnl - a.pnl);
         const timeStr = formatDateTime(new Date(round.timestamp));
         const checked = selectedRoundIds.has(id);
         const checkHtml = isSelectMode
             ? '<div class="checkbox ' + (checked ? 'checked' : '') + '" data-check="' + id + '"></div>'
             : '';
-        const topHtml = top
-            ? '<span style="font-size:12px;color:var(--win);font-weight:500">' + escHtml(top.name) + ' ' + formatPnl(top.pnl) + '</span>'
+        const carouselHtml = sorted.length > 0
+            ? '<div class="round-carousel">' + sorted.map(p => {
+                const cls = p.pnl > 0 ? 'positive' : p.pnl < 0 ? 'negative' : 'neutral';
+                const av = (p.avatarId != null || p.avatarRef) ? p : (players.find(lp => lp.name === p.name) || p);
+                return '<div class="round-carousel-slide">' +
+                    '<div class="avatar-circle sm" style="background:' + getAvatarBgFor(av) + ';flex-shrink:0">' + getAvatarContent(av) + '</div>' +
+                    '<div class="round-carousel-info">' +
+                    '<div class="round-carousel-name">' + escHtml(p.name) + '</div>' +
+                    '<div class="round-carousel-pnl ' + cls + '">' + formatPnl(p.pnl) + '分</div>' +
+                    '</div></div>';
+            }).join('') + '</div>'
             : '';
         return '<div class="swipe-row record-row" data-round-id="' + id + '">' +
             '<div class="swipe-delete-btn" data-del-round="' + id + '">' +
@@ -1123,12 +1132,13 @@ function renderRoundsTab() {
             '<div style="font-size:15px;font-weight:500;color:var(--ink-1)">第 ' + (i + 1) + ' 局</div>' +
             '<div style="font-size:12px;color:var(--ink-3);margin-top:2px">' + timeStr + ' · ' + playerList.length + '人</div>' +
             '</div>' +
-            '<div class="player-pnl-col" style="flex-direction:column;align-items:flex-end;gap:3px">' +
-            topHtml +
+            '<div class="player-pnl-col">' +
+            carouselHtml +
             '<div class="card-chevron"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="9 18 15 12 9 6"/></svg></div>' +
             '</div></div></div></div>';
     }).join('');
     setupRecordSwipeDelete();
+    setupCarousels();
     updateActionBar();
 }
 
@@ -1268,6 +1278,38 @@ function setupAggSwipeDelete() {
             tracking = false; clearTimeout(pressTimer); pressTimer = null; card.classList.remove('long-press-active');
         });
     });
+}
+function setupCarousels() {
+    const existing = document.getElementById('carousel-styles');
+    if (existing) existing.remove();
+    const PER = 2.0; // seconds each player is shown
+    const FADE = 0.15; // seconds for fade transition
+    let css = '';
+    document.querySelectorAll('.round-carousel').forEach((el, ri) => {
+        const slides = Array.from(el.querySelectorAll('.round-carousel-slide'));
+        const N = slides.length;
+        if (N === 0) return;
+        if (N === 1) { slides[0].style.opacity = '1'; return; }
+        const total = N * PER;
+        const slot = 100 / N;
+        const fade = (FADE / total) * 100;
+        const kf = 'cs' + ri;
+        css += '@keyframes ' + kf + '{' +
+            '0%,100%{opacity:0;transform:translateY(4px)}' +
+            fade.toFixed(1) + '%{opacity:1;transform:translateY(0)}' +
+            (slot - fade).toFixed(1) + '%{opacity:1;transform:translateY(0)}' +
+            slot.toFixed(1) + '%{opacity:0;transform:translateY(-4px)}' +
+            '}\n';
+        slides.forEach((s, i) => {
+            s.style.animation = kf + ' ' + total.toFixed(1) + 's linear ' + (i * PER).toFixed(1) + 's infinite both';
+        });
+    });
+    if (css) {
+        const st = document.createElement('style');
+        st.id = 'carousel-styles';
+        st.textContent = css;
+        document.head.appendChild(st);
+    }
 }
 function showRoundDeleteConfirm(id) {
     pendingDeleteRoundId = id;

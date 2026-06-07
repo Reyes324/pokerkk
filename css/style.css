@@ -988,6 +988,38 @@ body{
   display:block;
 }
 
+/* ─── Round list carousel ─── */
+.round-carousel{
+  position:relative;
+  width:104px;height:34px;
+  overflow:hidden;flex-shrink:0;
+}
+.round-carousel-slide{
+  position:absolute;inset:0;
+  display:flex;align-items:center;gap:5px;
+  opacity:0;
+}
+.round-carousel-info{
+  min-width:0;flex:1;
+  display:flex;flex-direction:column;gap:1px;
+}
+.round-carousel-name{
+  font-size:11px;font-weight:500;color:var(--ink-1);
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+  line-height:1.3;
+}
+.round-carousel-pnl{
+  font-size:11px;font-weight:600;
+  line-height:1.3;white-space:nowrap;
+}
+.round-carousel-pnl.positive{color:var(--win)}
+.round-carousel-pnl.negative{color:var(--lose)}
+.round-carousel-pnl.neutral{color:var(--ink-3)}
+@media(prefers-reduced-motion:reduce){
+  .round-carousel-slide{animation:none!important}
+  .round-carousel-slide:first-child{opacity:1!important}
+}
+
 /* ─── Utilities ─── */
 .hidden{display:none!important}
 @keyframes slideUp {
