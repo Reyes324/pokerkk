@@ -988,14 +988,24 @@ body{
   display:block;
 }
 
-/* ─── Round list carousel ─── */
+/* ─── Round list carousel (horizontal stacked-deck) ─── */
 .round-carousel{
   position:relative;
-  width:104px;height:34px;
+  width:104px;height:34px;  /* same height as avatar-circle.sm, no increase */
   overflow:hidden;flex-shrink:0;
 }
+/* Right-side fade — peeking arcs dissolve into card background */
+.round-carousel::after{
+  content:'';
+  position:absolute;top:0;bottom:0;right:0;
+  width:22px;
+  background:linear-gradient(to right, transparent, var(--surface));
+  pointer-events:none;z-index:20;
+}
 .round-carousel-slide{
-  position:absolute;inset:0;
+  position:absolute;
+  top:0;bottom:0;left:0;
+  width:104px;   /* full container width, NOT inset (no right:0 stretch) */
   display:flex;align-items:center;gap:5px;
   opacity:0;
 }
@@ -1016,8 +1026,8 @@ body{
 .round-carousel-pnl.negative{color:var(--lose)}
 .round-carousel-pnl.neutral{color:var(--ink-3)}
 @media(prefers-reduced-motion:reduce){
-  .round-carousel-slide{animation:none!important}
-  .round-carousel-slide:first-child{opacity:1!important}
+  .round-carousel-slide{transition:none!important}
+  .round-carousel-slide:first-child{opacity:1!important;transform:translateX(0)!important}
 }
 
 /* ─── Utilities ─── */

@@ -1280,36 +1280,76 @@ function setupAggSwipeDelete() {
     });
 }
 function setupCarousels() {
-    const existing = document.getElementById('carousel-styles');
-    if (existing) existing.remove();
-    const PER = 2.0; // seconds each player is shown
-    const FADE = 0.15; // seconds for fade transition
-    let css = '';
-    document.querySelectorAll('.round-carousel').forEach((el, ri) => {
-        const slides = Array.from(el.querySelectorAll('.round-carousel-slide'));
+    if (window._carouselTimers) window._carouselTimers.forEach(clearInterval);
+    window._carouselTimers = [];
+
+    // Horizontal stack: active on left, peeks visible as arcs on the right.
+    // x = translateX value; arcs appear because slides overflow the right edge and get clipped.
+    const STACK = [
+        { x: 0,    opacity: 1.0, z: 10 }, // active — fully visible
+        { x: 88,   opacity: 0.6, z: 9  }, // peek 1 — ~16px of left arc visible
+        { x: 96,   opacity: 0.35, z: 8  }, // peek 2 — ~8px arc visible
+        { x: 110,  opacity: 0,   z: 7  }, // hidden (off right edge)
+    ];
+    const ANIM_MS = 360;
+    const HOLD_MS = 2000;
+    const EXIT_X  = -110; // exit to the left
+    const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+    function applyPos(slide, pos, animate) {
+        const cfg = STACK[Math.min(pos, STACK.length - 1)];
+        slide.style.transition = animate
+            ? 'transform ' + ANIM_MS + 'ms cubic-bezier(.4,0,.2,1), opacity ' + ANIM_MS + 'ms ease'
+            : 'none';
+        slide.style.transform = 'translateX(' + cfg.x + 'px)';
+        slide.style.opacity = cfg.opacity;
+        slide.style.zIndex = cfg.z;
+    }
+
+    document.querySelectorAll('.round-carousel').forEach(carousel => {
+        const slides = Array.from(carousel.querySelectorAll('.round-carousel-slide'));
         const N = slides.length;
         if (N === 0) return;
-        if (N === 1) { slides[0].style.opacity = '1'; return; }
-        const total = N * PER;
-        const slot = 100 / N;
-        const fade = (FADE / total) * 100;
-        const kf = 'cs' + ri;
-        css += '@keyframes ' + kf + '{' +
-            '0%,100%{opacity:0;transform:translateY(4px)}' +
-            fade.toFixed(1) + '%{opacity:1;transform:translateY(0)}' +
-            (slot - fade).toFixed(1) + '%{opacity:1;transform:translateY(0)}' +
-            slot.toFixed(1) + '%{opacity:0;transform:translateY(-4px)}' +
-            '}\n';
-        slides.forEach((s, i) => {
-            s.style.animation = kf + ' ' + total.toFixed(1) + 's linear ' + (i * PER).toFixed(1) + 's infinite both';
-        });
+
+        if (reducedMotion || N === 1) {
+            slides[0].style.opacity = '1';
+            slides[0].style.transform = 'translateX(0)';
+            return;
+        }
+
+        let top = 0;
+        slides.forEach((s, i) => applyPos(s, i, false));
+
+        function advance() {
+            const exitIdx = top;
+            top = (top + 1) % N;
+
+            // Active slide exits to the left
+            const exitSlide = slides[exitIdx];
+            exitSlide.style.transition = 'transform ' + ANIM_MS + 'ms cubic-bezier(.4,0,.2,1), opacity ' + ANIM_MS + 'ms ease';
+            exitSlide.style.transform = 'translateX(' + EXIT_X + 'px)';
+            exitSlide.style.opacity = '0';
+
+            // All others shift left toward active position
+            slides.forEach((s, i) => {
+                if (i === exitIdx) return;
+                applyPos(s, (i - top + N) % N, true);
+            });
+
+            // After exit animation completes, silently reposition old slide to right end of queue
+            setTimeout(() => {
+                const newPos = (exitIdx - top + N) % N;
+                const cfg = STACK[Math.min(newPos, STACK.length - 1)];
+                exitSlide.style.transition = 'none';
+                exitSlide.style.transform = 'translateX(' + cfg.x + 'px)';
+                exitSlide.style.opacity = cfg.opacity;
+                exitSlide.style.zIndex = cfg.z;
+            }, ANIM_MS + 20);
+        }
+
+        const timer = setInterval(advance, HOLD_MS + ANIM_MS);
+        window._carouselTimers.push(timer);
     });
-    if (css) {
-        const st = document.createElement('style');
-        st.id = 'carousel-styles';
-        st.textContent = css;
-        document.head.appendChild(st);
-    }
 }
 function showRoundDeleteConfirm(id) {
     pendingDeleteRoundId = id;
@@ -1508,7 +1548,10 @@ window.addEventListener('pageshow', e => {
 
 // ── Multi-round event listeners ────────────────────────────────
 document.getElementById('btn-open-records').addEventListener('click', openRecordsPage);
-document.getElementById('btn-close-records').addEventListener('click', () => closeModal('records-page'));
+document.getElementById('btn-close-records').addEventListener('click', () => {
+    if (window._carouselTimers) { window._carouselTimers.forEach(clearInterval); window._carouselTimers = []; }
+    closeModal('records-page');
+});
 document.getElementById('btn-records-select').addEventListener('click', toggleSelectMode);
 document.getElementById('btn-do-aggregate').addEventListener('click', doAggregate);
 
