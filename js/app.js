@@ -1123,8 +1123,8 @@ function renderRoundsTab() {
             const pdata = JSON.stringify(sorted.map(p => [p.name, p.pnl]));
 
             const avatarItems = sorted.map((p, idx) => {
-                const av = (p.avatarId != null || p.avatarRef) ? p : (players.find(lp => lp.name === p.name) || p);
-                const left = Math.min(idx, AVMAX - 1) * OFF;
+                const av = players.find(lp => lp.name === p.name) || p;
+                const left = Math.max(0, AVMAX - 1 - idx) * OFF; // rightmost = front
                 const opa = idx < AVMAX ? OPA[idx] : 0;
                 const z = sorted.length - idx;
                 return '<div class="round-ava-item" style="left:' + left + 'px;opacity:' + opa + ';z-index:' + z + ';background:' + getAvatarBgFor(av) + '">' +
@@ -1309,7 +1309,7 @@ function setupCarousels() {
     const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
     function applyItem(item, pos, N, animate) {
-        const left = Math.min(pos, AVMAX - 1) * OFF;
+        const left = Math.max(0, AVMAX - 1 - pos) * OFF; // rightmost = front (pos 0)
         const opa  = pos < AVMAX ? OPA[pos] : 0;
         const z    = N - pos;
         item.style.transition = animate
@@ -1339,30 +1339,26 @@ function setupCarousels() {
             const exitIdx = top;
             top = (top + 1) % N;
 
-            // Exit: front avatar slides right into hidden zone, fades out
+            // Exit: front avatar (rightmost) slides further right, clipped by overflow:hidden
             const exitItem = items[exitIdx];
             exitItem.style.transition = 'left ' + ANIM_MS + 'ms cubic-bezier(.4,0,.2,1), opacity ' + ANIM_MS + 'ms ease';
-            exitItem.style.left    = (AVMAX * OFF) + 'px';
+            exitItem.style.left    = (AVMAX * OFF + AV) + 'px'; // well past right edge
             exitItem.style.opacity = '0';
             exitItem.style.zIndex  = '0';
 
-            // All others advance one step toward the front (shift left)
+            // All others advance one step toward the front (shift right)
             items.forEach((item, i) => {
                 if (i === exitIdx) return;
                 applyItem(item, (i - top + N) % N, N, true);
             });
 
-            // Swap text: fade out → update → fade in
-            pnlText.style.opacity = '0';
-            setTimeout(() => {
-                const [name, pnl] = pdata[top] || ['', 0];
-                const cls = pnl > 0 ? 'positive' : pnl < 0 ? 'negative' : 'neutral';
-                pnlText.querySelector('.round-carousel-name').textContent = name;
-                const pnlEl = pnlText.querySelector('.round-carousel-pnl');
-                pnlEl.textContent = formatPnl(pnl) + '分';
-                pnlEl.className = 'round-carousel-pnl ' + cls;
-                pnlText.style.opacity = '1';
-            }, 160);
+            // Instant text swap — no animation
+            const [name, pnl] = pdata[top] || ['', 0];
+            const cls = pnl > 0 ? 'positive' : pnl < 0 ? 'negative' : 'neutral';
+            pnlText.querySelector('.round-carousel-name').textContent = name;
+            const pnlEl = pnlText.querySelector('.round-carousel-pnl');
+            pnlEl.textContent = formatPnl(pnl) + '分';
+            pnlEl.className = 'round-carousel-pnl ' + cls;
 
             // After exit anim ends, silently reposition exited avatar to back of queue
             setTimeout(() => {
@@ -1403,8 +1399,8 @@ function openRoundDetailModal(roundId) {
     document.getElementById('round-detail-time').textContent = formatDateTime(new Date(round.timestamp));
     document.getElementById('round-detail-body').innerHTML = playerList.map(p => {
         const cls = p.pnl > 0 ? 'positive' : p.pnl < 0 ? 'negative' : 'neutral';
-        // Fall back to live player avatar when archived data has no avatar (old rounds)
-        const avatarSrc = (p.avatarId != null || p.avatarRef) ? p : (players.find(lp => lp.name === p.name) || p);
+        // Always prefer live player avatar; fall back to archived data if player left the game
+        const avatarSrc = players.find(lp => lp.name === p.name) || p;
         return '<div style="display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid var(--n10)">' +
             '<div style="display:flex;align-items:center;gap:8px">' +
             '<div class="avatar-circle sm" style="background:' + getAvatarBgFor(avatarSrc) + ';flex-shrink:0">' + getAvatarContent(avatarSrc) + '</div>' +
