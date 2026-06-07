@@ -130,12 +130,18 @@ poker-settle/
 
 ## 设计规范
 
-- **主题**：Fluent Design 浅色（白底，非深色）
-- **主色**：绿色 `#107C10` + 金色 `#C19A00`
-- **字体**：Noto Sans SC + Segoe UI
-- **圆角**：12px（卡片）/ 8px（输入框/按钮）
+> **完整设计系统见 [`DESIGN_SYSTEM.md`](./DESIGN_SYSTEM.md)**，包含颜色 token、排版、圆角、阴影、所有组件规格（导航栏、底部栏、卡片、按钮、半页、Push 导航、列表行）及 z-index 层级表。
+>
+> **规则**：做任何 UI 改动前先查 DESIGN_SYSTEM.md，优先复用已有 token 和组件模式。
+
+以下为快速参考：
+
+- **背景层级**：`--bg`（#F5F1EA 暖米）→ body；`--surface`（#FFF）→ 卡片；`--surface-sunken`（#FAF7F1）→ 凹陷区
+- **主色**：`--brand: #424343`（猫爪灰黑）
+- **字体**：Noto Sans SC + Segoe UI，主内容 15px/500，标题 16px/700，辅助 12–13px/400
+- **圆角**：卡片 `--r12`（12px）/ 输入框 `--r8`（8px）/ 全宽按钮 `--r12`
 - **Toast**：居中显示（页面中央，非底部）
-- **删除**：左滑或长按，无常驻删除按钮
+- **删除**：左滑或长按，无常驻删除按钮，统一弹 `delete-modal`（z-index 200）
 - **半页弹窗动画**：所有弹窗通过 `openModal()` / `closeModal()` 统一管理，打开/关闭均有 sheet slideUp/slideDown + overlay fade 动画
 - **半页弹窗关闭**：所有半页都支持点击蒙层关闭（含删除确认）
 
