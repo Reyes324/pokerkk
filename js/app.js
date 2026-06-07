@@ -158,6 +158,7 @@ db.ref('sharedAvatars').on('value', snap => {
     sharedAvatars = snap.val() || {};
     sharedAvatarsLoaded = true;
     renderPlayers();
+    renderRecordsPageIfOpen();
     if (chipModalIdx >= 0 && players[chipModalIdx]) renderChipModal(chipModalIdx);
     // Live-refresh the open picker grid (e.g. someone else uploaded/deleted a photo)
     if (!document.getElementById('avatar-modal').classList.contains('hidden') && pendingAvatarIdx >= 0) {
@@ -1140,7 +1141,7 @@ function renderRoundsTab() {
             const pdata = JSON.stringify(sorted.map(p => [p.name, p.pnl]));
 
             const avatarItems = sorted.map((p, idx) => {
-                const av = players.find(lp => lp.name === p.name) || p;
+                const av = p;
                 const left = Math.max(0, AVMAX - 1 - idx) * OFF; // rightmost = front
                 const opa = idx < AVMAX ? OPA[idx] : 0;
                 const z = sorted.length - idx;
