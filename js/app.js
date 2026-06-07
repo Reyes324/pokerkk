@@ -1007,9 +1007,10 @@ function renderHeader() {
 function formatDateTime(date) {
     const M = date.getMonth() + 1;
     const D = date.getDate();
+    const weekdays = ['周日','周一','周二','周三','周四','周五','周六'];
     const H = String(date.getHours()).padStart(2, '0');
     const min = String(date.getMinutes()).padStart(2, '0');
-    return M + '月' + D + '日 ' + H + ':' + min;
+    return M + '月' + D + '日 ' + weekdays[date.getDay()] + ' ' + H + ':' + min;
 }
 function formatDateWeekday(date) {
     const M = date.getMonth() + 1;
