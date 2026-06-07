@@ -234,6 +234,7 @@ body{
   display:flex;align-items:center;gap:4px;
   padding-left:10px;
 }
+.pnl-stack{display:flex;flex-direction:column;align-items:flex-end;gap:3px;}
 
 /* P&L value — vivid colors, larger */
 .pnl-inline{font-size:15px;font-weight:600;letter-spacing:-.2px;line-height:1}

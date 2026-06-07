@@ -80,20 +80,36 @@ function normalizePlayer(raw) {
 }
 
 // "Someone else is editing this row" — true if the editing set has any device
-// that isn't me. When I'm the only editor, nobody (including me) sees the tag.
+// that isn't me with a fresh timestamp (< 60s). Legacy boolean `true` entries
+// and stale timestamps are treated as inactive to handle crashed/backgrounded sessions.
 function isEditingByOther(idx) {
     const editing = players[idx]?.editing;
     if (!editing) return false;
-    return Object.keys(editing).some(id => id !== deviceId);
+    const now = Date.now();
+    return Object.entries(editing).some(([id, ts]) => {
+        if (id === deviceId) return false;
+        if (typeof ts !== 'number') return false; // legacy true — treat as stale
+        if (now - ts > 60000) return false;        // older than 60s — stale
+        return true;
+    });
 }
+
+let editingHeartbeat = null;
 
 function setEditingBy(idx) {
     const ref = gameRef.child('players/' + idx + '/editing/' + deviceId);
-    ref.set(true);
+    ref.set(Date.now());
     ref.onDisconnect().remove();
+    clearInterval(editingHeartbeat);
+    editingHeartbeat = setInterval(() => {
+        if (chipModalIdx >= 0)
+            gameRef.child('players/' + chipModalIdx + '/editing/' + deviceId).set(Date.now());
+    }, 20000);
 }
 
 function clearEditingBy(idx) {
+    clearInterval(editingHeartbeat);
+    editingHeartbeat = null;
     const ref = gameRef.child('players/' + idx + '/editing/' + deviceId);
     ref.onDisconnect().cancel();
     ref.remove();
@@ -240,10 +256,10 @@ function renderPlayers() {
                     </div>
                     <!-- pnl + chevron — right side -->
                     <div class="player-pnl-col">
-                        ${otherEditing
-                            ? '<span class="editing-tag">有人录入中</span>'
-                            : `<span class="pnl-inline ${isConfirmed ? pnlClass : 'placeholder'}">${isConfirmed ? formatPnl(pnl) + ' 分' : '录入筹码'}</span>`
-                        }
+                        <div class="pnl-stack">
+                            <span class="pnl-inline ${isConfirmed ? pnlClass : 'placeholder'}">${isConfirmed ? formatPnl(pnl) + ' 分' : '录入筹码'}</span>
+                            ${otherEditing ? '<span class="editing-tag">录入中</span>' : ''}
+                        </div>
                         <div class="card-chevron">
                             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="9 18 15 12 9 6"/></svg>
                         </div>
