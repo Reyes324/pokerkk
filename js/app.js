@@ -1076,11 +1076,12 @@ function confirmEndRound() {
 }
 
 // ── Records page ───────────────────────────────────────────────
-function openRecordsPage() {
+function openRecordsPage(pushHistory = true) {
     recordsTab = 'rounds';
     isSelectMode = false;
     selectedRoundIds = new Set();
     renderRecordsPage();
+    if (pushHistory) history.pushState({ page: 'records' }, '', '/records');
     openModal('records-page');
 }
 function renderRecordsPageIfOpen() {
@@ -1586,8 +1587,25 @@ window.addEventListener('pageshow', e => {
 document.getElementById('btn-open-records').addEventListener('click', openRecordsPage);
 document.getElementById('btn-close-records').addEventListener('click', () => {
     if (window._carouselTimers) { window._carouselTimers.forEach(clearInterval); window._carouselTimers = []; }
-    closeModal('records-page');
+    if (location.pathname === '/records') history.back(); else closeModal('records-page');
 });
+
+window.addEventListener('popstate', () => {
+    if (location.pathname !== '/records') {
+        const overlay = document.getElementById('records-page');
+        if (overlay && !overlay.classList.contains('hidden')) {
+            if (window._carouselTimers) { window._carouselTimers.forEach(clearInterval); window._carouselTimers = []; }
+            closeModal('records-page');
+        }
+    }
+});
+
+// Direct navigation to /records (e.g. shared link or browser refresh)
+if (location.pathname === '/records') {
+    history.replaceState(null, '', '/');
+    history.pushState({ page: 'records' }, '', '/records');
+    openRecordsPage(false);
+}
 document.getElementById('btn-records-select').addEventListener('click', toggleSelectMode);
 document.getElementById('btn-do-aggregate').addEventListener('click', doAggregate);
 
