@@ -1048,7 +1048,9 @@ function confirmEndRound() {
     const results = {};
     confirmed.forEach((p, i) => {
         const pnl = calcPnl(calcChipTotal(p.n10, p.n20, p.n50, p.n100), calcInvested(p.buyIns));
-        results['p' + i] = { name: p.name, pnl };
+        const entry = { name: p.name, pnl, avatarId: p.avatarId || 0 };
+        if (p.avatarRef) entry.avatarRef = p.avatarRef;
+        results['p' + i] = entry;
     });
     gameRef.child('rounds').push({ timestamp: now, results });
     closeModal('end-round-modal', () => {
@@ -1295,7 +1297,10 @@ function openRoundDetailModal(roundId) {
     document.getElementById('round-detail-body').innerHTML = playerList.map(p => {
         const cls = p.pnl > 0 ? 'positive' : p.pnl < 0 ? 'negative' : 'neutral';
         return '<div style="display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid var(--n10)">' +
+            '<div style="display:flex;align-items:center;gap:8px">' +
+            '<div class="avatar-circle sm" style="background:' + getAvatarBgFor(p) + ';flex-shrink:0">' + getAvatarContent(p) + '</div>' +
             '<span style="font-size:15px;color:var(--ink-1)">' + escHtml(p.name) + '</span>' +
+            '</div>' +
             '<span class="pnl-inline ' + cls + '">' + formatPnl(p.pnl) + ' 分</span></div>';
     }).join('');
     openModal('round-detail-modal');
@@ -1311,8 +1316,12 @@ function doAggregate() {
     document.getElementById('summary-result-info').textContent = '共 ' + summary.roundCount + ' 局';
     document.getElementById('summary-result-body').innerHTML = summary.players.map(p => {
         const cls = p.total > 0 ? 'positive' : p.total < 0 ? 'negative' : 'neutral';
+        const live = players.find(lp => lp.name === p.name) || p;
         return '<div style="display:flex;justify-content:space-between;align-items:center;padding:12px 0;border-bottom:1px solid var(--n10)">' +
+            '<div style="display:flex;align-items:center;gap:8px">' +
+            '<div class="avatar-circle sm" style="background:' + getAvatarBgFor(live) + ';flex-shrink:0">' + getAvatarContent(live) + '</div>' +
             '<span style="font-size:15px;color:var(--ink-1)">' + escHtml(p.name) + '</span>' +
+            '</div>' +
             '<span class="pnl-inline ' + cls + '">' + formatPnl(p.total) + ' 分</span></div>';
     }).join('');
     document.getElementById('summary-result-modal').dataset.summaryJson = JSON.stringify(summary);
@@ -1324,13 +1333,18 @@ function saveAggregation() {
     const summary = JSON.parse(modal.dataset.summaryJson || 'null');
     if (!summary) return;
     const now = new Date();
-    const players = {};
-    summary.players.forEach((p, i) => { players['p' + i] = { name: p.name, total: p.total }; });
+    const playerData = {};
+    summary.players.forEach((p, i) => {
+        const live = players.find(lp => lp.name === p.name);
+        const entry = { name: p.name, total: p.total, avatarId: live ? (live.avatarId || 0) : 0 };
+        if (live && live.avatarRef) entry.avatarRef = live.avatarRef;
+        playerData['p' + i] = entry;
+    });
     gameRef.child('aggregations').push({
         timestamp: now.getTime(),
         label: formatDateWeekday(now),
         roundCount: summary.roundCount,
-        players
+        players: playerData
     });
     closeModal('summary-result-modal', () => {
         isSelectMode = false;
@@ -1350,7 +1364,10 @@ function openAggDetailModal(aggId) {
     document.getElementById('agg-detail-body').innerHTML = playerList.map(p => {
         const cls = p.total > 0 ? 'positive' : p.total < 0 ? 'negative' : 'neutral';
         return '<div style="display:flex;justify-content:space-between;align-items:center;padding:12px 0;border-bottom:1px solid var(--n10)">' +
+            '<div style="display:flex;align-items:center;gap:8px">' +
+            '<div class="avatar-circle sm" style="background:' + getAvatarBgFor(p) + ';flex-shrink:0">' + getAvatarContent(p) + '</div>' +
             '<span style="font-size:15px;color:var(--ink-1)">' + escHtml(p.name) + '</span>' +
+            '</div>' +
             '<span class="pnl-inline ' + cls + '">' + formatPnl(p.total) + ' 分</span></div>';
     }).join('');
     openModal('agg-detail-modal');
