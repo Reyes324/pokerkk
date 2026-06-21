@@ -239,7 +239,7 @@ function renderPlayers() {
         return `
         <div class="swipe-row" data-idx="${i}">
             <div class="swipe-delete-btn" data-del="${i}">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
                     <polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4h6v2"/>
                 </svg>
                 删除
@@ -1176,7 +1176,7 @@ function renderRoundsTab() {
 
         return '<div class="swipe-row record-row" data-round-id="' + id + '">' +
             '<div class="swipe-delete-btn" data-del-round="' + id + '">' +
-            '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">' +
+            '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">' +
             '<polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4h6v2"/></svg>删除</div>' +
             '<div class="player-card" data-round-id="' + id + '" onclick="onRoundRowClick(\'' + id + '\')">' +
             '<div class="player-card-main">' +
@@ -1206,7 +1206,7 @@ function renderAggregationsTab() {
         const pCount = agg.players ? Object.keys(agg.players).length : 0;
         return '<div class="swipe-row" data-agg-id="' + id + '">' +
             '<div class="swipe-delete-btn" data-del-agg="' + id + '">' +
-            '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">' +
+            '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">' +
             '<polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4h6v2"/></svg>删除</div>' +
             '<div class="player-card" onclick="openAggDetailModal(\'' + id + '\')">' +
             '<div class="player-card-main">' +
