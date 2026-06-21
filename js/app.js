@@ -1089,6 +1089,8 @@ function confirmEndRound() {
     gameRef.child('rounds').push({ timestamp: now, results });
     closeModal('end-round-modal', () => {
         showToast('本局已存档');
+        openExportModal();
+        setTimeout(generateImage, 350);
     });
 }
 
