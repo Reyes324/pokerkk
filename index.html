@@ -164,31 +164,33 @@
     </div>
 </div>
 
+<!-- Off-screen card for html2canvas capture (never visible to user) -->
+<div id="export-capture-zone" aria-hidden="true">
+    <div id="export-card">
+        <div class="export-card-header">
+            <div class="export-card-headline">本局结算</div>
+            <div class="export-card-sub">
+                <img src="img/paw.png" alt="" class="export-paw-sm">
+                猫店德州&ensp;·&ensp;<span id="export-date"></span>
+            </div>
+        </div>
+        <div id="export-table-wrap"></div>
+        <div id="export-badge"></div>
+    </div>
+</div>
+
 <!-- ── Export modal ── -->
 <div id="export-modal" class="modal-overlay hidden">
     <div class="modal-sheet export-modal-sheet">
         <div class="modal-handle"></div>
         <div class="modal-header">
-            <span>导出结算结果</span>
+            <span>长按保存到本地</span>
             <button class="btn-icon" id="btn-close-export" aria-label="关闭">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
             </button>
         </div>
         <div class="export-modal-body">
-            <!-- The card to be captured as image -->
-            <div id="export-card">
-                <div class="export-card-header">
-                    <div class="export-card-headline">本局结算</div>
-                    <div class="export-card-sub">
-                        <img src="img/paw.png" alt="" class="export-paw-sm">
-                        猫店德州&ensp;·&ensp;<span id="export-date"></span>
-                    </div>
-                </div>
-                <div id="export-table-wrap"></div>
-                <div id="export-badge"></div>
-            </div>
-            <p class="export-hint">长按图片保存到相册</p>
-            <img id="export-image" style="display:none;width:100%;border-radius:12px" alt="结算结果">
+            <img id="export-image" style="width:100%;border-radius:12px;display:block" alt="结算结果">
         </div>
         <div class="export-modal-footer">
             <button class="btn btn-primary" id="btn-confirm-archive" style="margin-bottom:8px">确认存档</button>

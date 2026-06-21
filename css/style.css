@@ -721,6 +721,14 @@ body{
 .btn-export:active { filter: brightness(.92); }
 
 /* ─── Export modal ─── */
+#export-capture-zone {
+  position: fixed;
+  left: -9999px;
+  top: 0;
+  width: 375px;
+  pointer-events: none;
+  z-index: -1;
+}
 .export-modal-sheet {
   max-height: 92dvh;
   display: flex;

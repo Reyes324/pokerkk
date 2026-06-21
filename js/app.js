@@ -364,10 +364,7 @@ function openExportModal() {
         ? `<div class="export-card-footer balanced"><div class="export-check-circle">${checkSvg}</div>零和验证通过</div>`
         : `<div class="export-card-footer unbalanced">✗ 总盈亏 = ${formatPnl(totalPnl)}，请检查</div>`;
 
-    // Reset image state
-    document.getElementById('export-image').style.display = 'none';
-    document.getElementById('export-card').style.display = 'block';
-    openModal('export-modal');
+    generateImage();
 }
 
 function generateImage() {
@@ -378,11 +375,8 @@ function generateImage() {
         useCORS: true,
         logging: false
     }).then(canvas => {
-        const img = document.getElementById('export-image');
-        img.src = canvas.toDataURL('image/png');
-        img.style.display = 'block';
-        card.style.display = 'none';
-        showToast('长按图片保存到相册');
+        document.getElementById('export-image').src = canvas.toDataURL('image/png');
+        openModal('export-modal');
     }).catch(() => {
         showToast('生成图片失败，请截图保存');
     });
@@ -1633,7 +1627,7 @@ if (location.pathname === '/records') {
 document.getElementById('btn-records-select').addEventListener('click', toggleSelectMode);
 document.getElementById('btn-do-aggregate').addEventListener('click', doAggregate);
 
-document.getElementById('btn-end-round').addEventListener('click', () => { openExportModal(); setTimeout(generateImage, 350); });
+document.getElementById('btn-end-round').addEventListener('click', openExportModal);
 
 document.getElementById('btn-close-round-detail').addEventListener('click', () => closeModal('round-detail-modal'));
 document.getElementById('round-detail-modal').addEventListener('click', e => { if (e.target === e.currentTarget) closeModal('round-detail-modal'); });
