@@ -1,0 +1,483 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>导出卡片样式预览</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500&display=swap" rel="stylesheet">
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  background: #DDD8CE;
+  padding: 28px 20px 48px;
+  font-family: 'Noto Sans SC', -apple-system, 'PingFang SC', sans-serif;
+  display: flex;
+  flex-direction: column;
+  gap: 36px;
+  max-width: 400px;
+  margin: 0 auto;
+}
+
+/* Label above each card */
+.label {
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: .7px;
+  text-transform: uppercase;
+  color: #888;
+  margin-bottom: 10px;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+.rec {
+  background: #1C1916;
+  color: #F5F1EA;
+  font-size: 9px;
+  font-weight: 500;
+  padding: 2px 7px;
+  border-radius: 20px;
+  letter-spacing: 0;
+  text-transform: none;
+}
+
+/* Shared avatar mock */
+.av {
+  width: 32px; height: 32px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  font-weight: 500;
+  color: #fff;
+  flex-shrink: 0;
+  overflow: hidden;
+}
+
+/* ══════════════════════════════════════
+   A · 深色奖杯卡  ★ 推荐
+══════════════════════════════════════ */
+.card-a {
+  background: #1C1916;
+  border-radius: 16px;
+  overflow: hidden;
+}
+.card-a .hdr {
+  display: flex; align-items: center;
+  padding: 14px 16px;
+  border-bottom: 1px solid rgba(255,255,255,.1);
+}
+.card-a .brand {
+  display: flex; align-items: center; gap: 6px;
+  font-size: 13px; font-weight: 500;
+  color: rgba(245,241,234,.55);
+  flex: 1;
+}
+.card-a .paw-icon {
+  width: 22px; height: 22px;
+  background: rgba(255,255,255,.1);
+  border-radius: 6px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 13px;
+}
+.card-a .date { font-size: 12px; color: rgba(245,241,234,.38); }
+.card-a .rows { padding: 5px 0; }
+.card-a .row {
+  display: flex; align-items: center; gap: 10px;
+  padding: 10px 16px;
+}
+.card-a .row + .row { border-top: 1px solid rgba(255,255,255,.06); }
+.card-a .rank {
+  width: 26px; text-align: center;
+  font-size: 12px; color: rgba(245,241,234,.3);
+  flex-shrink: 0; line-height: 1;
+}
+.card-a .rank.m { font-size: 19px; color: inherit; }
+.card-a .name {
+  font-size: 15px; font-weight: 500;
+  color: #F5F1EA; flex: 1;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.card-a .pnl {
+  font-size: 20px; font-weight: 500;
+  letter-spacing: -.5px; flex-shrink: 0;
+}
+.card-a .w { color: #4ADE80; }
+.card-a .l { color: #F87171; }
+.card-a .z { color: rgba(245,241,234,.38); }
+.card-a .ftr {
+  display: flex; align-items: center; justify-content: center;
+  padding: 10px 16px 13px;
+  border-top: 1px solid rgba(255,255,255,.1);
+  font-size: 12px; font-weight: 500;
+  color: rgba(74,222,128,.65);
+}
+
+/* ══════════════════════════════════════
+   B · 渐变暗金
+══════════════════════════════════════ */
+.card-b {
+  background: linear-gradient(155deg, #201B0E 0%, #161310 100%);
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: inset 0 0 0 1px rgba(212,180,100,.18);
+}
+.card-b .top-bar {
+  height: 2px;
+  background: linear-gradient(90deg, transparent 5%, rgba(212,180,100,.75) 45%, rgba(212,180,100,.75) 55%, transparent 95%);
+}
+.card-b .hdr {
+  display: flex; align-items: center;
+  padding: 13px 16px 12px;
+  border-bottom: 1px solid rgba(255,255,255,.08);
+}
+.card-b .brand {
+  display: flex; align-items: center; gap: 6px;
+  font-size: 13px; font-weight: 500;
+  color: rgba(212,180,100,.7);
+  flex: 1;
+}
+.card-b .paw-icon {
+  width: 22px; height: 22px;
+  background: rgba(212,180,100,.12);
+  border-radius: 6px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 13px;
+}
+.card-b .date { font-size: 12px; color: rgba(255,255,255,.28); }
+.card-b .rows { padding: 5px 0; }
+.card-b .row {
+  display: flex; align-items: center; gap: 10px;
+  padding: 10px 16px;
+}
+.card-b .row + .row { border-top: 1px solid rgba(255,255,255,.05); }
+.card-b .rank {
+  width: 26px; text-align: center;
+  font-size: 12px; color: rgba(255,255,255,.22);
+  flex-shrink: 0; line-height: 1;
+}
+.card-b .rank.m { font-size: 19px; color: inherit; }
+.card-b .name {
+  font-size: 15px; font-weight: 500;
+  color: rgba(255,255,255,.82); flex: 1;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.card-b .row.first .name { color: rgba(212,180,100,.95); }
+.card-b .pnl {
+  font-size: 20px; font-weight: 500;
+  letter-spacing: -.5px; flex-shrink: 0;
+}
+.card-b .w { color: #50D488; }
+.card-b .l { color: #E06868; }
+.card-b .z { color: rgba(255,255,255,.3); }
+.card-b .ftr {
+  display: flex; align-items: center; justify-content: center;
+  padding: 10px 16px 13px;
+  border-top: 1px solid rgba(255,255,255,.07);
+  font-size: 12px; font-weight: 500;
+  color: rgba(80,212,136,.6);
+}
+
+/* ══════════════════════════════════════
+   C · 浅色精简（升级版）
+══════════════════════════════════════ */
+.card-c {
+  background: #FAF7F1;
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: 0 0 0 1px rgba(66,67,67,.12);
+}
+.card-c .hdr {
+  display: flex; align-items: center;
+  padding: 13px 16px;
+  border-bottom: 1px solid rgba(66,67,67,.1);
+}
+.card-c .brand {
+  display: flex; align-items: center; gap: 6px;
+  font-size: 13px; font-weight: 500;
+  color: #424343; flex: 1;
+}
+.card-c .paw-icon {
+  width: 22px; height: 22px;
+  background: #fff;
+  border-radius: 6px;
+  border: 1px solid rgba(66,67,67,.1);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 13px;
+}
+.card-c .date { font-size: 12px; color: #AAA; }
+.card-c .rows { padding: 4px 0; }
+.card-c .row {
+  display: flex; align-items: center; gap: 10px;
+  padding: 10px 16px;
+}
+.card-c .row + .row { border-top: 1px solid rgba(66,67,67,.07); }
+.card-c .rank {
+  width: 26px; text-align: center;
+  font-size: 12px; color: #C8C4BC;
+  flex-shrink: 0; line-height: 1;
+}
+.card-c .rank.m { font-size: 19px; color: inherit; }
+.card-c .name {
+  font-size: 15px; font-weight: 500;
+  color: #2A2724; flex: 1;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.card-c .pnl {
+  font-size: 20px; font-weight: 500;
+  letter-spacing: -.5px; flex-shrink: 0;
+}
+.card-c .w { color: #1B9A46; }
+.card-c .l { color: #CC3030; }
+.card-c .z { color: #BBB; }
+.card-c .ftr {
+  display: flex; align-items: center; justify-content: center;
+  padding: 10px 16px 13px;
+  border-top: 1px solid rgba(66,67,67,.09);
+  font-size: 12px; font-weight: 500;
+  color: #1B9A46;
+}
+
+/* ══════════════════════════════════════
+   D · 夜场霓虹
+══════════════════════════════════════ */
+.card-d {
+  background: #111218;
+  border-radius: 16px;
+  overflow: hidden;
+}
+.card-d .hdr {
+  display: flex; align-items: center;
+  padding: 14px 16px;
+  border-bottom: 1px solid rgba(255,255,255,.07);
+}
+.card-d .brand {
+  display: flex; align-items: center; gap: 6px;
+  font-size: 13px; font-weight: 500;
+  color: rgba(255,255,255,.45);
+  flex: 1;
+}
+.card-d .paw-icon {
+  width: 22px; height: 22px;
+  background: rgba(255,255,255,.07);
+  border-radius: 6px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 13px;
+}
+.card-d .date { font-size: 12px; color: rgba(255,255,255,.28); }
+.card-d .rows { padding: 4px 0; }
+.card-d .row {
+  display: flex; align-items: center; gap: 10px;
+  padding: 10px 16px;
+}
+.card-d .row + .row { border-top: 1px solid rgba(255,255,255,.05); }
+.card-d .rank {
+  width: 26px; text-align: center;
+  font-size: 12px; color: rgba(255,255,255,.18);
+  flex-shrink: 0; line-height: 1;
+}
+.card-d .rank.m { font-size: 19px; color: inherit; }
+.card-d .name {
+  font-size: 15px; font-weight: 500;
+  color: rgba(255,255,255,.82); flex: 1;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.card-d .pnl {
+  font-size: 20px; font-weight: 500;
+  letter-spacing: -.5px; flex-shrink: 0;
+}
+.card-d .w { color: #2EE89A; text-shadow: 0 0 14px rgba(46,232,154,.4); }
+.card-d .l { color: #FF6B6B; text-shadow: 0 0 14px rgba(255,107,107,.35); }
+.card-d .z { color: rgba(255,255,255,.28); }
+.card-d .ftr {
+  display: flex; align-items: center; justify-content: center;
+  padding: 10px 16px 13px;
+  border-top: 1px solid rgba(255,255,255,.06);
+  font-size: 12px; font-weight: 500;
+  color: rgba(46,232,154,.55);
+}
+</style>
+</head>
+<body>
+
+<!-- OPTION A -->
+<div>
+  <div class="label">A · 深色奖杯卡 <span class="rec">★ 推荐</span></div>
+  <div class="card-a">
+    <div class="hdr">
+      <div class="brand"><div class="paw-icon">🐾</div> 猫店德州结算</div>
+      <div class="date">2024/6/21</div>
+    </div>
+    <div class="rows">
+      <div class="row">
+        <span class="rank m">🥇</span>
+        <div class="av" style="background:#7E9E78">T</div>
+        <div class="name">Tina</div>
+        <div class="pnl w">+1400</div>
+      </div>
+      <div class="row">
+        <span class="rank m">🥈</span>
+        <div class="av" style="background:#7878A8">小</div>
+        <div class="name">小明</div>
+        <div class="pnl w">+600</div>
+      </div>
+      <div class="row">
+        <span class="rank m">🥉</span>
+        <div class="av" style="background:#A87848">阿</div>
+        <div class="name">阿强</div>
+        <div class="pnl l">-200</div>
+      </div>
+      <div class="row">
+        <span class="rank">4</span>
+        <div class="av" style="background:#588898">猫</div>
+        <div class="name">猫猫</div>
+        <div class="pnl l">-800</div>
+      </div>
+      <div class="row">
+        <span class="rank">5</span>
+        <div class="av" style="background:#987058">大</div>
+        <div class="name">大头</div>
+        <div class="pnl l">-1000</div>
+      </div>
+    </div>
+    <div class="ftr">✓ 零和验证通过</div>
+  </div>
+</div>
+
+<!-- OPTION B -->
+<div>
+  <div class="label">B · 渐变暗金（冠军名字金色）</div>
+  <div class="card-b">
+    <div class="top-bar"></div>
+    <div class="hdr">
+      <div class="brand"><div class="paw-icon">🐾</div> 猫店德州结算</div>
+      <div class="date">2024/6/21</div>
+    </div>
+    <div class="rows">
+      <div class="row first">
+        <span class="rank m">🥇</span>
+        <div class="av" style="background:#4A3C1A">T</div>
+        <div class="name">Tina</div>
+        <div class="pnl w">+1400</div>
+      </div>
+      <div class="row">
+        <span class="rank m">🥈</span>
+        <div class="av" style="background:#2A2A48">小</div>
+        <div class="name">小明</div>
+        <div class="pnl w">+600</div>
+      </div>
+      <div class="row">
+        <span class="rank m">🥉</span>
+        <div class="av" style="background:#3A2810">阿</div>
+        <div class="name">阿强</div>
+        <div class="pnl l">-200</div>
+      </div>
+      <div class="row">
+        <span class="rank">4</span>
+        <div class="av" style="background:#182030">猫</div>
+        <div class="name">猫猫</div>
+        <div class="pnl l">-800</div>
+      </div>
+      <div class="row">
+        <span class="rank">5</span>
+        <div class="av" style="background:#2C1E14">大</div>
+        <div class="name">大头</div>
+        <div class="pnl l">-1000</div>
+      </div>
+    </div>
+    <div class="ftr">✓ 零和验证通过</div>
+  </div>
+</div>
+
+<!-- OPTION C -->
+<div>
+  <div class="label">C · 浅色精简（和现在风格一致）</div>
+  <div class="card-c">
+    <div class="hdr">
+      <div class="brand"><div class="paw-icon">🐾</div> 猫店德州结算</div>
+      <div class="date">2024/6/21</div>
+    </div>
+    <div class="rows">
+      <div class="row">
+        <span class="rank m">🥇</span>
+        <div class="av" style="background:#7E9E78">T</div>
+        <div class="name">Tina</div>
+        <div class="pnl w">+1400</div>
+      </div>
+      <div class="row">
+        <span class="rank m">🥈</span>
+        <div class="av" style="background:#7878A8">小</div>
+        <div class="name">小明</div>
+        <div class="pnl w">+600</div>
+      </div>
+      <div class="row">
+        <span class="rank m">🥉</span>
+        <div class="av" style="background:#A87848">阿</div>
+        <div class="name">阿强</div>
+        <div class="pnl l">-200</div>
+      </div>
+      <div class="row">
+        <span class="rank">4</span>
+        <div class="av" style="background:#588898">猫</div>
+        <div class="name">猫猫</div>
+        <div class="pnl l">-800</div>
+      </div>
+      <div class="row">
+        <span class="rank">5</span>
+        <div class="av" style="background:#987058">大</div>
+        <div class="name">大头</div>
+        <div class="pnl l">-1000</div>
+      </div>
+    </div>
+    <div class="ftr">✓ 零和验证通过</div>
+  </div>
+</div>
+
+<!-- OPTION D -->
+<div>
+  <div class="label">D · 夜场霓虹（发光效果）</div>
+  <div class="card-d">
+    <div class="hdr">
+      <div class="brand"><div class="paw-icon">🐾</div> 猫店德州结算</div>
+      <div class="date">2024/6/21</div>
+    </div>
+    <div class="rows">
+      <div class="row">
+        <span class="rank m">🥇</span>
+        <div class="av" style="background:#1C3428">T</div>
+        <div class="name">Tina</div>
+        <div class="pnl w">+1400</div>
+      </div>
+      <div class="row">
+        <span class="rank m">🥈</span>
+        <div class="av" style="background:#1E1E38">小</div>
+        <div class="name">小明</div>
+        <div class="pnl w">+600</div>
+      </div>
+      <div class="row">
+        <span class="rank m">🥉</span>
+        <div class="av" style="background:#301A0A">阿</div>
+        <div class="name">阿强</div>
+        <div class="pnl l">-200</div>
+      </div>
+      <div class="row">
+        <span class="rank">4</span>
+        <div class="av" style="background:#141828">猫</div>
+        <div class="name">猫猫</div>
+        <div class="pnl l">-800</div>
+      </div>
+      <div class="row">
+        <span class="rank">5</span>
+        <div class="av" style="background:#221612">大</div>
+        <div class="name">大头</div>
+        <div class="pnl l">-1000</div>
+      </div>
+    </div>
+    <div class="ftr">✓ 零和验证通过</div>
+  </div>
+</div>
+
+</body>
+</html>

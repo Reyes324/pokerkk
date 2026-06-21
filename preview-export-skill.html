@@ -1,0 +1,615 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>导出卡片 · 设计稿</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;700&family=Noto+Serif+SC:wght@500;600&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  background: #B8B0A6;
+  min-height: 100vh;
+  padding: 32px 16px 64px;
+  font-family: 'Noto Sans SC', 'PingFang SC', system-ui, sans-serif;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 48px;
+}
+
+/* ── Preview labels ── */
+.preview-block { width: 100%; max-width: 375px; }
+.preview-meta {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+.preview-tag {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 1.2px;
+  text-transform: uppercase;
+  color: rgba(0,0,0,.35);
+}
+.preview-name {
+  font-size: 13px;
+  font-weight: 500;
+  color: rgba(0,0,0,.55);
+}
+.badge-rec {
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: .5px;
+  background: #2B2722;
+  color: #F5F1EA;
+  padding: 2px 8px;
+  border-radius: 99px;
+  text-transform: uppercase;
+}
+
+/* ── Shared avatar chip ── */
+.av {
+  width: 34px; height: 34px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  font-weight: 500;
+  color: #fff;
+  flex-shrink: 0;
+  position: relative;
+  overflow: hidden;
+}
+.av img { width: 100%; height: 100%; object-fit: cover; }
+
+
+/* ══════════════════════════════════════════════
+   CARD 1 — NIGHTFALL  ★ 推荐
+   设计主张：牌局结束，夜场氛围。深暖底色 + 发光
+   数字。像高级俱乐部的内场结算屏。
+══════════════════════════════════════════════ */
+.c1 {
+  background: #1A1410;
+  border-radius: 18px;
+  overflow: hidden;
+}
+
+.c1-header {
+  display: flex;
+  align-items: center;
+  padding: 15px 18px 13px;
+}
+.c1-brand {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  flex: 1;
+}
+.c1-paw {
+  width: 24px; height: 24px;
+  background: rgba(245,241,234,.1);
+  border-radius: 7px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 14px;
+}
+.c1-title {
+  font-size: 13px;
+  font-weight: 500;
+  color: rgba(245,241,234,.5);
+  letter-spacing: .3px;
+}
+.c1-date {
+  font-size: 11px;
+  color: rgba(245,241,234,.28);
+  letter-spacing: .2px;
+}
+
+/* Divider */
+.c1-div {
+  height: 1px;
+  background: linear-gradient(90deg,
+    transparent 0%,
+    rgba(245,241,234,.12) 20%,
+    rgba(245,241,234,.12) 80%,
+    transparent 100%);
+  margin: 0 18px;
+}
+
+.c1-rows { padding: 4px 0 6px; }
+.c1-row {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  padding: 11px 18px;
+  position: relative;
+}
+.c1-row + .c1-row::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 18px; right: 18px;
+  height: 1px;
+  background: rgba(245,241,234,.06);
+}
+
+.c1-rank {
+  width: 28px;
+  text-align: center;
+  flex-shrink: 0;
+  line-height: 1;
+}
+.c1-rank.num {
+  font-size: 12px;
+  color: rgba(245,241,234,.25);
+  font-weight: 500;
+}
+.c1-rank.medal { font-size: 20px; }
+
+.c1-name {
+  font-size: 15px;
+  font-weight: 500;
+  color: rgba(245,241,234,.88);
+  flex: 1;
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.c1-pnl {
+  font-size: 22px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -.5px;
+  flex-shrink: 0;
+  min-width: 76px;
+  text-align: right;
+}
+.c1-pnl.win { color: #52E08C; }
+.c1-pnl.lose { color: #F07070; }
+.c1-pnl.zero { color: rgba(245,241,234,.3); }
+
+.c1-footer {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  padding: 10px 18px 14px;
+  font-size: 11px;
+  font-weight: 500;
+  color: rgba(245,241,234,.3);
+  border-top: 1px solid rgba(245,241,234,.07);
+  margin-top: 2px;
+}
+.c1-footer .dot {
+  width: 5px; height: 5px;
+  border-radius: 50%;
+  background: rgba(82,224,140,.5);
+  flex-shrink: 0;
+}
+
+
+/* ══════════════════════════════════════════════
+   CARD 2 — BROADSHEET
+   设计主张：报纸体育版结果榜。大号水印序号制造
+   纵深感；冠军行左侧绿线。纯排版驱动。
+══════════════════════════════════════════════ */
+.c2 {
+  background: #F5F1EA;
+  border-radius: 18px;
+  overflow: hidden;
+}
+
+.c2-header {
+  padding: 16px 18px 14px;
+  display: flex;
+  align-items: center;
+  border-bottom: 2px solid #2B2722;
+}
+.c2-brand {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  flex: 1;
+}
+.c2-paw {
+  width: 24px; height: 24px;
+  background: #2B2722;
+  border-radius: 7px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 14px;
+}
+.c2-title {
+  font-size: 13px;
+  font-weight: 700;
+  color: #2B2722;
+  letter-spacing: .3px;
+}
+.c2-date {
+  font-size: 11px;
+  font-weight: 500;
+  color: #A8A095;
+}
+
+.c2-rows { padding: 0; }
+.c2-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 11px 18px;
+  position: relative;
+  overflow: hidden;
+}
+.c2-row + .c2-row {
+  border-top: 1px solid #ECE6DC;
+}
+.c2-row.top {
+  background: rgba(62,142,79,.05);
+}
+.c2-row.top::before {
+  content: '';
+  position: absolute;
+  left: 0; top: 0; bottom: 0;
+  width: 3px;
+  background: #3E8E4F;
+}
+
+/* Watermark rank number behind row */
+.c2-wm {
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 72px;
+  font-weight: 700;
+  color: rgba(43,39,34,.05);
+  line-height: 1;
+  pointer-events: none;
+  letter-spacing: -4px;
+  font-variant-numeric: tabular-nums;
+}
+
+.c2-rank {
+  width: 28px;
+  text-align: center;
+  flex-shrink: 0;
+  line-height: 1;
+}
+.c2-rank.num {
+  font-size: 12px;
+  color: #A8A095;
+  font-weight: 500;
+}
+.c2-rank.medal { font-size: 20px; }
+
+.c2-name {
+  font-size: 15px;
+  font-weight: 500;
+  color: #2B2722;
+  flex: 1;
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.c2-pnl {
+  font-size: 22px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -.5px;
+  flex-shrink: 0;
+  min-width: 76px;
+  text-align: right;
+  position: relative;
+  z-index: 1;
+}
+.c2-pnl.win { color: #3E8E4F; }
+.c2-pnl.lose { color: #C8453A; }
+.c2-pnl.zero { color: #A8A095; }
+
+.c2-footer {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 10px 18px 13px;
+  font-size: 11px;
+  font-weight: 500;
+  color: #A8A095;
+  border-top: 1px solid #ECE6DC;
+}
+.c2-footer .tick {
+  font-size: 10px;
+  color: #3E8E4F;
+}
+
+
+/* ══════════════════════════════════════════════
+   CARD 3 — INVITATION
+   设计主张：上下分栏。深色顶部（品牌区 + 本局标
+   题）衬托浅色主体（排行列表）。像活动邀请函或
+   赛事成绩单，结构性更强。
+══════════════════════════════════════════════ */
+.c3 {
+  border-radius: 18px;
+  overflow: hidden;
+}
+
+.c3-top {
+  background: #2B2722;
+  padding: 14px 20px 16px;
+}
+.c3-paw {
+  font-size: 12px;
+}
+.c3-headline {
+  font-family: 'Noto Serif SC', 'Noto Sans SC', serif;
+  font-size: 22px;
+  font-weight: 600;
+  color: #F5F1EA;
+  line-height: 1.15;
+  letter-spacing: -.2px;
+  margin-bottom: 5px;
+}
+.c3-sub {
+  font-size: 11px;
+  color: rgba(245,241,234,.38);
+  font-weight: 400;
+  letter-spacing: .2px;
+  display: flex;
+  align-items: center;
+  gap: 3px;
+}
+
+.c3-body {
+  background: #FAF7F1;
+  padding: 6px 0;
+}
+
+.c3-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 11px 20px;
+  position: relative;
+}
+.c3-row + .c3-row {
+  border-top: 1px solid rgba(43,39,34,.07);
+}
+
+.c3-rank {
+  width: 28px;
+  text-align: center;
+  flex-shrink: 0;
+  line-height: 1;
+}
+.c3-rank.num {
+  font-size: 12px;
+  color: #C4BDB5;
+  font-weight: 500;
+}
+.c3-rank.medal { font-size: 20px; }
+
+.c3-name {
+  font-size: 15px;
+  font-weight: 500;
+  color: #2B2722;
+  flex: 1;
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.c3-pnl {
+  font-size: 22px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -.5px;
+  flex-shrink: 0;
+  min-width: 76px;
+  text-align: right;
+}
+.c3-pnl.win { color: #3E8E4F; }
+.c3-pnl.lose { color: #C8453A; }
+.c3-pnl.zero { color: #B0A898; }
+
+.c3-footer {
+  background: #2B2722;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 10px 20px 13px;
+  font-size: 11px;
+  font-weight: 500;
+  color: rgba(245,241,234,.35);
+}
+.c3-check {
+  width: 16px; height: 16px;
+  border-radius: 50%;
+  border: 1px solid rgba(82,224,140,.35);
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+}
+</style>
+</head>
+<body>
+
+<!-- ══ CARD 1 — NIGHTFALL ══ -->
+<div class="preview-block">
+  <div class="preview-meta">
+    <span class="preview-tag">A</span>
+    <span class="preview-name">NIGHTFALL · 夜场结算</span>
+    <span class="badge-rec">★ 推荐</span>
+  </div>
+  <div class="c1">
+    <div class="c1-header">
+      <div class="c1-brand">
+        <div class="c1-paw">🐾</div>
+        <span class="c1-title">猫店德州结算</span>
+      </div>
+      <span class="c1-date">2024年6月21日</span>
+    </div>
+    <div class="c1-div"></div>
+    <div class="c1-rows">
+      <div class="c1-row">
+        <span class="c1-rank medal">🥇</span>
+        <div class="av" style="background:#5C8C5A">T</div>
+        <div class="c1-name">Tina</div>
+        <div class="c1-pnl win">+1400</div>
+      </div>
+      <div class="c1-row">
+        <span class="c1-rank medal">🥈</span>
+        <div class="av" style="background:#5A5A9A">小</div>
+        <div class="c1-name">小明</div>
+        <div class="c1-pnl win">+600</div>
+      </div>
+      <div class="c1-row">
+        <span class="c1-rank medal">🥉</span>
+        <div class="av" style="background:#8A6038">阿</div>
+        <div class="c1-name">阿强</div>
+        <div class="c1-pnl lose">-200</div>
+      </div>
+      <div class="c1-row">
+        <span class="c1-rank num">4</span>
+        <div class="av" style="background:#3A7080">猫</div>
+        <div class="c1-name">猫猫</div>
+        <div class="c1-pnl lose">-800</div>
+      </div>
+      <div class="c1-row">
+        <span class="c1-rank num">5</span>
+        <div class="av" style="background:#7A5040">大</div>
+        <div class="c1-name">大头</div>
+        <div class="c1-pnl lose">-1000</div>
+      </div>
+    </div>
+    <div class="c1-footer">
+      <div class="dot"></div>
+      零和验证通过 · ∑ = 0
+    </div>
+  </div>
+</div>
+
+<!-- ══ CARD 2 — BROADSHEET ══ -->
+<div class="preview-block">
+  <div class="preview-meta">
+    <span class="preview-tag">B</span>
+    <span class="preview-name">BROADSHEET · 报榜</span>
+  </div>
+  <div class="c2">
+    <div class="c2-header">
+      <div class="c2-brand">
+        <div class="c2-paw">🐾</div>
+        <span class="c2-title">猫店德州结算</span>
+      </div>
+      <span class="c2-date">2024年6月21日</span>
+    </div>
+    <div class="c2-rows">
+      <div class="c2-row top">
+        <div class="c2-wm">1</div>
+        <span class="c2-rank medal">🥇</span>
+        <div class="av" style="background:#5C8C5A">T</div>
+        <div class="c2-name">Tina</div>
+        <div class="c2-pnl win">+1400</div>
+      </div>
+      <div class="c2-row">
+        <div class="c2-wm">2</div>
+        <span class="c2-rank medal">🥈</span>
+        <div class="av" style="background:#5A5A9A">小</div>
+        <div class="c2-name">小明</div>
+        <div class="c2-pnl win">+600</div>
+      </div>
+      <div class="c2-row">
+        <div class="c2-wm">3</div>
+        <span class="c2-rank medal">🥉</span>
+        <div class="av" style="background:#8A6038">阿</div>
+        <div class="c2-name">阿强</div>
+        <div class="c2-pnl lose">-200</div>
+      </div>
+      <div class="c2-row">
+        <div class="c2-wm">4</div>
+        <span class="c2-rank num">4</span>
+        <div class="av" style="background:#3A7080">猫</div>
+        <div class="c2-name">猫猫</div>
+        <div class="c2-pnl lose">-800</div>
+      </div>
+      <div class="c2-row">
+        <div class="c2-wm">5</div>
+        <span class="c2-rank num">5</span>
+        <div class="av" style="background:#7A5040">大</div>
+        <div class="c2-name">大头</div>
+        <div class="c2-pnl lose">-1000</div>
+      </div>
+    </div>
+    <div class="c2-footer">
+      <span class="tick">✓</span>
+      零和验证通过 · ∑ = 0
+    </div>
+  </div>
+</div>
+
+<!-- ══ CARD 3 — INVITATION (refined) ══ -->
+<div class="preview-block">
+  <div class="preview-meta">
+    <span class="preview-tag">C</span>
+    <span class="preview-name">INVITATION · 成绩单</span>
+    <span class="badge-rec">★ 推荐</span>
+  </div>
+  <div class="c3">
+    <div class="c3-top">
+      <div class="c3-headline">本局结算</div>
+      <div class="c3-sub">
+        <span class="c3-paw">🐾</span> 猫店德州&ensp;·&ensp;2024年6月21日
+      </div>
+    </div>
+    <div class="c3-body">
+      <div class="c3-row">
+        <span class="c3-rank medal">🥇</span>
+        <div class="av"><img src="img/avatars/cat-03.png" alt=""></div>
+        <div class="c3-name">Tina</div>
+        <div class="c3-pnl win">+1400</div>
+      </div>
+      <div class="c3-row">
+        <span class="c3-rank medal">🥈</span>
+        <div class="av"><img src="img/avatars/cat-11.png" alt=""></div>
+        <div class="c3-name">小明</div>
+        <div class="c3-pnl win">+600</div>
+      </div>
+      <div class="c3-row">
+        <span class="c3-rank medal">🥉</span>
+        <div class="av"><img src="img/avatars/cat-07.png" alt=""></div>
+        <div class="c3-name">阿强</div>
+        <div class="c3-pnl lose">-200</div>
+      </div>
+      <div class="c3-row">
+        <span class="c3-rank num">4</span>
+        <div class="av"><img src="img/avatars/cat-15.png" alt=""></div>
+        <div class="c3-name">猫猫</div>
+        <div class="c3-pnl lose">-800</div>
+      </div>
+      <div class="c3-row">
+        <span class="c3-rank num">5</span>
+        <div class="av"><img src="img/avatars/cat-22.png" alt=""></div>
+        <div class="c3-name">大头</div>
+        <div class="c3-pnl lose">-1000</div>
+      </div>
+    </div>
+    <div class="c3-footer">
+      <div class="c3-check">
+        <svg width="10" height="10" viewBox="0 0 10 10" fill="none">
+          <path d="M1.5 5l2.5 2.5 4.5-4.5" stroke="#52E08C" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </div>
+      零和验证通过
+    </div>
+  </div>
+</div>
+
+</body>
+</html>
