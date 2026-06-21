@@ -336,47 +336,45 @@ function openExportModal() {
     const totalPnl = sorted.reduce((s, r) => s + r.pnl, 0);
     const isBalanced = totalPnl === 0;
 
-    // Set date
+    // Set date + time with seconds
     const now = new Date();
+    const timeStr = `${now.getHours()}:${String(now.getMinutes()).padStart(2,'0')}:${String(now.getSeconds()).padStart(2,'0')}`;
     document.getElementById('export-date').textContent =
-        `${now.getFullYear()}/${now.getMonth()+1}/${now.getDate()} ${now.getHours()}:${String(now.getMinutes()).padStart(2,'0')}`;
+        `${now.getFullYear()}/${now.getMonth()+1}/${now.getDate()} ${timeStr}`;
 
-    // Build table
-    document.getElementById('export-table-wrap').innerHTML = `
-        <table class="export-table">
-            <thead><tr><th>玩家</th><th>持筹</th><th>投入</th><th>盈亏</th></tr></thead>
-            <tbody>${sorted.map(r => `
-                <tr class="${r.pnl > 0 ? 'win' : r.pnl < 0 ? 'lose' : ''}">
-                    <td class="export-name-cell">
-                        <div class="avatar-circle sm" style="background:${getAvatarBgFor(r)}">${getAvatarContent(r)}</div>
-                        ${escHtml(r.name)}
-                    </td>
-                    <td>${r.chipTotal}</td>
-                    <td>${r.invested}</td>
-                    <td>${formatPnl(r.pnl)}</td>
-                </tr>`).join('')}
-            </tbody>
-        </table>`;
-
-    document.getElementById('export-badge').innerHTML = `
-        <div class="${isBalanced ? 'badge-balanced' : 'badge-unbalanced'}" style="margin-top:10px">
-            ${isBalanced ? '✓ 总盈亏 = 0，验证通过' : `✗ 总盈亏 = ${formatPnl(totalPnl)}，请检查`}
+    // Build player rows
+    const medals = ['🥇','🥈','🥉'];
+    const rowsHtml = sorted.map((r, i) => {
+        const rankHtml = i < 3
+            ? `<span class="export-rank medal">${medals[i]}</span>`
+            : `<span class="export-rank num">${i + 1}</span>`;
+        const pnlClass = r.pnl > 0 ? 'win' : r.pnl < 0 ? 'lose' : 'zero';
+        return `<div class="export-player-row">
+            ${rankHtml}
+            <div class="avatar-circle sm" style="background:${getAvatarBgFor(r)}">${getAvatarContent(r)}</div>
+            <div class="export-player-name">${escHtml(r.name)}</div>
+            <div class="export-pnl ${pnlClass}">${formatPnl(r.pnl)}</div>
         </div>`;
+    }).join('');
+    document.getElementById('export-table-wrap').innerHTML =
+        `<div class="export-player-list">${rowsHtml}</div>`;
+
+    const checkSvg = `<svg width="9" height="9" viewBox="0 0 10 10" fill="none"><path d="M1.5 5l2.5 2.5 4.5-4.5" stroke="#3E8E4F" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
+    document.getElementById('export-badge').innerHTML = isBalanced
+        ? `<div class="export-card-footer balanced"><div class="export-check-circle">${checkSvg}</div>零和验证通过</div>`
+        : `<div class="export-card-footer unbalanced">✗ 总盈亏 = ${formatPnl(totalPnl)}，请检查</div>`;
 
     // Reset image state
     document.getElementById('export-image').style.display = 'none';
     document.getElementById('export-card').style.display = 'block';
-    document.getElementById('btn-generate-img').style.display = 'flex';
-
     openModal('export-modal');
 }
 
 function generateImage() {
     const card = document.getElementById('export-card');
-    document.getElementById('btn-generate-img').textContent = '生成中...';
     html2canvas(card, {
         scale: 2,
-        backgroundColor: '#ffffff',
+        backgroundColor: null,
         useCORS: true,
         logging: false
     }).then(canvas => {
@@ -384,11 +382,9 @@ function generateImage() {
         img.src = canvas.toDataURL('image/png');
         img.style.display = 'block';
         card.style.display = 'none';
-        document.getElementById('btn-generate-img').style.display = 'none';
         showToast('长按图片保存到相册');
     }).catch(() => {
         showToast('生成图片失败，请截图保存');
-        document.getElementById('btn-generate-img').textContent = '生成图片';
     });
 }
 
@@ -1043,7 +1039,8 @@ function formatDateTime(date) {
     const weekdays = ['周日','周一','周二','周三','周四','周五','周六'];
     const H = String(date.getHours()).padStart(2, '0');
     const min = String(date.getMinutes()).padStart(2, '0');
-    return M + '月' + D + '日 ' + weekdays[date.getDay()] + ' ' + H + ':' + min;
+    const sec = String(date.getSeconds()).padStart(2, '0');
+    return M + '月' + D + '日 ' + weekdays[date.getDay()] + ' ' + H + ':' + min + ':' + sec;
 }
 function formatDateWeekday(date) {
     const M = date.getMonth() + 1;
@@ -1086,11 +1083,18 @@ function confirmEndRound() {
         if (p.avatarRef) entry.avatarRef = p.avatarRef;
         results['p' + i] = entry;
     });
-    gameRef.child('rounds').push({ timestamp: now, results });
-    closeModal('end-round-modal', () => {
-        showToast('本局已存档');
-        openExportModal();
-        setTimeout(generateImage, 350);
+    const btn = document.getElementById('btn-confirm-archive');
+    if (btn) { btn.textContent = '存档中…'; btn.disabled = true; }
+    gameRef.child('rounds').push({ timestamp: now, results }, err => {
+        if (btn) { btn.textContent = '确认存档'; btn.disabled = false; }
+        if (err) { showToast('存档失败，请检查网络'); return; }
+        closeModal('export-modal', () => {
+            showToast('已存档，筹码已重置');
+            gameRef.child('status').set('waiting');
+            gameRef.child('players').set(
+                players.map(p => ({ ...p, n10: 0, n20: 0, n50: 0, n100: 0, buyIns: 0, confirmed: false }))
+            );
+        });
     });
 }
 
@@ -1184,7 +1188,7 @@ function renderRoundsTab() {
             '<div class="player-card-main">' +
             checkHtml +
             '<div class="player-name-col">' +
-            '<div style="font-size:15px;font-weight:500;color:var(--ink-1)">第 ' + (i + 1) + ' 局</div>' +
+            '<div style="font-size:15px;font-weight:400;color:var(--ink-1)">第 ' + (i + 1) + ' 局</div>' +
             '<div style="font-size:12px;color:var(--ink-3);margin-top:2px">' + timeStr + ' · ' + playerList.length + '人</div>' +
             '</div>' +
             '<div class="player-pnl-col">' +
@@ -1213,7 +1217,7 @@ function renderAggregationsTab() {
             '<div class="player-card" onclick="openAggDetailModal(\'' + id + '\')">' +
             '<div class="player-card-main">' +
             '<div class="player-name-col">' +
-            '<div style="font-size:15px;font-weight:500;color:var(--ink-1)">' + escHtml(agg.label) + '</div>' +
+            '<div style="font-size:15px;font-weight:400;color:var(--ink-1)">' + escHtml(agg.label) + '</div>' +
             '<div style="font-size:12px;color:var(--ink-3);margin-top:2px">共 ' + agg.roundCount + ' 局 · ' + pCount + '人</div>' +
             '</div>' +
             '<div class="card-chevron"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="9 18 15 12 9 6"/></svg></div>' +
@@ -1519,7 +1523,8 @@ function openAggDetailModal(aggId) {
 document.getElementById('btn-add-player').addEventListener('click', addPlayer);
 document.getElementById('btn-reset-soft').addEventListener('click', showResetModal);
 document.getElementById('btn-export').addEventListener('click', openExportModal);
-document.getElementById('btn-generate-img').addEventListener('click', generateImage);
+document.getElementById('btn-confirm-archive').addEventListener('click', confirmEndRound);
+document.getElementById('btn-cancel-export').addEventListener('click', () => closeModal('export-modal'));
 document.getElementById('btn-close-export').addEventListener('click', () => closeModal('export-modal'));
 document.getElementById('export-modal').addEventListener('click', e => {
     if (e.target === e.currentTarget) closeModal('export-modal');
@@ -1628,11 +1633,7 @@ if (location.pathname === '/records') {
 document.getElementById('btn-records-select').addEventListener('click', toggleSelectMode);
 document.getElementById('btn-do-aggregate').addEventListener('click', doAggregate);
 
-document.getElementById('btn-end-round').addEventListener('click', openEndRoundModal);
-document.getElementById('btn-close-end-round').addEventListener('click', () => closeModal('end-round-modal'));
-document.getElementById('btn-cancel-end-round').addEventListener('click', () => closeModal('end-round-modal'));
-document.getElementById('btn-confirm-end-round').addEventListener('click', confirmEndRound);
-document.getElementById('end-round-modal').addEventListener('click', e => { if (e.target === e.currentTarget) closeModal('end-round-modal'); });
+document.getElementById('btn-end-round').addEventListener('click', () => { openExportModal(); setTimeout(generateImage, 350); });
 
 document.getElementById('btn-close-round-detail').addEventListener('click', () => closeModal('round-detail-modal'));
 document.getElementById('round-detail-modal').addEventListener('click', e => { if (e.target === e.currentTarget) closeModal('round-detail-modal'); });

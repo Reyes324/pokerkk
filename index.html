@@ -178,11 +178,11 @@
             <!-- The card to be captured as image -->
             <div id="export-card">
                 <div class="export-card-header">
-                    <div class="export-card-logo">
-                        <img src="img/paw.png" alt="猫爪">
-                        猫店德州结算
+                    <div class="export-card-headline">本局结算</div>
+                    <div class="export-card-sub">
+                        <img src="img/paw.png" alt="" class="export-paw-sm">
+                        猫店德州&ensp;·&ensp;<span id="export-date"></span>
                     </div>
-                    <div class="export-card-date" id="export-date"></div>
                 </div>
                 <div id="export-table-wrap"></div>
                 <div id="export-badge"></div>
@@ -191,7 +191,8 @@
             <img id="export-image" style="display:none;width:100%;border-radius:12px" alt="结算结果">
         </div>
         <div class="export-modal-footer">
-            <button class="btn btn-primary" id="btn-generate-img">生成图片</button>
+            <button class="btn btn-primary" id="btn-confirm-archive" style="margin-bottom:8px">确认存档</button>
+            <button class="btn btn-ghost" id="btn-cancel-export">取消</button>
         </div>
     </div>
 </div>
