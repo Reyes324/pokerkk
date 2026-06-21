@@ -669,6 +669,8 @@ function openModal(id) {
     const isPush = overlay.classList.contains('push');
     overlay.classList.remove('hidden');
     document.body.style.overflow = 'hidden';
+    document.body.style.position = 'fixed';
+    document.body.style.width = '100%';
     if (sheet) {
         sheet.style.animation = 'none';
         sheet.offsetHeight; // force reflow
@@ -697,7 +699,11 @@ function closeModal(id, callback) {
             setTimeout(() => {
                 overlay.classList.add('hidden');
                 sheet.style.animation = '';
-                document.body.style.overflow = document.querySelector('.modal-overlay:not(.hidden)') ? 'hidden' : '';
+                if (!document.querySelector('.modal-overlay:not(.hidden)')) {
+                    document.body.style.overflow = '';
+                    document.body.style.position = '';
+                    document.body.style.width = '';
+                }
                 if (callback) callback();
             }, DUR);
         } else {
@@ -710,13 +716,21 @@ function closeModal(id, callback) {
                 sheet.style.animation = '';
                 overlay.style.transition = '';
                 overlay.style.opacity = '';
-                document.body.style.overflow = document.querySelector('.modal-overlay:not(.hidden)') ? 'hidden' : '';
+                if (!document.querySelector('.modal-overlay:not(.hidden)')) {
+                    document.body.style.overflow = '';
+                    document.body.style.position = '';
+                    document.body.style.width = '';
+                }
                 if (callback) callback();
             }, DUR);
         }
     } else {
         overlay.classList.add('hidden');
-        document.body.style.overflow = document.querySelector('.modal-overlay:not(.hidden)') ? 'hidden' : '';
+        if (!document.querySelector('.modal-overlay:not(.hidden)')) {
+            document.body.style.overflow = '';
+            document.body.style.position = '';
+            document.body.style.width = '';
+        }
         if (callback) callback();
     }
 }
