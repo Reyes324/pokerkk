@@ -116,16 +116,16 @@ function clearEditingBy(idx) {
 }
 
 // ── Firebase ───────────────────────────────────────────────────
-gameRef.on('value', snap => {
-    const data = snap.val();
+gameRef.child('players').on('value', snap => {
     isLoading = false;
-    if (!data || !data.players) {
+    const data = snap.val();
+    if (!data) {
         gameRef.set({ status: 'waiting', players: defaultPlayers(3) });
         return;
     }
-    const incoming = Object.keys(data.players)
+    const incoming = Object.keys(data)
         .sort((a, b) => Number(a) - Number(b))
-        .map(k => normalizePlayer(data.players[k]));
+        .map(k => normalizePlayer(data[k]));
 
     // While a chip modal is open, the player being edited is owned by local
     // state — don't let a (possibly stale, mid-debounce) remote echo clobber
@@ -164,6 +164,17 @@ db.ref('sharedAvatars').on('value', snap => {
     if (!document.getElementById('avatar-modal').classList.contains('hidden') && pendingAvatarIdx >= 0) {
         renderAvatarGrid(pendingAvatarIdx);
     }
+});
+
+// Connection status — surface "重连中…" when WebSocket drops (common in WeChat WebView)
+db.ref('.info/connected').on('value', snap => {
+    const el = document.getElementById('conn-indicator');
+    if (el) el.classList.toggle('hidden', snap.val() === true);
+});
+
+// WeChat backgrounds and kills the WebSocket — force reconnect on resume
+document.addEventListener('visibilitychange', () => {
+    if (!document.hidden) db.goOnline();
 });
 
 // Show skeleton immediately on load
@@ -258,8 +269,13 @@ function renderPlayers() {
                     <!-- pnl + chevron — right side -->
                     <div class="player-pnl-col">
                         <div class="pnl-stack">
-                            <span class="pnl-inline ${isConfirmed ? pnlClass : 'placeholder'}">${isConfirmed ? formatPnl(pnl) + ' 分' : '录入筹码'}</span>
-                            ${otherEditing ? '<span class="editing-tag">录入中</span>' : ''}
+                            ${isConfirmed
+                                ? `<div class="pnl-confirmed-row">
+                                       <span class="pnl-inline ${pnlClass}">${formatPnl(pnl)} 分</span>
+                                       ${otherEditing ? '<span class="editing-dot"></span>' : ''}
+                                   </div>`
+                                : `<span class="pnl-inline placeholder">${otherEditing ? '录入中…' : '录入筹码'}</span>`
+                            }
                         </div>
                         <div class="card-chevron">
                             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="9 18 15 12 9 6"/></svg>

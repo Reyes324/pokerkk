@@ -235,6 +235,13 @@ body{
   padding-left:10px;
 }
 .pnl-stack{display:flex;flex-direction:column;align-items:flex-end;gap:3px;}
+.pnl-confirmed-row{display:flex;align-items:center;gap:5px;}
+.editing-dot{
+  width:6px;height:6px;border-radius:50%;
+  background:var(--lose);flex-shrink:0;
+  animation:editing-pulse 1.2s ease-in-out infinite;
+}
+@keyframes editing-pulse{0%,100%{opacity:1}50%{opacity:.25}}
 
 /* P&L value — vivid colors, larger */
 .pnl-inline{font-size:15px;font-weight:600;letter-spacing:-.2px;line-height:1}
@@ -647,6 +654,16 @@ body{
   color: var(--lose);
   white-space: nowrap;
   flex-shrink: 0;
+}
+
+/* Connection status banner — shown when Firebase WebSocket is disconnected */
+.conn-indicator {
+  font-size: 11px; font-weight: 500;
+  color: var(--ink-3);
+  background: var(--n10);
+  border-radius: var(--rfull);
+  padding: 2px 9px;
+  white-space: nowrap;
 }
 
 /* Balance status pill */
