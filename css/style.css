@@ -23,6 +23,16 @@
   --lose:          #C8453A;
   --flat:          #A09A8E;
 
+  /* 成就称号语义色（低饱和、暖色和谐；底+深一档同色字，对比度达标）
+     大赢家为填充主角，其余为柔和淡彩 */
+  --title-champ-bg:    #EBCB7E;  --title-champ-ink:    #5A3F0E;  /* 🏆 今晚大赢家 */
+  --title-fish-bg:     #FBE0D6;  --title-fish-ink:     #A8442E;  /* 快乐源泉 */
+  --title-streak-bg:   #DCEBDD;  --title-streak-ink:   #2F6B3E;  /* 常胜将军 */
+  --title-steady-bg:   #E2E7EE;  --title-steady-ink:   #46566E;  /* 稳如泰山 */
+  --title-comeback-bg: #FBE2CE;  --title-comeback-ink: #8E4A1C;  /* 后程发力 */
+  --title-bigheart-bg: #ECDFEF;  --title-bigheart-ink: #67407A;  /* 大心脏 */
+  --title-fighter-bg:  #D6E9E7;  --title-fighter-ink:  #1C6962;  /* 不服就干 */
+
   /* Ink (text layers) */
   --ink-1:         #2B2722;
   --ink-2:         #6B6358;
@@ -271,6 +281,29 @@ body{
 .pnl-inline.negative{color:var(--pnl-lose)}
 .pnl-inline.neutral{color:var(--text3)}
 .pnl-inline.placeholder{font-size:15px;font-weight:300;color:var(--n60)}
+
+/* ── 成就称号：行内徽标，紧跟在汇总卡排名行的玩家名字后面 ──
+   名字可省略号截断，徽标 flex-shrink:0 不被挤压；徽标比名字小一档(12 vs 15px)，
+   作为名字的"后缀荣誉"，不抢主行的盈亏数字 */
+.agg-name-wrap{display:inline-flex;align-items:center;gap:6px;min-width:0}
+.agg-name{
+  font-size:15px;color:var(--ink-1);
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+}
+/* 称号彩色胶囊标签：每个称号专属低饱和色身份（--tb-bg/--tb-ink 由 JS 按称号注入），
+   定制线性图标 + rfull 胶囊。「今晚大赢家」.champ 为填充主角（更重字 + 轻微抬升） */
+.title-badge{
+  display:inline-flex;align-items:center;gap:4px;flex-shrink:0;
+  padding:3px 9px 3px 7px;border-radius:var(--rfull);
+  background:var(--tb-bg);color:var(--tb-ink);
+  font-size:12px;font-weight:600;line-height:1.4;white-space:nowrap;
+}
+.title-badge svg{width:13px;height:13px;flex-shrink:0}
+.title-badge.champ{
+  font-weight:700;padding:3px 10px 3px 8px;
+  box-shadow:0 1px 2px rgba(110,78,18,.22);
+}
+
 /* chevron — subtle, right of pnl; spacing comes from the col's gap only */
 .card-chevron{
   display:flex;align-items:center;

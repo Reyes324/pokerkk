@@ -66,6 +66,22 @@
 | `--n60` | `#ABA395` | 占位符文字 |
 | `--n80` | `#5C564C` | 深色辅助文字 |
 
+### 2.6 成就称号语义色
+
+汇总战报卡上的「成就称号」彩色徽标用色。低饱和、暖色和谐（参考 Linear/Things 彩色标签，刻意避开赌场金箔炫光）。每个称号一组「底色 + 深一档同色字/图标」，对比度达标。`--title-champ-*`（今晚大赢家）为**填充主角**，其余为柔和淡彩。
+
+| 称号 | 底色 token | 字/图标色 token | 色相 |
+|---|---|---|---|
+| 🏆 今晚大赢家 | `--title-champ-bg` `#EBCB7E` | `--title-champ-ink` `#5A3F0E` | 蜂蜜金（填充主角） |
+| 快乐源泉 | `--title-fish-bg` `#FBE0D6` | `--title-fish-ink` `#A8442E` | 暖珊瑚 |
+| 常胜将军 | `--title-streak-bg` `#DCEBDD` | `--title-streak-ink` `#2F6B3E` | 鼠尾草绿 |
+| 稳如泰山 | `--title-steady-bg` `#E2E7EE` | `--title-steady-ink` `#46566E` | 石板蓝 |
+| 后程发力 | `--title-comeback-bg` `#FBE2CE` | `--title-comeback-ink` `#8E4A1C` | 暖橙 |
+| 大心脏 | `--title-bigheart-bg` `#ECDFEF` | `--title-bigheart-ink` `#67407A` | 暗紫 |
+| 不服就干 | `--title-fighter-bg` `#D6E9E7` | `--title-fighter-ink` `#1C6962` | 青绿 |
+
+**组件 `.title-badge`**：行内彩色胶囊，紧跟在汇总卡排名行的玩家名字后。`--rfull` 胶囊、12px/600、定制单色线性 SVG 图标（描边随字色）。`.title-badge.champ` 为主角变体（700 字重 + 轻微抬升阴影）。颜色由 JS（`renderTitleBadge`，见 `js/night-titles.js`）按称号注入 `--tb-bg`/`--tb-ink`。无入场动效。
+
 ---
 
 ## 三、字体与排版

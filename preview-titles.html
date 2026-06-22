@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>称号系统预览（真实组件）</title>
+<!-- 真实样式 + 真实逻辑，预览所见即线上所得 -->
+<link rel="stylesheet" href="css/style.css?v=22">
+<style>
+  /* 仅为预览页面布局，不触碰任何组件 class */
+  body{background:var(--bg);margin:0;padding:16px;display:flex;flex-direction:column;align-items:center;gap:14px;
+    font-family:var(--font)}
+  .pv-controls{width:100%;max-width:390px;display:flex;gap:6px;flex-wrap:wrap}
+  .pv-btn{flex:1;min-width:90px;padding:8px 10px;border:1px solid var(--n20);background:var(--surface);
+    border-radius:var(--r8);font-family:var(--font);font-size:13px;color:var(--ink-1);cursor:pointer}
+  .pv-btn.active{background:var(--brand-soft);color:var(--brand);border-color:var(--brand);font-weight:500}
+  .pv-note{max-width:390px;font-size:12px;color:var(--ink-3);line-height:1.5}
+  /* 把真实半页 sheet 以静态面板形式摆出来看（仅改定位，不改观感） */
+  .pv-stage{width:100%;max-width:390px}
+  .pv-stage .modal-sheet{position:static;max-height:none;border-radius:var(--r16);box-shadow:var(--sh8);
+    animation:none;transform:none}
+</style>
+</head>
+<body>
+
+<div class="pv-controls" id="scene-btns"></div>
+<div class="pv-note">下面是<b>真实的汇总卡组件</b>（真实 css/style.css + 真实 calcNightTitles + 真实 renderTitleBadge + 真实头像），称号标签直接跟在人名后面。切换场景看门槛与「宁缺毋滥」。</div>
+
+<!-- 真实 summary-result-modal 结构，逐字复刻自 index.html -->
+<div class="pv-stage">
+  <div class="modal-sheet has-scroll-body">
+    <div class="modal-handle"></div>
+    <div class="modal-header">
+      <div>
+        <div style="font-size:16px;font-weight:500">加总结果</div>
+        <div id="summary-result-info" style="font-size:12px;color:var(--ink-3);margin-top:2px;font-weight:400"></div>
+      </div>
+      <button class="btn-icon" aria-label="关闭">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </div>
+    <div id="summary-result-body" class="modal-scroll-body"></div>
+    <div class="modal-footer">
+      <button class="btn btn-primary" style="margin-bottom:8px">保存汇总记录</button>
+      <button class="btn btn-secondary">导出图片</button>
+    </div>
+  </div>
+</div>
+
+<!-- 真实逻辑文件 -->
+<script src="js/avatars.js?v=22"></script>
+<script src="js/settlement.js?v=22"></script>
+<script src="js/night-titles.js?v=22"></script>
+<script>
+// 仅预览用的假数据。每个 result 含 {name,pnl,buyIns,avatarId}
+const NAME2AV = {'老王':0,'阿强':6,'小李':11,'胖子':17,'眼镜':21,'阿珍':24};
+function mk(rows){ // rows: {name:[pnl,buyIns]}
+  const results={}; let i=0;
+  for(const n in rows){ results['p'+(i++)]={name:n, pnl:rows[n][0], buyIns:rows[n][1]||0, avatarId:NAME2AV[n]}; }
+  return {results};
+}
+const SCENES = {
+  '热闹6人6局':[
+    mk({老王:[1800],阿强:[-600,1],小李:[-400],胖子:[-300],眼镜:[-500,1],阿珍:[0]}),
+    mk({老王:[900],阿强:[-1100,1],小李:[600],胖子:[200],眼镜:[-700,1],阿珍:[100]}),
+    mk({老王:[-200],阿强:[-800,1],小李:[500],胖子:[300],眼镜:[1200],阿珍:[-1000,1]}),
+    mk({老王:[700],阿强:[1600],小李:[-300],胖子:[-600],眼镜:[-400],阿珍:[-1000,1]}),
+    mk({老王:[400],阿强:[900],小李:[300],胖子:[-500,1],眼镜:[-600],阿珍:[-500,1]}),
+    mk({老王:[600],阿强:[1400],小李:[200],胖子:[-400],眼镜:[-800,1],阿珍:[-1000,1]}),
+  ],
+  '平局2局(大多空着)':[
+    mk({老王:[300],阿强:[-200],小李:[100],胖子:[-200]}),
+    mk({老王:[-100],阿强:[400],小李:[-200],胖子:[-100]}),
+  ],
+  '不服就干(借底翻盘)':[
+    mk({老王:[-900,1],阿强:[600],小李:[300]}),
+    mk({老王:[-1100,1],阿强:[500],小李:[600]}),
+    mk({老王:[-800,1],阿强:[400],小李:[400]}),
+    mk({老王:[3400],阿强:[-1700,1],小李:[-1700,1]}),
+  ],
+};
+
+function render(scene){
+  const rounds = SCENES[scene];
+  const summary = calcNightSummary(rounds);
+  const titleByName = {};
+  calcNightTitles(rounds).forEach(t=>{ titleByName[t.name]=t; });
+  document.getElementById('summary-result-info').textContent = '共 '+summary.roundCount+' 局';
+  const esc = s => String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+  // 逐字复刻 doAggregate 的玩家行（含行内称号徽标，同一 renderTitleBadge）
+  const rows = summary.players.map(p=>{
+    const cls = p.total>0?'positive':p.total<0?'negative':'neutral';
+    return '<div style="display:flex;justify-content:space-between;align-items:center;padding:12px 0;border-bottom:1px solid var(--n10)">'+
+      '<div style="display:flex;align-items:center;gap:8px;min-width:0">'+
+      '<div class="avatar-circle sm" style="background:'+getAvatarBg(NAME2AV[p.name])+';flex-shrink:0">'+getAvatarSvg(NAME2AV[p.name])+'</div>'+
+      '<span class="agg-name-wrap"><span class="agg-name">'+esc(p.name)+'</span>'+renderTitleBadge(titleByName[p.name])+'</span>'+
+      '</div>'+
+      '<span class="pnl-inline '+cls+'">'+formatPnl(p.total)+' 分</span></div>';
+  }).join('');
+  document.getElementById('summary-result-body').innerHTML = rows;
+}
+
+const box = document.getElementById('scene-btns');
+Object.keys(SCENES).forEach((k,i)=>{
+  const b=document.createElement('button');
+  b.className='pv-btn'+(i===0?' active':''); b.textContent=k;
+  b.onclick=()=>{ [...box.children].forEach(c=>c.classList.remove('active')); b.classList.add('active'); render(k); };
+  box.appendChild(b);
+});
+render(Object.keys(SCENES)[0]);
+</script>
+</body>
+</html>

@@ -1087,7 +1087,7 @@ function confirmEndRound() {
     const results = {};
     confirmed.forEach((p, i) => {
         const pnl = calcPnl(calcChipTotal(p.n10, p.n20, p.n50, p.n100), calcInvested(p.buyIns));
-        const entry = { name: p.name, pnl, avatarId: p.avatarId || 0 };
+        const entry = { name: p.name, pnl, avatarId: p.avatarId || 0, buyIns: p.buyIns || 0 };
         if (p.avatarRef) entry.avatarRef = p.avatarRef;
         results['p' + i] = entry;
     });
@@ -1466,14 +1466,16 @@ function doAggregate() {
         .filter(([id]) => selectedRoundIds.has(id))
         .map(([, r]) => r);
     const summary = calcNightSummary(selected);
+    const titleByName = {};
+    calcNightTitles(selected).forEach(t => { titleByName[t.name] = t; });
     document.getElementById('summary-result-info').textContent = '共 ' + summary.roundCount + ' 局';
     document.getElementById('summary-result-body').innerHTML = summary.players.map(p => {
         const cls = p.total > 0 ? 'positive' : p.total < 0 ? 'negative' : 'neutral';
         const live = players.find(lp => lp.name === p.name) || p;
         return '<div style="display:flex;justify-content:space-between;align-items:center;padding:12px 0;border-bottom:1px solid var(--n10)">' +
-            '<div style="display:flex;align-items:center;gap:8px">' +
+            '<div style="display:flex;align-items:center;gap:8px;min-width:0">' +
             '<div class="avatar-circle sm" style="background:' + getAvatarBgFor(live) + ';flex-shrink:0">' + getAvatarContent(live) + '</div>' +
-            '<span style="font-size:15px;color:var(--ink-1)">' + escHtml(p.name) + '</span>' +
+            '<span class="agg-name-wrap"><span class="agg-name">' + escHtml(p.name) + '</span>' + renderTitleBadge(titleByName[p.name]) + '</span>' +
             '</div>' +
             '<span class="pnl-inline ' + cls + '">' + formatPnl(p.total) + ' 分</span></div>';
     }).join('');
