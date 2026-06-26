@@ -1,51 +1,51 @@
-@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;600;700;900&family=Noto+Serif+SC:wght@500;600&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800;900&family=Noto+Sans+SC:wght@300;400;500;700;900&display=swap');
 
-/* ─── Design tokens ─── */
+/* ════════════════════════════════════════════════════════════════
+   SPOTIFY 设计语言 —— 暗·沉浸 / 圆润 / 绿色单点
+   参考: awesome-design-md/spotify/DESIGN.md
+   近黑沉浸(内容优先) + Spotify 绿单点 + pill/圆形几何 + 重阴影;
+   Montserrat 做 Latin/数字,中文走 Noto Sans SC(遵 LAMBORGHINI-DESIGN.md §2)。
+   ════════════════════════════════════════════════════════════════ */
 :root {
-  /* ── Semantic source of truth (warm "cat-café" system) ── */
-  /* Surfaces */
-  --bg:            #F5F1EA;   /* warm cream */
-  --surface:       #FFFFFF;
-  --surface-sunken:#FAF7F1;
-  --line:          #ECE6DC;
+  /* ── 近黑沉浸表面(content-first darkness) ── */
+  --bg:            #121212;
+  --surface:       #181818;   /* 卡片 */
+  --surface-sunken:#0d0d0d;
+  --line:          #2a2a2a;
 
-  /* Brand — warm amber */
-  /* ── 主色 ── 当前:猫爪灰黑(试用)。要返回琥珀版,改回下面注释里的三个值即可:
-     琥珀版 → --brand:#C8894B; --brand-strong:#B5763A; --brand-soft:#F3E7D7; */
-  --brand:         #424343;
-  --brand-strong:  #2E2F2F;
-  --brand-soft:    #EAE8E5;
-  /* Derived from --brand so shadows track the theme automatically (one knob) */
-  --brand-shadow:  color-mix(in srgb, var(--brand) 26%, transparent);
+  /* ── 主色:Spotify 绿 ── */
+  --brand:         #1ed760;
+  --brand-strong:  #1fdf64;
+  --brand-soft:    #14271c;   /* 暗绿底 */
+  --brand-shadow:  rgba(30,215,96,.3);
 
-  /* P&L semantics — earthy, clear */
-  --win:           #3E8E4F;
-  --lose:          #C8453A;
-  --flat:          #A09A8E;
+  /* ── P&L:绿赢 + Spotify 粉红输 ── */
+  --win:           #1ed760;
+  --lose:          #f0617a;
+  --flat:          #a7a7a7;
 
-  /* 成就称号语义色（低饱和、暖色和谐；底+深一档同色字，对比度达标）
-     大赢家为填充主角，其余为柔和淡彩 */
-  --title-champ-bg:    #EBCB7E;  --title-champ-ink:    #5A3F0E;  /* 🏆 今晚大赢家 */
-  --title-fish-bg:     #FBE0D6;  --title-fish-ink:     #A8442E;  /* 快乐源泉 */
-  --title-streak-bg:   #DCEBDD;  --title-streak-ink:   #2F6B3E;  /* 常胜将军 */
-  --title-steady-bg:   #E2E7EE;  --title-steady-ink:   #46566E;  /* 稳如泰山 */
-  --title-comeback-bg: #FBE2CE;  --title-comeback-ink: #8E4A1C;  /* 后程发力 */
-  --title-bigheart-bg: #ECDFEF;  --title-bigheart-ink: #67407A;  /* 大心脏 */
-  --title-fighter-bg:  #D6E9E7;  --title-fighter-ink:  #1C6962;  /* 不服就干 */
+  /* 成就称号:暗场适配(深底 + 亮字;冠军=绿主角) */
+  --title-champ-bg:    #11331f;  --title-champ-ink:    #1ed760;  /* 🏆 今晚大赢家 */
+  --title-fish-bg:     #3a211c;  --title-fish-ink:     #f0a58c;  /* 快乐源泉 */
+  --title-streak-bg:   #16301f;  --title-streak-ink:   #6fcb89;  /* 常胜将军 */
+  --title-steady-bg:   #1b2433;  --title-steady-ink:   #8fb0de;  /* 稳如泰山 */
+  --title-comeback-bg: #33230f;  --title-comeback-ink: #e0a05c;  /* 后程发力 */
+  --title-bigheart-bg: #2a1c33;  --title-bigheart-ink: #c49be0;  /* 大心脏 */
+  --title-fighter-bg:  #12302c;  --title-fighter-ink:  #6fcfc4;  /* 不服就干 */
 
-  /* Ink (text layers) */
-  --ink-1:         #2B2722;
-  --ink-2:         #6B6358;
-  --ink-3:         #A8A095;
+  /* Ink — Spotify 文字层级 */
+  --ink-1:         #ffffff;
+  --ink-2:         #b3b3b3;
+  --ink-3:         #6a6a6a;
 
-  /* Neutrals (warm-tinted) */
-  --n10:           #F4F1EB;
-  --n20:           #E9E3D9;
-  --n40:           #D4CCBF;
-  --n60:           #ABA395;
-  --n80:           #5C564C;
+  /* Neutrals — 暗度阶梯 */
+  --n10:           #1a1a1a;
+  --n20:           #2a2a2a;
+  --n40:           #404040;
+  --n60:           #727272;
+  --n80:           #b3b3b3;
 
-  /* ── Back-compat aliases (old literal names → semantic) ── */
+  /* ── Back-compat aliases ── */
   --surface2:  var(--surface-sunken);
   --green:     var(--brand);
   --green-dk:  var(--brand-strong);
@@ -53,42 +53,46 @@
   --gold:      var(--brand);
   --gold-lt:   var(--brand-soft);
   --red:       var(--lose);
-  --red-lt:    #F7E4E1;
+  --red-lt:    #2a1419;     /* 暗粉红底 */
   --pnl-win:   var(--win);
   --pnl-lose:  var(--lose);
   --text:      var(--ink-1);
   --text2:     var(--ink-2);
   --text3:     var(--ink-3);
+  /* 圆润:保留圆角(Spotify 是圆的,卡片圆角 + 按钮 pill) */
   --r4:    4px;
   --r8:    8px;
   --r12:   12px;
   --r16:   16px;
   --rfull: 9999px;
-  --sh2: 0 1px 2px rgba(74,56,30,.10), 0 0 1px rgba(74,56,30,.06);
-  --sh4: 0 2px 8px rgba(74,56,30,.08), 0 0 1px rgba(74,56,30,.05);
-  --sh8: 0 6px 16px rgba(74,56,30,.10), 0 1px 3px rgba(74,56,30,.06);
+  /* Spotify 重阴影(elevated 元素) */
+  --sh2: 0 1px 3px rgba(0,0,0,.4);
+  --sh4: 0 4px 14px rgba(0,0,0,.45);
+  --sh8: 0 8px 24px rgba(0,0,0,.5);
   --font: 'Noto Sans SC','Segoe UI Variable','Segoe UI','PingFang SC','Microsoft YaHei',system-ui,sans-serif;
+  /* 展示字:Latin/数字 走 Montserrat,中文回退 Noto Sans SC */
+  --font-display: 'Montserrat','Noto Sans SC',system-ui,sans-serif;
 
   /* ── Typography scale ── */
-  --fs-player:  17px;   /* 玩家名、Modal 标题 */
-  --fs-body:    15px;   /* 盈亏数字、主要内容 */
-  --fs-label:   13px;   /* 辅助说明文字 */
-  --fs-caption: 12px;   /* 时间戳、小标注 */
-  --fs-tiny:    10px;   /* 最小标签文字 */
+  --fs-player:  17px;
+  --fs-body:    15px;
+  --fs-label:   13px;
+  --fs-caption: 12px;
+  --fs-tiny:    10px;
 
-  --fw-regular: 300;
-  --fw-medium:  400;
+  --fw-regular: 400;
+  --fw-medium:  500;
 
   /* ── Overlay & backdrop ── */
-  --overlay-subtle:  rgba(0,0,0,.04);   /* 卡片边框、凹陷背景 */
-  --overlay-medium:  rgba(0,0,0,.36);   /* 头像编辑遮罩 */
-  --overlay-modal:   rgba(0,0,0,.42);   /* Modal 背景幕 */
-  --bg-blur:         rgba(245,241,234,.92);  /* 导航栏、记录栏毛玻璃 */
-  --bg-blur-bar:     rgba(245,241,234,.94);  /* 底部浮动栏毛玻璃 */
+  --overlay-subtle:  rgba(255,255,255,.07);
+  --overlay-medium:  rgba(0,0,0,.6);
+  --overlay-modal:   rgba(0,0,0,.7);
+  --bg-blur:         rgba(18,18,18,.86);
+  --bg-blur-bar:     rgba(18,18,18,.92);
 
   /* ── Extended shadows ── */
-  --sh-modal:  0 -4px 24px rgba(0,0,0,.12);  /* 底部半页弹起阴影 */
-  --sh-sm:     0 1px 4px rgba(0,0,0,.18);    /* 小元素阴影（头像管理按钮等） */
+  --sh-modal:  0 -8px 40px rgba(0,0,0,.6);
+  --sh-sm:     0 1px 4px rgba(0,0,0,.5);
 }
 
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
@@ -105,7 +109,7 @@ html{font-size:16px;-webkit-text-size-adjust:100%}
 
 body{
   font-family:var(--font);
-  font-weight:300;
+  font-weight:400;   /* 暗底下提一档保可读 */
   background:var(--bg);
   overscroll-behavior: none; /* prevent pull-to-refresh on main page */
   color:var(--text);
@@ -136,16 +140,15 @@ body{
 .app-title{display:flex;align-items:center;gap:10px}
 .app-title-icon{
   width:36px;height:36px;
-  background:#fff;
-  border-radius:var(--r8);
+  background:var(--surface);
+  border-radius:50%;   /* Spotify 圆形封面感 */
   display:flex;align-items:center;justify-content:center;
   flex-shrink:0;
   overflow:hidden;
-  box-shadow:var(--sh2);
 }
 .app-title-icon img{width:100%;height:100%;object-fit:cover;display:block}
 .app-title-icon svg{width:22px;height:22px}
-.app-title-text{font-size:17px;font-weight:400;letter-spacing:.2px;color:var(--ink-1)}
+.app-title-text{font-size:18px;font-weight:700;letter-spacing:.01em;color:var(--ink-1)}
 .header-actions{display:flex;gap:2px}
 .btn-icon{
   width:40px;height:40px;
@@ -154,9 +157,9 @@ body{
   display:flex;align-items:center;justify-content:center;
   color:var(--text2);cursor:pointer;
   -webkit-tap-highlight-color:transparent;
-  transition:background .12s;
+  transition:background .12s,color .12s;
 }
-.btn-icon:active{background:rgba(0,0,0,.08)}
+.btn-icon:active{background:rgba(255,255,255,.1);color:var(--ink-1)}
 
 /* ─── Swipe row (iOS delete) ─── */
 .swipe-row{
@@ -186,9 +189,8 @@ body{
   position:relative;z-index:1;
   background:var(--surface);
   border-radius:var(--r12);
-  box-shadow:var(--sh4);
-  border:1px solid var(--overlay-subtle);
-  transition:transform .22s cubic-bezier(.4,0,.2,1),box-shadow .15s;
+  border:none;
+  transition:background .15s,transform .15s;
   cursor:pointer;
   -webkit-tap-highlight-color:transparent;
   /* Long-press must not select text or pop the iOS callout menu */
@@ -196,7 +198,8 @@ body{
   -webkit-touch-callout:none;
 }
 .player-card *{-webkit-user-select:none;user-select:none;}
-.player-card:active{box-shadow:var(--sh2)}
+.player-card:hover{background:#242424}
+.player-card:active{background:#2a2a2a}
 .swipe-row.swiped .player-card{transform:translateX(-80px)}
 .player-card.long-press-active{
   transform:scale(.97);
@@ -242,7 +245,7 @@ body{
 /* ─── Player info ─── */
 .player-info{flex:1;min-width:0}
 .player-name-row{display:flex;align-items:center;gap:0;margin-bottom:3px;flex-wrap:nowrap}
-.player-name{font-size:17px;font-weight:400;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;line-height:1.4}
+.player-name{font-size:16px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;line-height:1.4}
 /* icon-only edit button — amber pencil, flush with text baseline */
 .btn-edit-name{
   background:none;border:none;color:var(--brand);
@@ -275,12 +278,13 @@ body{
 }
 @keyframes editing-pulse{0%,100%{opacity:1}50%{opacity:.25}}
 
-/* P&L value — vivid colors, larger */
-.pnl-inline{font-size:15px;font-weight:400;letter-spacing:-.2px;line-height:1}
+/* P&L value — Montserrat 数字 */
+.pnl-inline{font-family:var(--font-display);font-size:16px;font-weight:700;letter-spacing:0;line-height:1;font-variant-numeric:tabular-nums}
 .pnl-inline.positive{color:var(--pnl-win)}
 .pnl-inline.negative{color:var(--pnl-lose)}
 .pnl-inline.neutral{color:var(--text3)}
-.pnl-inline.placeholder{font-size:15px;font-weight:300;color:var(--n60)}
+/* 占位是中文「录入筹码」:用正文字体(不穿数字的 Montserrat),与其它中文统一 */
+.pnl-inline.placeholder{font-family:var(--font);font-size:14px;font-weight:400;letter-spacing:0;color:var(--n60)}
 
 /* ── 成就称号：行内徽标，紧跟在汇总卡排名行的玩家名字后面 ──
    名字可省略号截断，徽标 flex-shrink:0 不被挤压；徽标比名字小一档(12 vs 15px)，
@@ -294,14 +298,13 @@ body{
    定制线性图标 + rfull 胶囊。「今晚大赢家」.champ 为填充主角（更重字 + 轻微抬升） */
 .title-badge{
   display:inline-flex;align-items:center;gap:4px;flex-shrink:0;
-  padding:3px 9px 3px 7px;border-radius:var(--rfull);
+  padding:3px 10px 3px 8px;border-radius:var(--rfull);
   background:var(--tb-bg);color:var(--tb-ink);
-  font-size:12px;font-weight:600;line-height:1.4;white-space:nowrap;
+  font-size:11px;font-weight:600;line-height:1.4;white-space:nowrap;letter-spacing:.02em;
 }
 .title-badge svg{width:13px;height:13px;flex-shrink:0}
 .title-badge.champ{
-  font-weight:700;padding:3px 10px 3px 8px;
-  box-shadow:0 1px 2px rgba(110,78,18,.22);
+  font-weight:700;
 }
 
 /* chevron — subtle, right of pnl; spacing comes from the col's gap only */
@@ -314,21 +317,21 @@ body{
 /* ─── Add player — airy dashed amber ─── */
 .btn-add-player{
   display:flex;align-items:center;justify-content:center;gap:8px;
-  width:100%;height:56px;
+  width:100%;height:54px;
   background:transparent;
-  border:1.5px dashed var(--brand);
-  border-radius:var(--r16);
-  font-family:var(--font);font-size:15px;font-weight:400;color:var(--brand);
+  border:1px solid var(--n40);
+  border-radius:var(--rfull);
+  font-family:var(--font);font-size:15px;font-weight:600;color:var(--ink-1);
   cursor:pointer;margin-bottom:8px;
   -webkit-tap-highlight-color:transparent;
-  transition:background .12s,filter .12s;
+  transition:background .12s,border-color .12s,transform .12s;
 }
 .btn-add-player svg{
   width:20px;height:20px;
   stroke-width:2;
   display:block;flex-shrink:0;
 }
-.btn-add-player:active{background:var(--brand-soft)}
+.btn-add-player:active{background:var(--n10);border-color:var(--ink-2);transform:scale(.99)}
 .hint-text{font-size:12px;color:var(--ink-3);text-align:center;margin-top:4px;margin-bottom:14px}
 
 /* ─── Summary ─── */
@@ -357,26 +360,26 @@ body{
 }
 .btn:active{filter:brightness(.92);transform:scale(.98)}
 .btn:disabled{opacity:.4;cursor:not-allowed;filter:none;transform:none}
+/* Spotify 主按钮:绿色全 pill + 黑字(招牌) */
 .btn-primary{
-  height:48px;background:var(--brand);color:#fff;
-  border-radius:var(--r12);font-size:16px;
-  box-shadow:0 3px 8px var(--brand-shadow);
+  height:50px;background:var(--brand);color:#000;
+  border-radius:var(--rfull);font-size:16px;font-weight:700;letter-spacing:.02em;
 }
+.btn-primary:active{filter:none;transform:scale(.98);background:var(--brand-strong)}
 .btn-secondary{
-  height:48px;background:var(--n10);color:var(--text2);
-  border:1.5px solid var(--n40);
-  border-radius:var(--r12);font-size:16px;
+  height:50px;background:transparent;color:var(--ink-1);
+  border:1px solid var(--n40);
+  border-radius:var(--rfull);font-size:16px;font-weight:600;
 }
 .btn-danger{
-  height:48px;background:var(--red-lt);color:var(--red);
-  border:1.5px solid rgba(164,38,44,.22);
-  border-radius:var(--r12);font-size:16px;
+  height:50px;background:transparent;color:var(--lose);
+  border:1px solid rgba(240,97,122,.4);
+  border-radius:var(--rfull);font-size:16px;font-weight:600;
 }
-/* Cancel / dismiss — lowest hierarchy, but same 48px tap height as the rest.
-   Lighter than secondary (no fill, no border) so it reads as subordinate. */
+/* Cancel / dismiss — lowest hierarchy. */
 .btn-ghost{
-  height:48px;background:transparent;color:var(--text3);
-  border:none;border-radius:var(--r12);font-size:16px;font-weight:400;
+  height:50px;background:transparent;color:var(--text2);
+  border:none;border-radius:var(--rfull);font-size:16px;font-weight:600;
 }
 .btn-ghost:active{filter:none;background:var(--n10)}
 
@@ -690,10 +693,12 @@ body{
   white-space: nowrap;
 }
 .float-bar-value {
-  font-size: 20px;
-  font-weight:400;
+  font-family:var(--font-display);
+  font-size: 22px;
+  font-weight:700;
   color: var(--ink-1);
-  letter-spacing: -.3px;
+  letter-spacing: 0;
+  font-variant-numeric:tabular-nums;
 }
 .float-bar-value.positive { color: var(--win); }
 .float-bar-value.negative { color: var(--lose); }
@@ -730,8 +735,8 @@ body{
   border-radius: var(--rfull);
   white-space: nowrap;
 }
-.balance-tag.ok   { background: var(--brand-soft); color: var(--win); background: #E6F2E9; }
-.balance-tag.warn { background: var(--brand-soft); color: var(--brand-strong); }
+.balance-tag.ok   { background: rgba(30,215,96,.16); color: var(--win); }
+.balance-tag.warn { background: rgba(240,97,122,.16); color: var(--lose); }
 .btn-export {
   display: flex;
   align-items: center;
@@ -963,8 +968,8 @@ body{
 .round-badge{
   position:absolute;top:2px;right:2px;
   min-width:16px;height:16px;
-  background:var(--brand);color:#fff;
-  font-size:10px;font-weight:400;
+  background:var(--brand);color:#000;
+  font-size:10px;font-weight:700;
   border-radius:var(--rfull);
   display:flex;align-items:center;justify-content:center;
   padding:0 4px;pointer-events:none;
@@ -973,28 +978,27 @@ body{
 /* ─── Float bar additions ─── */
 .float-bar-btns{display:flex;align-items:center;gap:8px;flex-shrink:0}
 .btn-end-round{
-  height:36px;padding:0 14px;
-  background:var(--brand);color:#fff;
-  border:none;border-radius:var(--r8);
-  font-family:var(--font);font-size:13px;font-weight:400;
+  height:40px;padding:0 20px;
+  background:var(--brand);color:#000;
+  border:none;border-radius:var(--rfull);
+  font-family:var(--font);font-size:14px;font-weight:700;
   cursor:pointer;white-space:nowrap;
   -webkit-tap-highlight-color:transparent;
   transition:filter .1s,transform .1s;
-  box-shadow:0 2px 6px var(--brand-shadow);
 }
-.btn-end-round:active{filter:brightness(.92);transform:scale(.97)}
-.btn-end-round:disabled{opacity:.4;cursor:not-allowed;box-shadow:none;filter:none;transform:none}
+.btn-end-round:active{transform:scale(.96);background:var(--brand-strong)}
+.btn-end-round:disabled{opacity:.35;cursor:not-allowed;filter:none;transform:none}
 .btn-export-icon{
-  width:36px;height:36px;
-  background:transparent;border:1.5px solid var(--n40);
-  border-radius:var(--r8);
+  width:40px;height:40px;
+  background:transparent;border:1px solid var(--n40);
+  border-radius:50%;
   display:flex;align-items:center;justify-content:center;
   color:var(--ink-2);cursor:pointer;
   -webkit-tap-highlight-color:transparent;
-  transition:background .12s,color .12s;
+  transition:background .12s,color .12s,border-color .12s;
   flex-shrink:0;
 }
-.btn-export-icon:active{background:var(--n20)}
+.btn-export-icon:active{background:var(--n20);border-color:var(--brand);color:var(--brand)}
 .btn-export-icon:disabled{opacity:.4;cursor:not-allowed}
 
 /* ─── Records full-screen page — push navigation ─── */
