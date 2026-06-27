@@ -342,26 +342,35 @@ function openExportModal() {
     document.getElementById('export-date').textContent =
         `${now.getFullYear()}/${now.getMonth()+1}/${now.getDate()} ${timeStr}`;
 
-    // Build player rows
-    const medals = ['🥇','🥈','🥉'];
+    // Build player rows — Spotify 成绩单:大赢家=正在播放(绿) + Montserrat 排名
+    const pot = sorted.reduce((s, r) => s + r.invested, 0);
     const rowsHtml = sorted.map((r, i) => {
-        const rankHtml = i < 3
-            ? `<span class="export-rank medal">${medals[i]}</span>`
-            : `<span class="export-rank num">${i + 1}</span>`;
         const pnlClass = r.pnl > 0 ? 'win' : r.pnl < 0 ? 'lose' : 'zero';
-        return `<div class="export-player-row">
-            ${rankHtml}
-            <div class="avatar-circle sm" style="background:${getAvatarBgFor(r)}">${getAvatarContent(r)}</div>
-            <div class="export-player-name">${escHtml(r.name)}</div>
+        const lead = i === 0 ? ' lead' : '';
+        const champTag = (i === 0 && r.pnl > 0)
+            ? `<span class="export-champ-tag">今晚大赢家</span>` : '';
+        return `<div class="export-player-row${lead}">
+            <span class="export-rank">${i + 1}</span>
+            <div class="export-ava"><div class="avatar-circle sm" style="background:${getAvatarBgFor(r)}">${getAvatarContent(r)}</div></div>
+            <div class="export-name-col">
+                <span class="export-player-name">${escHtml(r.name)}</span>
+                ${champTag}
+            </div>
             <div class="export-pnl ${pnlClass}">${formatPnl(r.pnl)}</div>
         </div>`;
     }).join('');
     document.getElementById('export-table-wrap').innerHTML =
         `<div class="export-player-list">${rowsHtml}</div>`;
 
-    const checkSvg = `<svg width="9" height="9" viewBox="0 0 10 10" fill="none"><path d="M1.5 5l2.5 2.5 4.5-4.5" stroke="#3E8E4F" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
+    const checkSvg = `<svg width="9" height="9" viewBox="0 0 10 10" fill="none"><path d="M1.5 5l2.5 2.5 4.5-4.5" stroke="#1ed760" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
     document.getElementById('export-badge').innerHTML = isBalanced
-        ? `<div class="export-card-footer balanced"><div class="export-check-circle">${checkSvg}</div>零和验证通过</div>`
+        ? `<div class="export-card-footer balanced">
+               <span class="export-foot-stat">${sorted.length} 人</span>
+               <span class="export-foot-sep"></span>
+               <span class="export-foot-stat">底池 ${pot}</span>
+               <span class="export-foot-sep"></span>
+               <span class="export-foot-verify"><span class="export-check-circle">${checkSvg}</span>零和通过</span>
+           </div>`
         : `<div class="export-card-footer unbalanced">✗ 总盈亏 = ${formatPnl(totalPnl)}，请检查</div>`;
 
     generateImage();

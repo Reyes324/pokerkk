@@ -787,10 +787,12 @@ body{
   border-top: 1px solid var(--n20);
   background: var(--surface);
 }
-/* ─── Export card — INVITATION style ─── */
+/* ─── Export card — Spotify 成绩单(分享图) ──────────────────────
+   值全写死 = html2canvas 安全;圆形头像(border-radius,非 clip-path,安全)。
+   结构:头 → 冠军=正在播放(绿) → 排名 → 遥测页脚。 */
 #export-card {
-  background: #FAF7F1;
-  border-radius: 16px;
+  background: #181818;
+  border-radius: 14px;
   overflow: hidden;
   margin-bottom: 10px;
 }
@@ -799,94 +801,120 @@ body{
   align-items: center;
   justify-content: space-between;
   gap: 10px;
-  padding: 14px 18px 13px;
-  background: #F5F1EA;
-  border-bottom: 1px solid rgba(43,39,34,.1);
+  padding: 18px 18px 16px;
+  background: linear-gradient(160deg,#1f6b3a 0%, #18341f 38%, #181818 100%);
 }
 .export-card-headline {
-  font-family: 'Noto Serif SC', serif;
-  font-size: 20px;
-  font-weight: 400;
-  color: #2B2722;
-  line-height: 1.2;
+  font-family: 'Noto Sans SC', sans-serif;
+  font-size: 21px;
+  font-weight: 800;
+  letter-spacing: .01em;
+  color: #ffffff;
+  line-height: 1.1;
   flex-shrink: 0;
 }
 .export-card-sub {
   display: flex;
   align-items: center;
-  gap: 4px;
+  gap: 5px;
   font-size: 11px;
-  color: rgba(43,39,34,.42);
+  color: rgba(255,255,255,.7);
   min-width: 0;
 }
 .export-paw-sm {
-  width: 14px; height: 14px;
+  width: 13px; height: 13px;
   object-fit: cover;
-  border-radius: 3px;
-  opacity: .65;
+  border-radius: 50%;
+  opacity: .85;
   flex-shrink: 0;
 }
-.export-player-list { padding: 5px 0; }
+.export-player-list { padding: 4px 0; }
 .export-player-row {
   display: flex;
   align-items: center;
-  gap: 10px;
-  padding: 11px 18px;
+  gap: 12px;
+  padding: 12px 18px;
 }
 .export-player-row + .export-player-row {
-  border-top: 1px solid rgba(43,39,34,.07);
+  border-top: 1px solid rgba(255,255,255,.05);
 }
 .export-rank {
-  width: 26px;
+  font-family: 'Montserrat','Noto Sans SC',sans-serif;
+  font-size: 16px;
+  font-weight: 600;
+  color: #7a7a7a;
+  width: 24px;
   text-align: center;
   flex-shrink: 0;
   line-height: 1;
+  font-variant-numeric: tabular-nums;
 }
-.export-rank.num {
-  font-size: 12px;
-  font-weight: 400;
-  color: rgba(43,39,34,.3);
+.export-player-row.lead .export-rank { color: #1ed760; }
+/* 圆形头像(Spotify;border-radius 安全于 html2canvas) */
+.export-ava { flex-shrink: 0; }
+.export-ava .avatar-circle {
+  width: 42px; height: 42px;
+  border-radius: 50%;
 }
-.export-rank.medal { font-size: 19px; }
+.export-player-row.lead .export-ava .avatar-circle {
+  box-shadow: 0 0 0 2px #1ed760;
+}
+.export-name-col {
+  flex: 1; min-width: 0;
+  display: flex; flex-direction: column; gap: 2px;
+}
 .export-player-name {
   font-size: 15px;
-  font-weight: 400;
-  color: #2B2722;
-  flex: 1;
-  min-width: 0;
+  font-weight: 600;
+  color: #ffffff;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
+.export-player-row.lead .export-player-name { color: #1ed760; }
+.export-champ-tag {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: .04em;
+  text-transform: uppercase;
+  color: #1ed760;
+}
 .export-pnl {
-  font-size: 20px;
-  font-weight: 400;
+  font-family: 'Montserrat','Noto Sans SC',sans-serif;
+  font-size: 21px;
+  font-weight: 700;
   font-variant-numeric: tabular-nums;
-  letter-spacing: -.5px;
+  letter-spacing: 0;
   flex-shrink: 0;
   min-width: 72px;
   text-align: right;
 }
-.export-pnl.win  { color: #3E8E4F; }
-.export-pnl.lose { color: #C8453A; }
-.export-pnl.zero { color: rgba(43,39,34,.35); }
+.export-pnl.win  { color: #1ed760; }
+.export-pnl.lose { color: #f0617a; }
+.export-pnl.zero { color: #7a7a7a; }
+.export-player-row.lead .export-pnl { font-size: 24px; }
 .export-card-footer {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 6px;
-  padding: 10px 18px 12px;
-  font-size: 11px;
-  font-weight: 400;
-  background: #EDE8DF;
-  border-top: 1px solid rgba(43,39,34,.08);
+  gap: 10px;
+  padding: 13px 18px 15px;
+  font-family: 'Montserrat','Noto Sans SC',sans-serif;
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: .02em;
+  background: #0d0d0d;
+  border-top: 1px solid #2a2a2a;
+  color: #8a8a8a;
 }
-.export-card-footer.balanced   { color: rgba(43,39,34,.4); }
-.export-card-footer.unbalanced { color: #C8453A; }
+.export-card-footer.unbalanced { color: #f0617a; }
+.export-foot-stat { color: #b3b3b3; }
+.export-foot-sep { width: 3px; height: 3px; border-radius: 50%; background: #4a4a4a; flex-shrink: 0; }
+.export-foot-verify { display: flex; align-items: center; gap: 5px; color: #1ed760; }
 .export-check-circle {
-  width: 15px; height: 15px;
+  width: 16px; height: 16px;
   border-radius: 50%;
-  border: 1px solid rgba(62,142,79,.45);
+  border: 1px solid rgba(30,215,96,.55);
   display: flex; align-items: center; justify-content: center;
   flex-shrink: 0;
 }
