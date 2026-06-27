@@ -607,7 +607,7 @@ body{
 .modal-sheet.has-scroll-body .modal-handle,
 .modal-sheet.has-scroll-body .modal-header{flex-shrink:0}
 .modal-sheet.has-scroll-body .modal-scroll-body{
-  flex:1;overflow-y:auto;
+  flex:1;overflow-y:auto;overflow-x:hidden;
   -webkit-overflow-scrolling:touch;
   overscroll-behavior:contain;
   padding-bottom:max(16px,calc(4px + env(safe-area-inset-bottom)));
@@ -1213,8 +1213,8 @@ body{
 }
 
 /* ─── 汇总明细表 ─── */
-.agg-fit{overflow:hidden}
-.agg-table-wrap{overflow:hidden}
+.agg-fit{overflow:hidden;width:100%}
+.agg-table-wrap{overflow:hidden;width:100%}
 .agg-table{border-collapse:collapse;width:100%;font-size:13px}
 .agg-table th,.agg-table td{padding:9px 10px;white-space:nowrap;text-align:left}
 .agg-table thead th{

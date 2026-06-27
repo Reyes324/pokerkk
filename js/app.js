@@ -1681,7 +1681,7 @@ function fitAggTable(bodyEl) {
     wrap.style.overflow = '';
     outer.style.height = '';
     outer.style.overflow = '';
-    const cw = bodyEl.offsetWidth;
+    const cw = wrap.offsetWidth || Math.min(window.innerWidth, 480) - 40;
     const ww = wrap.scrollWidth;
     if (!cw || ww <= cw) return;
     const s = cw / ww;
