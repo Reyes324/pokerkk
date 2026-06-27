@@ -1573,6 +1573,28 @@ function openAggDetailModal(aggId) {
     document.getElementById('agg-detail-body').innerHTML = html;
     openModal('agg-detail-modal');
 }
+function openAggActionSheet() {
+    const aggId = document.getElementById('agg-detail-modal').dataset.aggId;
+    if (!aggId) return;
+    const agg = aggregations[aggId];
+    const hasSnapshot = agg && agg.rounds && Object.keys(agg.rounds).length > 0;
+    document.getElementById('agg-action-modal').dataset.aggId = aggId;
+    document.getElementById('btn-agg-release').style.display = hasSnapshot ? '' : 'none';
+    openModal('agg-action-modal');
+}
+function releaseAggregation() {
+    const aggId = document.getElementById('agg-action-modal').dataset.aggId;
+    const agg = aggregations[aggId];
+    if (!agg || !agg.rounds) return;
+    const updates = {};
+    Object.entries(agg.rounds).forEach(([rid, r]) => { updates['rounds/' + rid] = r; });
+    updates['aggregations/' + aggId] = null;
+    gameRef.update(updates, err => { if (err) showToast('释放失败，请检查网络'); });
+    closeModal('agg-action-modal', () => {
+        closeModal('agg-detail-modal');
+        showToast('已释放，对局已退回');
+    });
+}
 
 // ── Event listeners ────────────────────────────────────────────
 document.getElementById('btn-add-player').addEventListener('click', addPlayer);
@@ -1700,3 +1722,11 @@ document.getElementById('summary-result-modal').addEventListener('click', e => {
 
 document.getElementById('btn-close-agg-detail').addEventListener('click', () => closeModal('agg-detail-modal'));
 document.getElementById('agg-detail-modal').addEventListener('click', e => { if (e.target === e.currentTarget) closeModal('agg-detail-modal'); });
+document.getElementById('btn-agg-more').addEventListener('click', openAggActionSheet);
+document.getElementById('btn-agg-release').addEventListener('click', releaseAggregation);
+document.getElementById('btn-agg-delete').addEventListener('click', () => {
+    const aggId = document.getElementById('agg-action-modal').dataset.aggId;
+    closeModal('agg-action-modal', () => { if (aggId) showAggDeleteConfirm(aggId); });
+});
+document.getElementById('btn-agg-action-cancel').addEventListener('click', () => closeModal('agg-action-modal'));
+document.getElementById('agg-action-modal').addEventListener('click', e => { if (e.target === e.currentTarget) closeModal('agg-action-modal'); });

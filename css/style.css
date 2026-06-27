@@ -1233,3 +1233,5 @@ thead .agg-name-cell{display:table-cell}
 .agg-cell{font-family:var(--font-display);font-weight:600;font-variant-numeric:tabular-nums}
 .agg-col.total,.agg-cell.total{background:rgba(30,215,96,.08);font-weight:700}
 .agg-cell.win{color:var(--win)} .agg-cell.lose{color:var(--lose)} .agg-cell.zero{color:var(--ink-3)}
+
+#agg-action-modal{z-index:210}
