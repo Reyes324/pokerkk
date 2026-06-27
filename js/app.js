@@ -1496,6 +1496,8 @@ function saveAggregation() {
     const modal = document.getElementById('summary-result-modal');
     const summary = JSON.parse(modal.dataset.summaryJson || 'null');
     if (!summary) return;
+    const ids = [...selectedRoundIds].filter(id => rounds[id]);
+    if (ids.length === 0) return;
     const now = new Date();
     const playerData = {};
     summary.players.forEach((p, i) => {
@@ -1504,12 +1506,19 @@ function saveAggregation() {
         if (live && live.avatarRef) entry.avatarRef = live.avatarRef;
         playerData['p' + i] = entry;
     });
-    gameRef.child('aggregations').push({
+    const roundsSnapshot = {};
+    ids.forEach(id => { roundsSnapshot[id] = rounds[id]; });
+    const aggId = gameRef.child('aggregations').push().key;
+    const updates = {};
+    updates['aggregations/' + aggId] = {
         timestamp: now.getTime(),
         label: formatDateWeekday(now),
         roundCount: summary.roundCount,
-        players: playerData
-    });
+        players: playerData,
+        rounds: roundsSnapshot
+    };
+    ids.forEach(id => { updates['rounds/' + id] = null; });
+    gameRef.update(updates, err => { if (err) showToast('汇总失败，请检查网络'); });
     closeModal('summary-result-modal', () => {
         isSelectMode = false;
         selectedRoundIds = new Set();
