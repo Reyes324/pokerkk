@@ -396,13 +396,56 @@ function buildAggExportCard() {
     const summary = JSON.parse(modal.dataset.summaryJson || 'null');
     const roundsSnapshot = JSON.parse(modal.dataset.roundsSnapshot || 'null');
     if (!summary) return false;
-    document.getElementById('aggx-eyebrow').textContent = '汇总 · 共 ' + summary.roundCount + ' 局 · ' + summary.players.length + ' 人';
-    document.getElementById('aggx-list').innerHTML = renderAggView({
-        rounds: roundsSnapshot || {}, totals: summary.players, roundCount: summary.roundCount
-    });
+    const totals = summary.players;
+    const roundsObj = roundsSnapshot || {};
+    const hasSnapshot = Object.keys(roundsObj).length > 0;
+    // 全部内联样式：html2canvas 不支持 position:sticky，导出卡单独构建不依赖 CSS class
+    const WIN = '#1ed760', LOSE = '#f0617a', ZERO = '#6a6a6a';
+    const BG = '#181818', SURF = '#242424', INK1 = '#fff', INK3 = '#b3b3b3';
+    const pnlColor = (v) => v > 0 ? WIN : v < 0 ? LOSE : ZERO;
+    const cellBase = 'padding:9px 12px;white-space:nowrap;font-size:13px;border-top:1px solid rgba(255,255,255,.06)';
+    const headCell = (txt, extra) => '<th style="padding:8px 12px;white-space:nowrap;font-size:11px;font-weight:500;color:' + INK3 + ';text-align:left;' + (extra||'') + '">' + txt + '</th>';
+    const nameColStyle = 'min-width:100px;text-align:left;';
+    const numStyle = (v, extra) => cellBase + ';font-family:Montserrat,sans-serif;font-weight:600;font-variant-numeric:tabular-nums;color:' + pnlColor(v) + ';' + (extra||'');
+    const totalBg = 'background:rgba(30,215,96,.08);';
+    let tableHTML;
+    if (!hasSnapshot) {
+        tableHTML = '<tr>' + headCell('玩家', nameColStyle) + headCell('合计', totalBg) + '</tr>' +
+            totals.map((p, i) => {
+                const live = players.find(lp => lp.name === p.name) || p;
+                const isLead = i === 0;
+                return '<tr><td style="' + cellBase + ';' + nameColStyle + '">' +
+                    '<div style="display:flex;align-items:center;gap:8px">' +
+                    '<div style="width:24px;height:24px;border-radius:50%;background:' + getAvatarBgFor(live) + ';flex-shrink:0;overflow:hidden;display:flex;align-items:center;justify-content:center">' + getAvatarContent(live) + '</div>' +
+                    '<span style="font-size:13px;color:' + (isLead ? WIN : INK1) + '">' + escHtml(p.name) + (isLead ? ' 🏆' : '') + '</span></div></td>' +
+                    '<td style="' + numStyle(p.total, totalBg) + '">' + formatPnl(p.total) + '</td></tr>';
+            }).join('');
+    } else {
+        const roundEntries = Object.entries(roundsObj).sort((a, b) => (a[1].timestamp || 0) - (b[1].timestamp || 0));
+        const roundMaps = roundEntries.map(([, r]) => { const m = {}; if (r.results) Object.values(r.results).forEach(x => { m[x.name] = x.pnl; }); return m; });
+        tableHTML = '<tr>' + headCell('玩家', nameColStyle) +
+            roundEntries.map((_, i) => headCell('局' + (i + 1))).join('') +
+            headCell('合计', totalBg) + '</tr>' +
+            totals.map((p, i) => {
+                const live = players.find(lp => lp.name === p.name) || p;
+                const isLead = i === 0;
+                const cells = roundMaps.map(m => {
+                    if (m[p.name] == null) return '<td style="' + cellBase + ';color:' + ZERO + '">—</td>';
+                    return '<td style="' + numStyle(m[p.name]) + '">' + formatPnl(m[p.name]) + '</td>';
+                }).join('');
+                return '<tr><td style="' + cellBase + ';' + nameColStyle + '">' +
+                    '<div style="display:flex;align-items:center;gap:8px">' +
+                    '<div style="width:24px;height:24px;border-radius:50%;background:' + getAvatarBgFor(live) + ';flex-shrink:0;overflow:hidden;display:flex;align-items:center;justify-content:center">' + getAvatarContent(live) + '</div>' +
+                    '<span style="font-size:13px;color:' + (isLead ? WIN : INK1) + '">' + escHtml(p.name) + (isLead ? ' 🏆' : '') + '</span></div></td>' +
+                    cells + '<td style="' + numStyle(p.total, totalBg) + '">' + formatPnl(p.total) + '</td></tr>';
+            }).join('');
+    }
+    document.getElementById('aggx-eyebrow').textContent = '汇总 · 共 ' + summary.roundCount + ' 局 · ' + totals.length + ' 人';
+    document.getElementById('aggx-list').innerHTML = '<table style="border-collapse:collapse;background:' + BG + '">' + tableHTML + '</table>';
     document.getElementById('aggx-footer').innerHTML =
-        '<span class="aggx-fstat">' + summary.players.length + ' 人</span><span class="aggx-fsep"></span>' +
-        '<span class="aggx-fstat">共 ' + summary.roundCount + ' 局</span>';
+        '<span style="color:' + INK3 + ';font-size:11px">' + totals.length + ' 人</span>' +
+        '<span style="width:3px;height:3px;border-radius:50%;background:#4a4a4a;display:inline-block;margin:0 8px;vertical-align:middle"></span>' +
+        '<span style="color:' + INK3 + ';font-size:11px">共 ' + summary.roundCount + ' 局</span>';
     return true;
 }
 function generateAggImage() {
