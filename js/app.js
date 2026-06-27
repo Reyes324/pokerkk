@@ -385,9 +385,60 @@ function generateImage() {
         logging: false
     }).then(canvas => {
         document.getElementById('export-image').src = canvas.toDataURL('image/png');
+        const a=document.getElementById('btn-confirm-archive'); if(a) a.style.display='';
         openModal('export-modal');
     }).catch(() => {
         showToast('生成图片失败，请截图保存');
+    });
+}
+function buildAggExportCard() {
+    const modal = document.getElementById('summary-result-modal');
+    const summary = JSON.parse(modal.dataset.summaryJson || 'null');
+    if (!summary) return false;
+    const totals = summary.players;
+    const medal = (i) => i === 0 ? '#1ed760' : '#7a7a7a';
+    document.getElementById('aggx-eyebrow').textContent = '汇总成绩单 · 共 ' + summary.roundCount + ' 局';
+    document.getElementById('aggx-title').textContent = totals.length ? '累计领先 · ' + totals[0].name : '本晚汇总';
+    document.getElementById('aggx-list').innerHTML = totals.map((p, i) => {
+        const live = players.find(lp => lp.name === p.name) || p;
+        const cls = p.total > 0 ? 'win' : p.total < 0 ? 'lose' : 'zero';
+        const ring = i === 0 ? 'box-shadow:0 0 0 2px #1ed760;' : '';
+        return '<div class="aggx-row' + (i === 0 ? ' lead' : '') + '">' +
+            '<span class="aggx-rank" style="color:' + medal(i) + '">' + (i + 1) + '</span>' +
+            '<div class="aggx-ava" style="' + ring + 'background:' + getAvatarBgFor(live) + '">' + getAvatarContent(live) + '</div>' +
+            '<span class="aggx-name">' + escHtml(p.name) + (i === 0 ? '<span class="aggx-tag">今晚领先</span>' : '') + '</span>' +
+            '<span class="aggx-pnl ' + cls + '">' + formatPnl(p.total) + '</span></div>';
+    }).join('');
+    document.getElementById('aggx-footer').innerHTML =
+        '<span class="aggx-fstat">' + totals.length + ' 人</span><span class="aggx-fsep"></span>' +
+        '<span class="aggx-fstat">共 ' + summary.roundCount + ' 局</span>';
+    return true;
+}
+function generateAggImage() {
+    if (!buildAggExportCard()) { showToast('暂无可导出的汇总'); return; }
+    const btn = document.getElementById('btn-export-summary');
+    const oldText = btn ? btn.textContent : '';
+    if (btn) {
+        btn.disabled = true;
+        btn.textContent = '生成中...';
+    }
+    const card = document.getElementById('agg-export-card');
+    html2canvas(card, { scale: 2, backgroundColor: null, useCORS: true, logging: false }).then(canvas => {
+        document.getElementById('export-image').src = canvas.toDataURL('image/png');
+        const arch = document.getElementById('btn-confirm-archive');
+        if (arch) arch.style.display = 'none';   // agg 模式:不存档
+        const summaryModal = document.getElementById('summary-result-modal');
+        const showExport = () => openModal('export-modal');
+        if (summaryModal && !summaryModal.classList.contains('hidden')) {
+            closeModal('summary-result-modal', showExport);
+        } else {
+            showExport();
+        }
+    }).catch(() => showToast('生成图片失败，请截图保存')).finally(() => {
+        if (btn) {
+            btn.disabled = false;
+            btn.textContent = oldText || '导出图片';
+        }
     });
 }
 
@@ -1222,7 +1273,7 @@ function renderAggregationsTab() {
     const content = document.getElementById('records-content');
     const entries = Object.entries(aggregations).sort((a, b) => b[1].timestamp - a[1].timestamp);
     if (entries.length === 0) {
-        content.innerHTML = '<p style="text-align:center;color:var(--ink-3);margin-top:48px;font-size:14px">暂无汇总记录<br><span style="font-size:12px">在对局 Tab 选择多局后进行加总</span></p>';
+        content.innerHTML = '<p style="text-align:center;color:var(--ink-3);margin-top:48px;font-size:14px">暂无汇总记录<br><span style="font-size:12px">在对局 Tab 选择多局后进行汇总</span></p>';
         return;
     }
     content.innerHTML = entries.map(([id, agg]) => {
@@ -1269,7 +1320,7 @@ function updateActionBar() {
     if (isSelectMode) {
         bar.classList.remove('hidden');
         const n = selectedRoundIds.size;
-        btn.textContent = n >= 2 ? '加总 (' + n + '局)' : '加总';
+        btn.textContent = n >= 2 ? '汇总 (' + n + '局)' : '汇总';
         btn.disabled = n < 2;
     } else {
         bar.classList.add('hidden');
@@ -1449,6 +1500,7 @@ function showAggDeleteConfirm(id) {
 function openRoundDetailModal(roundId) {
     const round = rounds[roundId];
     if (!round) return;
+    document.getElementById('round-detail-modal').dataset.roundId = roundId;
     const entries = Object.entries(rounds).sort((a, b) => a[1].timestamp - b[1].timestamp);
     const idx = entries.findIndex(([id]) => id === roundId);
     const playerList = round.results ? Object.values(round.results).sort((a, b) => b.pnl - a.pnl) : [];
@@ -1466,6 +1518,12 @@ function openRoundDetailModal(roundId) {
             '<span class="pnl-inline ' + cls + '">' + formatPnl(p.pnl) + ' 分</span></div>';
     }).join('');
     openModal('round-detail-modal');
+}
+function openRoundActionSheet() {
+    const roundId = document.getElementById('round-detail-modal').dataset.roundId;
+    if (!roundId) return;
+    document.getElementById('round-action-modal').dataset.roundId = roundId;
+    openModal('round-action-modal');
 }
 
 // ── Aggregate ──────────────────────────────────────────────────
@@ -1532,9 +1590,8 @@ function renderAggView(opts) {
     const totals = opts.totals;
     const roundsObj = opts.rounds || {};
     const hasSnapshot = Object.keys(roundsObj).length > 0;
-    const memberCount = totals.length;
-    const leaderName = totals.length ? totals[0].name : '';
     const pnlCls = (v) => v > 0 ? 'win' : v < 0 ? 'lose' : 'zero';
+    const headNameCell = '<th class="agg-name-cell"><div class="agg-name-inner agg-name-head-inner"><i class="agg-name-avatar-spacer"></i><span>玩家</span></div></th>';
     const nameCell = (p, isLead) => {
         const live = players.find(lp => lp.name === p.name) || p;
         const champ = isLead ? '<span class="agg-champ">🏆</span>' : '';
@@ -1543,7 +1600,7 @@ function renderAggView(opts) {
     };
     let table;
     if (!hasSnapshot) {
-        table = '<table class="agg-table"><thead><tr><th class="agg-name-cell">玩家</th><th class="agg-col total">合计</th></tr></thead><tbody>' +
+        table = '<table class="agg-table"><thead><tr>' + headNameCell + '<th class="agg-col total">合计</th></tr></thead><tbody>' +
             totals.map((p, i) => '<tr' + (i === 0 ? ' class="lead"' : '') + '>' + nameCell(p, i === 0) +
                 '<td class="agg-cell total ' + pnlCls(p.total) + '">' + formatPnl(p.total) + '</td></tr>').join('') +
             '</tbody></table>';
@@ -1563,14 +1620,10 @@ function renderAggView(opts) {
             return '<tr' + (i === 0 ? ' class="lead"' : '') + '>' + nameCell(p, i === 0) + cells +
                 '<td class="agg-cell total ' + pnlCls(p.total) + '">' + formatPnl(p.total) + '</td></tr>';
         }).join('');
-        table = '<table class="agg-table"><thead><tr><th class="agg-name-cell">玩家</th>' + headCols +
+        table = '<table class="agg-table"><thead><tr>' + headNameCell + headCols +
             '<th class="agg-col total">合计</th></tr></thead><tbody>' + rowsHtml + '</tbody></table>';
     }
     return '<div class="agg-view">' +
-        '<div class="agg-view-hero">' +
-        '<div class="agg-view-eyebrow">汇总 · 共 ' + (opts.roundCount || 0) + ' 局 · ' + memberCount + ' 人</div>' +
-        '<div class="agg-view-title">' + (leaderName ? '累计领先 · ' + escHtml(leaderName) : '本晚汇总') + '</div>' +
-        '</div>' +
         '<div class="agg-table-wrap">' + table + '</div></div>';
 }
 
@@ -1728,9 +1781,19 @@ document.getElementById('btn-end-round').addEventListener('click', openExportMod
 
 document.getElementById('btn-close-round-detail').addEventListener('click', () => closeModal('round-detail-modal'));
 document.getElementById('round-detail-modal').addEventListener('click', e => { if (e.target === e.currentTarget) closeModal('round-detail-modal'); });
+document.getElementById('btn-round-more').addEventListener('click', openRoundActionSheet);
+document.getElementById('btn-round-delete').addEventListener('click', () => {
+    const roundId = document.getElementById('round-action-modal').dataset.roundId;
+    closeModal('round-action-modal', () => {
+        closeModal('round-detail-modal', () => { if (roundId) showRoundDeleteConfirm(roundId); });
+    });
+});
+document.getElementById('btn-round-action-cancel').addEventListener('click', () => closeModal('round-action-modal'));
+document.getElementById('round-action-modal').addEventListener('click', e => { if (e.target === e.currentTarget) closeModal('round-action-modal'); });
 
 document.getElementById('btn-save-aggregation').addEventListener('click', saveAggregation);
-document.getElementById('btn-export-summary').addEventListener('click', () => showToast('长按截图保存到相册'));
+const btnExportSummary = document.getElementById('btn-export-summary');
+if (btnExportSummary) btnExportSummary.addEventListener('click', generateAggImage);
 document.getElementById('btn-close-summary-result').addEventListener('click', () => closeModal('summary-result-modal'));
 document.getElementById('summary-result-modal').addEventListener('click', e => { if (e.target === e.currentTarget) closeModal('summary-result-modal'); });
 

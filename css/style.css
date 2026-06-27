@@ -814,13 +814,13 @@ body{
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 10px;
-  padding: 18px 18px 16px;
+  gap: 8px;
+  padding: 14px 16px 13px;
   background: linear-gradient(160deg,#1f6b3a 0%, #18341f 38%, #181818 100%);
 }
 .export-card-headline {
   font-family: 'Noto Sans SC', sans-serif;
-  font-size: 21px;
+  font-size: 18px;
   font-weight: 800;
   letter-spacing: .01em;
   color: #ffffff;
@@ -830,34 +830,34 @@ body{
 .export-card-sub {
   display: flex;
   align-items: center;
-  gap: 5px;
-  font-size: 11px;
+  gap: 4px;
+  font-size: 10px;
   color: rgba(255,255,255,.7);
   min-width: 0;
 }
 .export-paw-sm {
-  width: 13px; height: 13px;
+  width: 11px; height: 11px;
   object-fit: cover;
   border-radius: 50%;
   opacity: .85;
   flex-shrink: 0;
 }
-.export-player-list { padding: 4px 0; }
+.export-player-list { padding: 2px 0; }
 .export-player-row {
   display: flex;
   align-items: center;
-  gap: 12px;
-  padding: 12px 18px;
+  gap: 9px;
+  padding: 8px 16px;
 }
 .export-player-row + .export-player-row {
   border-top: 1px solid rgba(255,255,255,.05);
 }
 .export-rank {
   font-family: 'Montserrat','Noto Sans SC',sans-serif;
-  font-size: 16px;
+  font-size: 13px;
   font-weight: 600;
   color: #7a7a7a;
-  width: 24px;
+  width: 18px;
   text-align: center;
   flex-shrink: 0;
   line-height: 1;
@@ -867,7 +867,7 @@ body{
 /* 圆形头像(Spotify;border-radius 安全于 html2canvas) */
 .export-ava { flex-shrink: 0; }
 .export-ava .avatar-circle {
-  width: 42px; height: 42px;
+  width: 34px; height: 34px;
   border-radius: 50%;
 }
 .export-player-row.lead .export-ava .avatar-circle {
@@ -878,7 +878,7 @@ body{
   display: flex; flex-direction: column; gap: 2px;
 }
 .export-player-name {
-  font-size: 15px;
+  font-size: 14px;
   font-weight: 600;
   color: #ffffff;
   overflow: hidden;
@@ -887,33 +887,33 @@ body{
 }
 .export-player-row.lead .export-player-name { color: #1ed760; }
 .export-champ-tag {
-  font-size: 10px;
+  font-size: 9px;
   font-weight: 700;
   letter-spacing: .04em;
   color: #1ed760;
 }
 .export-pnl {
   font-family: 'Montserrat','Noto Sans SC',sans-serif;
-  font-size: 21px;
+  font-size: 17px;
   font-weight: 700;
   font-variant-numeric: tabular-nums;
   letter-spacing: 0;
   flex-shrink: 0;
-  min-width: 72px;
+  min-width: 60px;
   text-align: right;
 }
 .export-pnl.win  { color: #1ed760; }
 .export-pnl.lose { color: #f0617a; }
 .export-pnl.zero { color: #7a7a7a; }
-.export-player-row.lead .export-pnl { font-size: 24px; }
+.export-player-row.lead .export-pnl { font-size: 19px; }
 .export-card-footer {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 10px;
-  padding: 13px 18px 15px;
+  gap: 9px;
+  padding: 10px 16px 11px;
   font-family: 'Montserrat','Noto Sans SC',sans-serif;
-  font-size: 12px;
+  font-size: 11px;
   font-weight: 500;
   letter-spacing: .02em;
   background: #0d0d0d;
@@ -1226,24 +1226,39 @@ body{
   text-align:left;position:sticky;left:0;background:var(--surface);z-index:1;
   min-width:120px;
 }
+.agg-table th.agg-name-cell,.agg-table td.agg-name-cell{text-align:left}
 .agg-name-inner{display:flex;align-items:center;gap:8px}
+.agg-name-avatar-spacer{display:block;width:28px;height:28px;flex-shrink:0}
 .agg-name-cell .avatar-circle.sm{width:28px;height:28px;flex-shrink:0}
 .agg-name-cell span{font-family:var(--font);font-size:14px;color:var(--ink-1);
   overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:84px}
+.agg-table thead .agg-name-head-inner span{font-size:11px;font-weight:500;color:var(--ink-3)}
 .agg-cell{font-family:var(--font-display);font-weight:600;font-variant-numeric:tabular-nums}
 .agg-col.total,.agg-cell.total{background:rgba(30,215,96,.08);font-weight:700}
 .agg-cell.win{color:var(--win)} .agg-cell.lose{color:var(--lose)} .agg-cell.zero{color:var(--ink-3)}
 
-#agg-action-modal{z-index:210}
+#agg-action-modal,#round-action-modal{z-index:210}
 
-/* ─── 汇总视图:成绩单头 + 领先高亮 ─── */
-.agg-view-hero{
-  margin:-4px -4px 14px;padding:18px 18px 16px;
-  background:linear-gradient(160deg,#1f6b3a 0%,#18341f 38%,#181818 100%);
-  border-radius:10px;
-}
-.agg-view-eyebrow{font-size:11px;font-weight:600;letter-spacing:.02em;color:rgba(255,255,255,.7);margin-bottom:6px}
-.agg-view-title{font-family:var(--font);font-size:18px;font-weight:800;color:#fff}
+/* ─── 汇总视图:领先高亮 ─── */
 .agg-table tr.lead .agg-name-cell span{color:var(--win)}
 .agg-table tr.lead .agg-cell.total{color:var(--win)}
 .agg-champ{margin-left:2px;font-size:12px}
+
+/* ─── 汇总导出成绩单(离屏,html2canvas 安全:写死值/圆头像/无 var) ─── */
+#agg-export-card{width:320px;background:#181818;border-radius:14px;overflow:hidden}
+.aggx-header{padding:14px 16px 13px;background:linear-gradient(160deg,#1f6b3a 0%,#18341f 38%,#181818 100%)}
+.aggx-eyebrow{font-family:'Montserrat','Noto Sans SC',sans-serif;font-size:10px;font-weight:600;color:rgba(255,255,255,.7);margin-bottom:5px}
+.aggx-title{font-family:'Noto Sans SC',sans-serif;font-size:18px;font-weight:800;color:#fff;line-height:1.15}
+.aggx-list{padding:2px 0}
+.aggx-row{display:flex;align-items:center;gap:9px;padding:7px 16px}
+.aggx-row+.aggx-row{border-top:1px solid rgba(255,255,255,.05)}
+.aggx-rank{font-family:'Montserrat','Noto Sans SC',sans-serif;font-size:13px;font-weight:700;width:16px;text-align:center;flex-shrink:0}
+.aggx-ava{width:32px;height:32px;border-radius:50%;overflow:hidden;flex-shrink:0;display:flex;align-items:center;justify-content:center}
+.aggx-ava img{width:100%;height:100%;object-fit:cover}
+.aggx-name{flex:1;min-width:0;font-family:'Noto Sans SC',sans-serif;font-size:14px;font-weight:600;color:#fff;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.aggx-row.lead .aggx-name{color:#1ed760}
+.aggx-tag{margin-left:5px;font-size:9px;font-weight:700;color:#1ed760}
+.aggx-pnl{font-family:'Montserrat','Noto Sans SC',sans-serif;font-size:17px;font-weight:700;font-variant-numeric:tabular-nums;flex-shrink:0;text-align:right;min-width:58px}
+.aggx-pnl.win{color:#1ed760}.aggx-pnl.lose{color:#f0617a}.aggx-pnl.zero{color:#7a7a7a}
+.aggx-footer{display:flex;align-items:center;justify-content:center;gap:9px;padding:9px 16px 10px;background:#0d0d0d;border-top:1px solid #2a2a2a;font-family:'Montserrat','Noto Sans SC',sans-serif;font-size:11px;color:#b3b3b3}
+.aggx-fsep{width:3px;height:3px;border-radius:50%;background:#4a4a4a}
