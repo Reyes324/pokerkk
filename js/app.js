@@ -458,9 +458,20 @@ function generateAggImage() {
     }
     const card = document.getElementById('agg-export-card');
     html2canvas(card, { scale: 2, backgroundColor: null, useCORS: true, logging: false }).then(canvas => {
-        document.getElementById('export-image').src = canvas.toDataURL('image/png');
+        const TARGET = 750; // 375px × 2 retina
+        let src;
+        if (canvas.width > TARGET) {
+            const out = document.createElement('canvas');
+            out.width = TARGET;
+            out.height = Math.round(canvas.height * TARGET / canvas.width);
+            out.getContext('2d').drawImage(canvas, 0, 0, out.width, out.height);
+            src = out.toDataURL('image/png');
+        } else {
+            src = canvas.toDataURL('image/png');
+        }
+        document.getElementById('export-image').src = src;
         const arch = document.getElementById('btn-confirm-archive');
-        if (arch) arch.style.display = 'none';   // agg 模式:不存档
+        if (arch) arch.style.display = 'none';
         const summaryModal = document.getElementById('summary-result-modal');
         const showExport = () => openModal('export-modal');
         if (summaryModal && !summaryModal.classList.contains('hidden')) {
@@ -1581,6 +1592,7 @@ function doAggregate() {
     modal.dataset.summaryJson = JSON.stringify(summary);
     modal.dataset.roundsSnapshot = JSON.stringify(roundsSnapshot);
     openModal('summary-result-modal');
+    requestAnimationFrame(() => fitAggTable(document.getElementById('summary-result-body')));
 }
 
 function saveAggregation() {
@@ -1657,7 +1669,27 @@ function renderAggView(opts) {
         table = '<table class="agg-table"><thead><tr>' + headNameCell + headCols +
             '<th class="agg-col total">合计</th></tr></thead><tbody>' + rowsHtml + '</tbody></table>';
     }
-    return '<div class="agg-table-wrap">' + table + '</div>';
+    return '<div class="agg-fit"><div class="agg-table-wrap">' + table + '</div></div>';
+}
+
+function fitAggTable(bodyEl) {
+    const outer = bodyEl.querySelector('.agg-fit');
+    const wrap = bodyEl.querySelector('.agg-table-wrap');
+    if (!outer || !wrap) return;
+    wrap.style.transform = '';
+    wrap.style.transformOrigin = '';
+    wrap.style.overflow = '';
+    outer.style.height = '';
+    outer.style.overflow = '';
+    const cw = bodyEl.offsetWidth;
+    const ww = wrap.scrollWidth;
+    if (!cw || ww <= cw) return;
+    const s = cw / ww;
+    wrap.style.transform = 'scale(' + s + ')';
+    wrap.style.transformOrigin = 'top left';
+    wrap.style.overflow = 'visible';
+    outer.style.height = Math.ceil(wrap.offsetHeight * s) + 'px';
+    outer.style.overflow = 'hidden';
 }
 
 // ── Aggregation detail ─────────────────────────────────────────
@@ -1672,6 +1704,7 @@ function openAggDetailModal(aggId) {
         rounds: agg.rounds || {}, totals: totals, roundCount: agg.roundCount || 0
     });
     openModal('agg-detail-modal');
+    requestAnimationFrame(() => fitAggTable(document.getElementById('agg-detail-body')));
 }
 function openAggActionSheet() {
     const aggId = document.getElementById('agg-detail-modal').dataset.aggId;
