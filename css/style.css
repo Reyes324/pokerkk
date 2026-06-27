@@ -1212,6 +1212,15 @@ body{
   to{transform:translateX(100%)}
 }
 
+/* ─── 汇总 modal 聚光灯蒙层 ─── */
+#summary-result-modal,
+#agg-detail-modal{
+  background:
+    radial-gradient(ellipse 70% 55% at 50% -5%, rgba(30,215,96,.22) 0%, transparent 65%),
+    radial-gradient(ellipse 40% 30% at 80% 15%, rgba(30,215,96,.07) 0%, transparent 60%),
+    rgba(10,10,10,.93);
+}
+
 /* ─── 汇总明细表 ─── */
 .agg-fit{overflow:hidden;width:100%}
 .agg-table-wrap{overflow:hidden;width:100%}
