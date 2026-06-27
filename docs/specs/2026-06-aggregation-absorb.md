@@ -91,3 +91,38 @@ aggregations/<aggId>: {
 ## 5. 验收（功能 + 设计）
 功能：造 3 局 → 汇总（3 局消失、角标-3、进汇总 Tab）→ 详情表（3 局明细+合计正确）→ 释放（3 局原样回对局）→ 再汇总→删除（永久不回）→ 老汇总降级不报错 → 双端同步一致。
 设计：§2（表内数字 Montserrat、中文 Noto、无大写）；§3（新表/菜单/sheet 无浅底漏色、绿底黑字）；整体长在 Spotify 语言里。
+
+---
+
+## 6. Refinement 批次（用户体验后追加决策）
+
+### 6.1 决策 A：预览时冻结快照（合计与明细永远一致 + 无静默）
+- `doAggregate`（点「汇总」）时，把选中局的**明细快照**与**合计**在**同一刻**一起冻结进 `summary-result-modal` 的 dataset（`summaryJson` + `roundsSnapshot`）。
+- `saveAggregation` **只用冻结的 `roundsSnapshot`**（不再读实时 `selectedRoundIds`/`rounds`）→ 合计=明细加总，永远一致；且保存不依赖实时数据 → 不会"保存时那几局消失"。
+- **无静默原则**：汇总路径每个失败/边界都给 toast——`<2 选中`→「请至少选择 2 局」；选中局已不存在→「所选对局已不存在，请刷新重试」；保存数据异常→「汇总数据异常，请重试」+关闭；写入失败→「汇总失败，请检查网络」。
+
+### 6.2 命名统一
+- 底部按钮 `#btn-do-aggregate`「加总」→「汇总」；预览标题「加总结果」→「汇总预览」。
+
+### 6.3 预览 = 详情（内容统一 + 成绩单设计）
+- 新增共享渲染器 `renderAggView({roundsSnapshot, totals, label, roundCount, hasSnapshot})`，**预览**(`doAggregate`)与**详情**(`openAggDetailModal`)都用它 → 内容一致：各局明细表 + 合计列。
+- **成绩单设计语言**（沿用结算导出卡）：绿色渐变头（`linear-gradient(160deg,#1f6b3a,#18341f,#181818)`）+ eyebrow「汇总·共N局·M人」+ 领先者(totals[0])行高亮（绿名+🏆+绿总，复用 `.export-champ` 思路）。
+- 动作区不同：预览=「保存汇总」+「导出图片」；详情=⋯ 菜单（释放/删除）。
+- 老汇总无快照：表降级 玩家+合计 两列，渐变头照常。
+
+### 6.4 对齐修复
+- 明细表玩家列原 `td{display:flex}` 与表头 `table-cell` 列宽不一致 → 错位。
+- 修：`.agg-name-cell{display:table-cell;position:sticky;left:0}`，头像+名字包进 `.agg-name-inner{display:flex}`；表头与内容同用 `.agg-name-cell` → 对齐。
+
+### 6.5 导出真图（汇总成绩单）
+- `#btn-export-summary` 现为假（仅 toast）→ 做成**真设计图**。
+- 新增离屏 `#agg-export-card`（仿 `#export-card` 成绩单：绿渐变头 + 每人**总计名次**行 + 冠军绿环/绿标 + 页脚「共N局·M人 · ✓」）。
+- **形态约定**：屏幕看各局明细矩阵；**导出分享图用汇总名次成绩单**（总计排名，非多局矩阵——固定宽分享图放不下矩阵）。
+- html2canvas 安全：值全写死、圆形头像用 `border-radius`（非 clip-path）、无 var/backdrop。
+- `btn-export-summary` → 填卡 → `html2canvas` → 图片预览（复用/简化，存档按钮不适用）。
+
+### 6.6 受影响（本批新增/改）
+- `js/app.js`：新增 `renderAggView`、`buildAggExportCard`、`generateAggImage`；重写 `doAggregate`/`saveAggregation`/`openAggDetailModal`；接 `btn-export-summary`。
+- `index.html`：两处文案改名；新增 `#agg-export-card` 离屏卡；`?v=` 自增。
+- `css/style.css`：`.agg-view-hero` 渐变头、`.agg-name-inner` 对齐、领先行高亮、`#agg-export-card` 成绩单样式。
+- 不动：firebase 配置、同步主体、释放/删除逻辑（已落地）。
