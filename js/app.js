@@ -1585,7 +1585,7 @@ function openAggActionSheet() {
 function releaseAggregation() {
     const aggId = document.getElementById('agg-action-modal').dataset.aggId;
     const agg = aggregations[aggId];
-    if (!agg || !agg.rounds) return;
+    if (!agg || !agg.rounds || Object.keys(agg.rounds).length === 0) return;
     const updates = {};
     Object.entries(agg.rounds).forEach(([rid, r]) => { updates['rounds/' + rid] = r; });
     updates['aggregations/' + aggId] = null;
@@ -1726,7 +1726,7 @@ document.getElementById('btn-agg-more').addEventListener('click', openAggActionS
 document.getElementById('btn-agg-release').addEventListener('click', releaseAggregation);
 document.getElementById('btn-agg-delete').addEventListener('click', () => {
     const aggId = document.getElementById('agg-action-modal').dataset.aggId;
-    closeModal('agg-action-modal', () => { if (aggId) showAggDeleteConfirm(aggId); });
+    closeModal('agg-action-modal', () => { closeModal('agg-detail-modal'); if (aggId) showAggDeleteConfirm(aggId); });
 });
 document.getElementById('btn-agg-action-cancel').addEventListener('click', () => closeModal('agg-action-modal'));
 document.getElementById('agg-action-modal').addEventListener('click', e => { if (e.target === e.currentTarget) closeModal('agg-action-modal'); });
