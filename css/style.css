@@ -1245,8 +1245,10 @@ body{
 .agg-champ{margin-left:2px;font-size:12px}
 
 /* ─── 汇总导出成绩单(离屏,html2canvas 安全:写死值/圆头像/无 var) ─── */
-#agg-export-card{width:320px;background:#181818;border-radius:14px;overflow:hidden}
-.aggx-header{padding:14px 16px 13px;background:linear-gradient(160deg,#1f6b3a 0%,#18341f 38%,#181818 100%)}
+#agg-export-card{width:max-content;min-width:320px;background:#181818;border-radius:14px;overflow:hidden}
+#agg-export-card .agg-table-wrap{overflow:visible}
+#agg-export-card .agg-name-cell{background:#181818}
+.aggx-header{padding:12px 16px 10px;background:#242424;border-bottom:1px solid rgba(255,255,255,.06)}
 .aggx-eyebrow{font-family:'Montserrat','Noto Sans SC',sans-serif;font-size:10px;font-weight:600;color:rgba(255,255,255,.7);margin-bottom:5px}
 .aggx-title{font-family:'Noto Sans SC',sans-serif;font-size:18px;font-weight:800;color:#fff;line-height:1.15}
 .aggx-list{padding:2px 0}

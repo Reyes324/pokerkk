@@ -394,23 +394,14 @@ function generateImage() {
 function buildAggExportCard() {
     const modal = document.getElementById('summary-result-modal');
     const summary = JSON.parse(modal.dataset.summaryJson || 'null');
+    const roundsSnapshot = JSON.parse(modal.dataset.roundsSnapshot || 'null');
     if (!summary) return false;
-    const totals = summary.players;
-    const medal = (i) => i === 0 ? '#1ed760' : '#7a7a7a';
-    document.getElementById('aggx-eyebrow').textContent = '汇总成绩单 · 共 ' + summary.roundCount + ' 局';
-    document.getElementById('aggx-title').textContent = totals.length ? '累计领先 · ' + totals[0].name : '本晚汇总';
-    document.getElementById('aggx-list').innerHTML = totals.map((p, i) => {
-        const live = players.find(lp => lp.name === p.name) || p;
-        const cls = p.total > 0 ? 'win' : p.total < 0 ? 'lose' : 'zero';
-        const ring = i === 0 ? 'box-shadow:0 0 0 2px #1ed760;' : '';
-        return '<div class="aggx-row' + (i === 0 ? ' lead' : '') + '">' +
-            '<span class="aggx-rank" style="color:' + medal(i) + '">' + (i + 1) + '</span>' +
-            '<div class="aggx-ava" style="' + ring + 'background:' + getAvatarBgFor(live) + '">' + getAvatarContent(live) + '</div>' +
-            '<span class="aggx-name">' + escHtml(p.name) + (i === 0 ? '<span class="aggx-tag">今晚领先</span>' : '') + '</span>' +
-            '<span class="aggx-pnl ' + cls + '">' + formatPnl(p.total) + '</span></div>';
-    }).join('');
+    document.getElementById('aggx-eyebrow').textContent = '汇总 · 共 ' + summary.roundCount + ' 局 · ' + summary.players.length + ' 人';
+    document.getElementById('aggx-list').innerHTML = renderAggView({
+        rounds: roundsSnapshot || {}, totals: summary.players, roundCount: summary.roundCount
+    });
     document.getElementById('aggx-footer').innerHTML =
-        '<span class="aggx-fstat">' + totals.length + ' 人</span><span class="aggx-fsep"></span>' +
+        '<span class="aggx-fstat">' + summary.players.length + ' 人</span><span class="aggx-fsep"></span>' +
         '<span class="aggx-fstat">共 ' + summary.roundCount + ' 局</span>';
     return true;
 }
