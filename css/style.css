@@ -1268,4 +1268,5 @@ body{
 .aggx-pnl{font-family:'Montserrat','Noto Sans SC',sans-serif;font-size:17px;font-weight:700;font-variant-numeric:tabular-nums;flex-shrink:0;text-align:right;min-width:58px}
 .aggx-pnl.win{color:#1ed760}.aggx-pnl.lose{color:#f0617a}.aggx-pnl.zero{color:#7a7a7a}
 .aggx-footer{display:flex;align-items:center;justify-content:center;gap:9px;padding:9px 16px 10px;background:#0d0d0d;border-top:1px solid #2a2a2a;font-family:'Montserrat','Noto Sans SC',sans-serif;font-size:11px;color:#b3b3b3}
+.aggx-fstat{color:#b3b3b3}
 .aggx-fsep{width:3px;height:3px;border-radius:50%;background:#4a4a4a}
