@@ -1211,3 +1211,25 @@ body{
   from{transform:translateX(0)}
   to{transform:translateX(100%)}
 }
+
+/* ─── 汇总明细表 ─── */
+.agg-table-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none}
+.agg-table-wrap::-webkit-scrollbar{display:none}
+.agg-table{border-collapse:collapse;width:100%;font-size:13px}
+.agg-table th,.agg-table td{padding:9px 10px;white-space:nowrap;text-align:right}
+.agg-table thead th{
+  font-family:var(--font);font-size:11px;font-weight:500;color:var(--ink-3);
+  border-bottom:1px solid var(--n20);position:sticky;top:0;background:var(--surface);
+}
+.agg-table tbody tr+tr td{border-top:1px solid rgba(255,255,255,.06)}
+.agg-name-cell{
+  text-align:left;position:sticky;left:0;background:var(--surface);z-index:1;
+  display:flex;align-items:center;gap:8px;min-width:120px;
+}
+thead .agg-name-cell{display:table-cell}
+.agg-name-cell .avatar-circle.sm{width:28px;height:28px;flex-shrink:0}
+.agg-name-cell span{font-family:var(--font);font-size:14px;color:var(--ink-1);
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:84px}
+.agg-cell{font-family:var(--font-display);font-weight:600;font-variant-numeric:tabular-nums}
+.agg-col.total,.agg-cell.total{background:rgba(30,215,96,.08);font-weight:700}
+.agg-cell.win{color:var(--win)} .agg-cell.lose{color:var(--lose)} .agg-cell.zero{color:var(--ink-3)}
