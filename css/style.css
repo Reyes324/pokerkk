@@ -131,13 +131,14 @@ body{
   position:fixed;top:0;left:0;right:0;z-index:20;
   display:flex;align-items:center;justify-content:space-between;
   height:56px;
-  padding:0 16px;
+  padding:0 12px;
+  gap:8px;
   background:var(--bg-blur);
   backdrop-filter:blur(14px);
   -webkit-backdrop-filter:blur(14px);
   border-bottom:1px solid var(--line);
 }
-.app-title{display:flex;align-items:center;gap:10px}
+.app-title{display:flex;align-items:center;gap:10px;min-width:0}
 .app-title-icon{
   width:36px;height:36px;
   background:var(--surface);
@@ -148,8 +149,8 @@ body{
 }
 .app-title-icon img{width:100%;height:100%;object-fit:cover;display:block}
 .app-title-icon svg{width:22px;height:22px}
-.app-title-text{font-size:18px;font-weight:700;letter-spacing:.01em;color:var(--ink-1)}
-.header-actions{display:flex;gap:6px}
+.app-title-text{font-size:16px;font-weight:700;letter-spacing:.01em;color:var(--ink-1);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.header-actions{display:flex;gap:6px;flex-shrink:0}
 .btn-icon{
   width:40px;height:40px;
   border:none;background:transparent;
@@ -160,6 +161,16 @@ body{
   transition:background .12s,color .12s;
 }
 .btn-icon:active{background:rgba(255,255,255,.1);color:var(--ink-1)}
+/* 头部图标+文字胶囊(紧凑,避免挤头部) */
+.btn-icon-text{
+  width:auto;height:34px;
+  padding:0 11px;gap:5px;
+  border-radius:var(--rfull);
+  background:rgba(255,255,255,.08);
+  font-family:var(--font);font-size:13px;font-weight:600;
+}
+.btn-icon-text svg{flex-shrink:0}
+.btn-icon-text:active{background:rgba(255,255,255,.16);color:var(--ink-1)}
 /* 重置=次要/破坏性操作:更灰一档,从属于记录入口 */
 .btn-icon-reset{color:var(--ink-3)}
 .btn-icon-reset:active{color:var(--ink-1)}
@@ -998,13 +1009,14 @@ body{
 /* ─── Header badge wrap ─── */
 .btn-icon-wrap{position:relative;display:inline-flex}
 .round-badge{
-  position:absolute;top:2px;right:2px;
+  position:absolute;top:-5px;right:-5px;
   min-width:16px;height:16px;
   background:var(--brand);color:#000;
   font-size:10px;font-weight:700;
   border-radius:var(--rfull);
   display:flex;align-items:center;justify-content:center;
   padding:0 4px;pointer-events:none;
+  border:2px solid var(--bg);   /* 与底色脱开,像通知角标 */
 }
 
 /* ─── Float bar additions ─── */
