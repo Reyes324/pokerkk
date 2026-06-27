@@ -1478,16 +1478,11 @@ function doAggregate() {
     const titleByName = {};
     calcNightTitles(selected).forEach(t => { titleByName[t.name] = t; });
     document.getElementById('summary-result-info').textContent = '共 ' + summary.roundCount + ' 局';
-    document.getElementById('summary-result-body').innerHTML = summary.players.map(p => {
-        const cls = p.total > 0 ? 'positive' : p.total < 0 ? 'negative' : 'neutral';
-        const live = players.find(lp => lp.name === p.name) || p;
-        return '<div style="display:flex;justify-content:space-between;align-items:center;padding:12px 0;border-bottom:1px solid var(--n10)">' +
-            '<div style="display:flex;align-items:center;gap:8px;min-width:0">' +
-            '<div class="avatar-circle sm" style="background:' + getAvatarBgFor(live) + ';flex-shrink:0">' + getAvatarContent(live) + '</div>' +
-            '<span class="agg-name-wrap"><span class="agg-name">' + escHtml(p.name) + '</span>' + renderTitleBadge(titleByName[p.name]) + '</span>' +
-            '</div>' +
-            '<span class="pnl-inline ' + cls + '">' + formatPnl(p.total) + ' 分</span></div>';
-    }).join('');
+    const previewRounds = {};
+    selectedEntries.forEach(([id, r]) => { previewRounds[id] = r; });
+    document.getElementById('summary-result-body').innerHTML = renderAggView({
+        rounds: previewRounds, totals: summary.players, roundCount: summary.roundCount
+    });
     const roundsSnapshot = {};
     selectedEntries.forEach(([id, r]) => { roundsSnapshot[id] = r; });
     const modal = document.getElementById('summary-result-modal');
@@ -1532,6 +1527,53 @@ function saveAggregation() {
     });
 }
 
+// 共享:汇总视图(成绩单语言) —— 预览与详情同款。opts:{rounds, totals, roundCount}
+function renderAggView(opts) {
+    const totals = opts.totals;
+    const roundsObj = opts.rounds || {};
+    const hasSnapshot = Object.keys(roundsObj).length > 0;
+    const memberCount = totals.length;
+    const leaderName = totals.length ? totals[0].name : '';
+    const pnlCls = (v) => v > 0 ? 'win' : v < 0 ? 'lose' : 'zero';
+    const nameCell = (p, isLead) => {
+        const live = players.find(lp => lp.name === p.name) || p;
+        const champ = isLead ? '<span class="agg-champ">🏆</span>' : '';
+        return '<td class="agg-name-cell"><div class="agg-name-inner"><div class="avatar-circle sm" style="background:' +
+            getAvatarBgFor(live) + '">' + getAvatarContent(live) + '</div><span>' + escHtml(p.name) + '</span>' + champ + '</div></td>';
+    };
+    let table;
+    if (!hasSnapshot) {
+        table = '<table class="agg-table"><thead><tr><th class="agg-name-cell">玩家</th><th class="agg-col total">合计</th></tr></thead><tbody>' +
+            totals.map((p, i) => '<tr' + (i === 0 ? ' class="lead"' : '') + '>' + nameCell(p, i === 0) +
+                '<td class="agg-cell total ' + pnlCls(p.total) + '">' + formatPnl(p.total) + '</td></tr>').join('') +
+            '</tbody></table>';
+    } else {
+        const roundEntries = Object.entries(roundsObj).sort((a, b) => (a[1].timestamp || 0) - (b[1].timestamp || 0));
+        const roundMaps = roundEntries.map(([, r]) => {
+            const m = {};
+            if (r.results) Object.values(r.results).forEach(x => { m[x.name] = x.pnl; });
+            return m;
+        });
+        const headCols = roundEntries.map((_, i) => '<th class="agg-col">局' + (i + 1) + '</th>').join('');
+        const rowsHtml = totals.map((p, i) => {
+            const cells = roundMaps.map(m => {
+                if (m[p.name] == null) return '<td class="agg-cell zero">—</td>';
+                return '<td class="agg-cell ' + pnlCls(m[p.name]) + '">' + formatPnl(m[p.name]) + '</td>';
+            }).join('');
+            return '<tr' + (i === 0 ? ' class="lead"' : '') + '>' + nameCell(p, i === 0) + cells +
+                '<td class="agg-cell total ' + pnlCls(p.total) + '">' + formatPnl(p.total) + '</td></tr>';
+        }).join('');
+        table = '<table class="agg-table"><thead><tr><th class="agg-name-cell">玩家</th>' + headCols +
+            '<th class="agg-col total">合计</th></tr></thead><tbody>' + rowsHtml + '</tbody></table>';
+    }
+    return '<div class="agg-view">' +
+        '<div class="agg-view-hero">' +
+        '<div class="agg-view-eyebrow">汇总 · 共 ' + (opts.roundCount || 0) + ' 局 · ' + memberCount + ' 人</div>' +
+        '<div class="agg-view-title">' + (leaderName ? '累计领先 · ' + escHtml(leaderName) : '本晚汇总') + '</div>' +
+        '</div>' +
+        '<div class="agg-table-wrap">' + table + '</div></div>';
+}
+
 // ── Aggregation detail ─────────────────────────────────────────
 function openAggDetailModal(aggId) {
     const agg = aggregations[aggId];
@@ -1540,42 +1582,9 @@ function openAggDetailModal(aggId) {
     document.getElementById('agg-detail-title').textContent = agg.label || '汇总';
     document.getElementById('agg-detail-subtitle').textContent = '共 ' + (agg.roundCount || 0) + ' 局';
     const totals = agg.players ? Object.values(agg.players).slice().sort((a, b) => b.total - a.total) : [];
-    const nameCell = (p) => {
-        const live = players.find(lp => lp.name === p.name) || p;
-        return '<td class="agg-name-cell"><div class="agg-name-inner"><div class="avatar-circle sm" style="background:' +
-            getAvatarBgFor(live) + '">' + getAvatarContent(live) + '</div><span>' + escHtml(p.name) + '</span></div></td>';
-    };
-    const pnlCls = (v) => v > 0 ? 'win' : v < 0 ? 'lose' : 'zero';
-    const hasSnapshot = agg.rounds && Object.keys(agg.rounds).length > 0;
-    let html;
-    if (!hasSnapshot) {
-        // 老汇总降级:玩家 + 合计 两列
-        html = '<div class="agg-table-wrap"><table class="agg-table"><thead><tr>' +
-            '<th class="agg-name-cell">玩家</th><th class="agg-col total">合计</th></tr></thead><tbody>' +
-            totals.map(p => '<tr>' + nameCell(p) +
-                '<td class="agg-cell total ' + pnlCls(p.total) + '">' + formatPnl(p.total) + '</td></tr>').join('') +
-            '</tbody></table></div>';
-    } else {
-        const roundEntries = Object.entries(agg.rounds).sort((a, b) => (a[1].timestamp || 0) - (b[1].timestamp || 0));
-        const roundMaps = roundEntries.map(([, r]) => {
-            const m = {};
-            if (r.results) Object.values(r.results).forEach(x => { m[x.name] = x.pnl; });
-            return m;
-        });
-        const headCols = roundEntries.map((_, i) => '<th class="agg-col">局' + (i + 1) + '</th>').join('');
-        const rowsHtml = totals.map(p => {
-            const cells = roundMaps.map(m => {
-                if (m[p.name] == null) return '<td class="agg-cell zero">—</td>';
-                return '<td class="agg-cell ' + pnlCls(m[p.name]) + '">' + formatPnl(m[p.name]) + '</td>';
-            }).join('');
-            return '<tr>' + nameCell(p) + cells +
-                '<td class="agg-cell total ' + pnlCls(p.total) + '">' + formatPnl(p.total) + '</td></tr>';
-        }).join('');
-        html = '<div class="agg-table-wrap"><table class="agg-table"><thead><tr>' +
-            '<th class="agg-name-cell">玩家</th>' + headCols + '<th class="agg-col total">合计</th></tr></thead>' +
-            '<tbody>' + rowsHtml + '</tbody></table></div>';
-    }
-    document.getElementById('agg-detail-body').innerHTML = html;
+    document.getElementById('agg-detail-body').innerHTML = renderAggView({
+        rounds: agg.rounds || {}, totals: totals, roundCount: agg.roundCount || 0
+    });
     openModal('agg-detail-modal');
 }
 function openAggActionSheet() {
