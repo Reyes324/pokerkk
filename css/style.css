@@ -1239,7 +1239,14 @@ body{
 
 #agg-action-modal,#round-action-modal{z-index:210}
 
-/* ─── 汇总视图:领先高亮 ─── */
+/* ─── 汇总视图:成绩单头 + 领先高亮 ─── */
+.agg-view-hero{
+  margin:-4px -4px 14px;padding:18px 18px 16px;
+  background:linear-gradient(160deg,#1f6b3a 0%,#18341f 38%,#181818 100%);
+  border-radius:10px;
+}
+.agg-view-eyebrow{font-size:11px;font-weight:600;letter-spacing:.02em;color:rgba(255,255,255,.7);margin-bottom:6px}
+.agg-view-title{font-family:var(--font);font-size:18px;font-weight:800;color:#fff}
 .agg-table tr.lead .agg-name-cell span{color:var(--win)}
 .agg-table tr.lead .agg-cell.total{color:var(--win)}
 .agg-champ{margin-left:2px;font-size:12px}
