@@ -1216,7 +1216,7 @@ body{
 .agg-table-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none}
 .agg-table-wrap::-webkit-scrollbar{display:none}
 .agg-table{border-collapse:collapse;width:100%;font-size:13px}
-.agg-table th,.agg-table td{padding:9px 10px;white-space:nowrap;text-align:right}
+.agg-table th,.agg-table td{padding:9px 10px;white-space:nowrap;text-align:left}
 .agg-table thead th{
   font-family:var(--font);font-size:11px;font-weight:500;color:var(--ink-3);
   border-bottom:1px solid var(--n20);position:sticky;top:0;background:var(--surface);
@@ -1239,14 +1239,7 @@ body{
 
 #agg-action-modal,#round-action-modal{z-index:210}
 
-/* ─── 汇总视图:成绩单头 + 领先高亮 ─── */
-.agg-view-hero{
-  margin:-4px -4px 14px;padding:18px 18px 16px;
-  background:linear-gradient(160deg,#1f6b3a 0%,#18341f 38%,#181818 100%);
-  border-radius:10px;
-}
-.agg-view-eyebrow{font-size:11px;font-weight:600;letter-spacing:.02em;color:rgba(255,255,255,.7);margin-bottom:6px}
-.agg-view-title{font-family:var(--font);font-size:18px;font-weight:800;color:#fff}
+/* ─── 汇总视图:领先高亮 ─── */
 .agg-table tr.lead .agg-name-cell span{color:var(--win)}
 .agg-table tr.lead .agg-cell.total{color:var(--win)}
 .agg-champ{margin-left:2px;font-size:12px}

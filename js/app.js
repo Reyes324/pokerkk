@@ -1623,14 +1623,7 @@ function renderAggView(opts) {
         table = '<table class="agg-table"><thead><tr>' + headNameCell + headCols +
             '<th class="agg-col total">合计</th></tr></thead><tbody>' + rowsHtml + '</tbody></table>';
     }
-    const memberCount = totals.length;
-    const leaderName = totals.length ? totals[0].name : '';
-    return '<div class="agg-view">' +
-        '<div class="agg-view-hero">' +
-        '<div class="agg-view-eyebrow">汇总 · 共 ' + (opts.roundCount || 0) + ' 局 · ' + memberCount + ' 人</div>' +
-        '<div class="agg-view-title">' + (leaderName ? '累计领先 · ' + escHtml(leaderName) : '本晚汇总') + '</div>' +
-        '</div>' +
-        '<div class="agg-table-wrap">' + table + '</div></div>';
+    return '<div class="agg-table-wrap">' + table + '</div>';
 }
 
 // ── Aggregation detail ─────────────────────────────────────────
