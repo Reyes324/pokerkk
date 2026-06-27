@@ -1224,9 +1224,9 @@ body{
 .agg-table tbody tr+tr td{border-top:1px solid rgba(255,255,255,.06)}
 .agg-name-cell{
   text-align:left;position:sticky;left:0;background:var(--surface);z-index:1;
-  display:flex;align-items:center;gap:8px;min-width:120px;
+  min-width:120px;
 }
-thead .agg-name-cell{display:table-cell}
+.agg-name-inner{display:flex;align-items:center;gap:8px}
 .agg-name-cell .avatar-circle.sm{width:28px;height:28px;flex-shrink:0}
 .agg-name-cell span{font-family:var(--font);font-size:14px;color:var(--ink-1);
   overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:84px}

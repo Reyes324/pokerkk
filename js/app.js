@@ -1470,10 +1470,10 @@ function openRoundDetailModal(roundId) {
 
 // ── Aggregate ──────────────────────────────────────────────────
 function doAggregate() {
-    if (selectedRoundIds.size < 2) return;
-    const selected = Object.entries(rounds)
-        .filter(([id]) => selectedRoundIds.has(id))
-        .map(([, r]) => r);
+    if (selectedRoundIds.size < 2) { showToast('请至少选择 2 局'); return; }
+    const selectedEntries = Object.entries(rounds).filter(([id]) => selectedRoundIds.has(id));
+    if (selectedEntries.length < 2) { showToast('所选对局已不存在，请刷新重试'); return; }
+    const selected = selectedEntries.map(([, r]) => r);
     const summary = calcNightSummary(selected);
     const titleByName = {};
     calcNightTitles(selected).forEach(t => { titleByName[t.name] = t; });
@@ -1488,16 +1488,23 @@ function doAggregate() {
             '</div>' +
             '<span class="pnl-inline ' + cls + '">' + formatPnl(p.total) + ' 分</span></div>';
     }).join('');
-    document.getElementById('summary-result-modal').dataset.summaryJson = JSON.stringify(summary);
+    const roundsSnapshot = {};
+    selectedEntries.forEach(([id, r]) => { roundsSnapshot[id] = r; });
+    const modal = document.getElementById('summary-result-modal');
+    modal.dataset.summaryJson = JSON.stringify(summary);
+    modal.dataset.roundsSnapshot = JSON.stringify(roundsSnapshot);
     openModal('summary-result-modal');
 }
 
 function saveAggregation() {
     const modal = document.getElementById('summary-result-modal');
     const summary = JSON.parse(modal.dataset.summaryJson || 'null');
-    if (!summary) return;
-    const ids = [...selectedRoundIds].filter(id => rounds[id]);
-    if (ids.length === 0) return;
+    const roundsSnapshot = JSON.parse(modal.dataset.roundsSnapshot || 'null');
+    if (!summary || !roundsSnapshot || Object.keys(roundsSnapshot).length === 0) {
+        showToast('汇总数据异常，请重试');
+        closeModal('summary-result-modal', () => { isSelectMode = false; selectedRoundIds = new Set(); renderRecordsPage(); });
+        return;
+    }
     const now = new Date();
     const playerData = {};
     summary.players.forEach((p, i) => {
@@ -1506,8 +1513,6 @@ function saveAggregation() {
         if (live && live.avatarRef) entry.avatarRef = live.avatarRef;
         playerData['p' + i] = entry;
     });
-    const roundsSnapshot = {};
-    ids.forEach(id => { roundsSnapshot[id] = rounds[id]; });
     const aggId = gameRef.child('aggregations').push().key;
     const updates = {};
     updates['aggregations/' + aggId] = {
@@ -1517,7 +1522,7 @@ function saveAggregation() {
         players: playerData,
         rounds: roundsSnapshot
     };
-    ids.forEach(id => { updates['rounds/' + id] = null; });
+    Object.keys(roundsSnapshot).forEach(id => { updates['rounds/' + id] = null; });
     gameRef.update(updates, err => { if (err) showToast('汇总失败，请检查网络'); });
     closeModal('summary-result-modal', () => {
         isSelectMode = false;
@@ -1537,8 +1542,8 @@ function openAggDetailModal(aggId) {
     const totals = agg.players ? Object.values(agg.players).slice().sort((a, b) => b.total - a.total) : [];
     const nameCell = (p) => {
         const live = players.find(lp => lp.name === p.name) || p;
-        return '<td class="agg-name-cell"><div class="avatar-circle sm" style="background:' +
-            getAvatarBgFor(live) + '">' + getAvatarContent(live) + '</div><span>' + escHtml(p.name) + '</span></td>';
+        return '<td class="agg-name-cell"><div class="agg-name-inner"><div class="avatar-circle sm" style="background:' +
+            getAvatarBgFor(live) + '">' + getAvatarContent(live) + '</div><span>' + escHtml(p.name) + '</span></div></td>';
     };
     const pnlCls = (v) => v > 0 ? 'win' : v < 0 ? 'lose' : 'zero';
     const hasSnapshot = agg.rounds && Object.keys(agg.rounds).length > 0;
