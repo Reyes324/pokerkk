@@ -718,12 +718,12 @@ body{
   white-space: nowrap;
 }
 .float-bar-value {
-  font-family:var(--font-display);
-  font-size: 22px;
-  font-weight:700;
+  font-family: var(--font);
+  font-size: 13px;
+  font-weight: 500;
   color: var(--ink-1);
   letter-spacing: 0;
-  font-variant-numeric:tabular-nums;
+  font-variant-numeric: tabular-nums;
 }
 .float-bar-value.positive { color: var(--win); }
 .float-bar-value.negative { color: var(--lose); }
