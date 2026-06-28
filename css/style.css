@@ -1050,7 +1050,7 @@ body { padding-bottom: calc(144px + env(safe-area-inset-bottom)) !important; }
   flex-direction: column;
   align-items: center;
   z-index: 5;
-  margin-top: 0px;
+  margin-top: -24px; /* 筒口轻盖住签条底部 */
   transform-origin: 50% 75%;
 }
 
@@ -1061,7 +1061,7 @@ body { padding-bottom: calc(144px + env(safe-area-inset-bottom)) !important; }
   height: auto;
   display: block;
   pointer-events: none;
-  filter: drop-shadow(0 12px 28px rgba(0,0,0,0.7));
+  filter: drop-shadow(0 16px 32px rgba(0,0,0,0.75)) drop-shadow(0 4px 8px rgba(0,0,0,0.4));
 }
 
 /* 摇签动画 */
@@ -1083,20 +1083,22 @@ body { padding-bottom: calc(144px + env(safe-area-inset-bottom)) !important; }
 .pj-slip {
   position: relative;   /* flex item — 参与 pj-oracle 的 flex 流 */
   flex-shrink: 0;
-  width: min(230px, 62vw);
+  width: min(270px, 72vw);
   min-height: 280px;
   background: linear-gradient(160deg, #f8f2e2 0%, #efe6cf 100%);
-  border: 1px solid rgba(139,90,60,0.35);
-  border-radius: 4px 4px 3px 3px;
+  border: 1px solid rgba(139,90,60,0.25);
+  border-radius: 14px;
   padding: 20px 18px;
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center; /* 文字垂直居中 */
+  justify-content: center;
   gap: 14px;
   box-shadow:
-    0 6px 24px rgba(0,0,0,0.55),
-    0 0 0 1px rgba(201,168,76,0.18);
+    0 6px 24px rgba(0,0,0,0.5),
+    0 0 0 1px rgba(201,168,76,0.2),
+    0 0 28px rgba(201,168,76,0.18),
+    0 2px 12px rgba(201,168,76,0.12);
   z-index: 3;
   /* 初始：藏在签筒后方（向下 300px 进入筒身区域） */
   transform: translateY(300px);
@@ -1138,9 +1140,9 @@ body { padding-bottom: calc(144px + env(safe-area-inset-bottom)) !important; }
   filter: drop-shadow(0 0 4px rgba(201,168,76,0.5));
 }
 
-/* 「再求签」按钮 — 紧跟签筒下方 */
+/* 「再来一签」按钮 */
 .pj-btn-redraw {
-  margin-top: 24px;
+  margin-top: 12px;
   background: transparent;
   border: 1px solid var(--pj-gold);
   color: var(--pj-gold);
