@@ -29,6 +29,14 @@ const deviceId = (() => {
 // ── State ──────────────────────────────────────────────────────
 let players = [];
 let isLoading = true; // true until first Firebase response
+
+function hideAppLoader() {
+    const el = document.getElementById('app-loader');
+    if (!el || el.classList.contains('done')) return;
+    el.classList.add('done');
+    el.addEventListener('transitionend', () => el.remove(), { once: true });
+}
+setTimeout(hideAppLoader, 6000); // 兜底：6s 后强制隐藏
 let chipModalIdx = -1;
 let chipModalSnapshot = null;
 let chipInputMode = 'stepper'; // 'stepper' | 'direct'
@@ -118,6 +126,7 @@ function clearEditingBy(idx) {
 // ── Firebase ───────────────────────────────────────────────────
 gameRef.child('players').on('value', snap => {
     isLoading = false;
+    hideAppLoader();
     const data = snap.val();
     if (!data) {
         gameRef.set({ status: 'waiting', players: defaultPlayers(3) });
