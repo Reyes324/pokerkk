@@ -1890,6 +1890,13 @@ function switchMainTab(tab) {
         mainView.style.display = 'none';
         paijueView.classList.remove('hidden');
         floatBar.style.display = 'none';
+        // Reset card state when switching back to paijue
+        if (_paijueFlipped === true) {
+            document.getElementById('paijue-card-inner').classList.remove('flipped');
+            _paijueFlipped = false;
+            document.getElementById('paijue-hint').textContent = '点击翻牌';
+            document.getElementById('btn-paijue-redraw').classList.add('hidden');
+        }
     }
 }
 
