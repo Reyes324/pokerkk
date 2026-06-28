@@ -1102,6 +1102,7 @@ body { padding-bottom: calc(144px + env(safe-area-inset-bottom)) !important; }
   display: block;
   pointer-events: none;
   filter: drop-shadow(0 12px 28px rgba(0,0,0,0.7));
+  margin-top: -40px; /* 把筒口上移，让签插在洞口里 */
 }
 
 /* 摇签动画 */
