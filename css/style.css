@@ -1158,8 +1158,8 @@ body { padding-bottom: calc(144px + env(safe-area-inset-bottom)) !important; }
 .pj-btn-redraw {
   margin-top: 12px;
   background: transparent;
-  border: 1px solid var(--brand);
-  color: var(--brand);
+  border: 1px solid var(--ink-3);
+  color: var(--ink-2);
   border-radius: var(--r8);
   padding: 10px 28px;
   font-family: var(--font);
@@ -1180,8 +1180,7 @@ body { padding-bottom: calc(144px + env(safe-area-inset-bottom)) !important; }
   display: block !important;
 }
 .pj-btn-redraw:active {
-  background: var(--brand-soft);
-  box-shadow: 0 0 12px var(--brand-shadow);
+  background: rgba(255,255,255,0.06);
 }
 .pj-btn-redraw:disabled {
   opacity: 0.3;
