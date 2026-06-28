@@ -6,7 +6,7 @@
     <title>猫店德州结算</title>
     <link rel="icon" type="image/png" href="img/paw.png">
     <link rel="apple-touch-icon" href="img/paw.png">
-    <link rel="stylesheet" href="css/style.css?v=61">
+    <link rel="stylesheet" href="css/style.css?v=62">
 </head>
 <body>
 <div class="container" id="main-view">
@@ -70,9 +70,16 @@
         <p class="pj-slip-text" id="pj-slip-text"></p>
         <div class="pj-slip-deco"></div>
       </div>
-      <!-- 签筒 PNG -->
-      <img class="pj-cylinder-img" id="pj-cylinder-wrap"
-           src="img/qiantong.png" alt="签筒">
+      <!-- 签筒组（签头 + 筒身 PNG，整体摇签） -->
+      <div class="pj-cylinder-group" id="pj-cylinder-wrap">
+        <div class="pj-sticks-top">
+          <div class="pj-stick-nub" style="--ni:0"></div>
+          <div class="pj-stick-nub" style="--ni:1"></div>
+          <div class="pj-stick-nub" style="--ni:2"></div>
+          <div class="pj-stick-nub" style="--ni:3"></div>
+        </div>
+        <img class="pj-cylinder-img" src="img/qiantong.png" alt="签筒">
+      </div>
     </div>
 
     <!-- 按钮在签筒下方 -->
@@ -379,6 +386,6 @@
 <script src="js/settlement.js?v=22"></script>
 <script src="js/night-titles.js?v=22"></script>
 <script src="js/cards.js?v=1"></script>
-<script src="js/app.js?v=49"></script>
+<script src="js/app.js?v=50"></script>
 </body>
 </html>

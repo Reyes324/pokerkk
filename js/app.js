@@ -1927,7 +1927,6 @@ function initPaijueCylinder() {
     if (reducedMotion) {
         const wisdom = PAIJUE_CARDS[_pjRandWisdom()];
         slipText.textContent = wisdom;
-        slipText.classList.toggle('long', wisdom.length > 18);
         slip.classList.add('out');
         redrawBtn.classList.remove('hidden');
         return;
@@ -1945,7 +1944,6 @@ function initPaijueCylinder() {
 
             const wisdom = PAIJUE_CARDS[_pjRandWisdom()];
             slipText.textContent = wisdom;
-            slipText.classList.toggle('long', wisdom.length > 18);
 
             // 强制浏览器计算布局后触发过渡
             slip.offsetHeight;
@@ -1973,7 +1971,6 @@ function redrawPaijueCylinder() {
     if (reducedMotion) {
         const wisdom = PAIJUE_CARDS[_pjRandWisdom()];
         slipText.textContent = wisdom;
-        slipText.classList.toggle('long', wisdom.length > 18);
         redrawBtn.classList.remove('hidden');
         return;
     }
@@ -1992,7 +1989,6 @@ function redrawPaijueCylinder() {
 
             const wisdom = PAIJUE_CARDS[_pjRandWisdom()];
             slipText.textContent = wisdom;
-            slipText.classList.toggle('long', wisdom.length > 18);
 
             slip.offsetHeight;
             slip.classList.add('out');

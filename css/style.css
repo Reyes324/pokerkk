@@ -1043,14 +1043,62 @@ body { padding-bottom: calc(144px + env(safe-area-inset-bottom)) !important; }
   align-items: center;
 }
 
-/* 签筒 PNG 图片 */
+/* 签筒组（签头 + 筒身整体） */
+.pj-cylinder-group {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  z-index: 5;
+  margin-top: -90px;      /* 筒口盖住签条底部约 40px */
+  transform-origin: 50% 75%;
+}
+
+/* 筒口露出的签头（4根竹签） */
+.pj-sticks-top {
+  display: flex;
+  gap: 8px;
+  align-items: flex-end;
+  height: 44px;
+  padding: 0 18px;
+  position: relative;
+  z-index: 4;
+}
+.pj-stick-nub {
+  width: 12px;
+  border-radius: 3px 3px 0 0;
+  background: linear-gradient(to right, #8a5e28 0%, #c8904a 20%, #e8c87a 45%, #d4a850 65%, #9a6a2e 100%);
+  box-shadow: inset 1px 0 2px rgba(255,220,100,0.3), inset -1px 0 3px rgba(0,0,0,0.25), 0 -2px 6px rgba(0,0,0,0.3);
+  position: relative;
+  overflow: hidden;
+  transform-origin: 50% 100%;
+  animation: pj-nub-sway 2.8s ease-in-out infinite;
+}
+.pj-stick-nub::after {
+  content: '';
+  position: absolute;
+  left: 0; right: 0;
+  height: 2px;
+  top: 38%;
+  background: rgba(80,44,12,0.35);
+  border-radius: 1px;
+}
+.pj-stick-nub:nth-child(1) { height: 22px; animation-delay: 0s; }
+.pj-stick-nub:nth-child(2) { height: 30px; animation-delay: 0.55s; }
+.pj-stick-nub:nth-child(3) { height: 20px; animation-delay: 1.1s; }
+.pj-stick-nub:nth-child(4) { height: 34px; animation-delay: 1.65s; }
+
+@keyframes pj-nub-sway {
+  0%,100% { transform: rotate(0deg); }
+  20%     { transform: rotate(2deg); }
+  50%     { transform: rotate(-1.5deg); }
+  75%     { transform: rotate(1deg); }
+}
+
+/* 签筒 PNG */
 .pj-cylinder-img {
   width: min(200px, 54vw);
   height: auto;
-  position: relative;
-  z-index: 5;
-  margin-top: -150px;     /* 筒口上移，盖住签条底部约 100px */
-  transform-origin: 50% 75%;
   display: block;
   pointer-events: none;
   filter: drop-shadow(0 12px 28px rgba(0,0,0,0.7));
@@ -1067,7 +1115,7 @@ body { padding-bottom: calc(144px + env(safe-area-inset-bottom)) !important; }
   86%  { transform: rotate(1deg); }
   100% { transform: rotate(0deg); }
 }
-.pj-cylinder-img.shaking {
+.pj-cylinder-group.shaking {
   animation: pj-shake 0.7s cubic-bezier(0.36, 0.07, 0.19, 0.97) both;
 }
 
@@ -1120,10 +1168,7 @@ body { padding-bottom: calc(144px + env(safe-area-inset-bottom)) !important; }
   word-break: break-all;
 }
 
-/* 签文字数多时缩小字号 */
-.pj-slip-text.long {
-  font-size: 14px;
-}
+/* 字号固定，不再按长度缩小 */
 
 /* 底部导航牌诀激活金色覆盖 */
 .bottom-nav-tab.pj-active {
