@@ -1045,15 +1045,15 @@ body { padding-bottom: calc(144px + env(safe-area-inset-bottom)) !important; }
 
 /* 签筒 PNG 图片 */
 .pj-cylinder-img {
-  width: min(220px, 58vw);
+  width: min(200px, 54vw);
   height: auto;
   position: relative;
   z-index: 5;
-  margin-top: -72px;      /* 与签条底部叠压，制造"从筒口滑出"感 */
-  transform-origin: 50% 80%; /* 摇摆轴靠近筒体中下部 */
+  margin-top: -150px;     /* 筒口上移，盖住签条底部约 100px */
+  transform-origin: 50% 75%;
   display: block;
   pointer-events: none;
-  filter: drop-shadow(0 8px 24px rgba(0,0,0,0.6));
+  filter: drop-shadow(0 12px 28px rgba(0,0,0,0.7));
 }
 
 /* 摇签动画 */
