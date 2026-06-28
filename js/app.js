@@ -1892,3 +1892,41 @@ function switchMainTab(tab) {
         floatBar.style.display = 'none';
     }
 }
+
+// ── 牌诀翻牌 ──────────────────────────────────────────────────
+let _paijueLastIdx = -1;
+let _paijueFlipped = false;
+
+function initPaijue() {
+    document.getElementById('paijue-card').addEventListener('click', function() {
+        if (!_paijueFlipped) _flipPaijue();
+    });
+    document.getElementById('btn-paijue-redraw').addEventListener('click', _redrawPaijue);
+}
+
+function _flipPaijue() {
+    const idx = _randomPaijueIdx();
+    _paijueLastIdx = idx;
+    document.getElementById('paijue-text').textContent = PAIJUE_CARDS[idx];
+    document.getElementById('paijue-card-inner').classList.add('flipped');
+    document.getElementById('paijue-hint').textContent = '';
+    document.getElementById('btn-paijue-redraw').classList.remove('hidden');
+    _paijueFlipped = true;
+}
+
+function _redrawPaijue() {
+    const inner = document.getElementById('paijue-card-inner');
+    inner.classList.remove('flipped');
+    _paijueFlipped = false;
+    setTimeout(_flipPaijue, 460);
+}
+
+function _randomPaijueIdx() {
+    if (PAIJUE_CARDS.length <= 1) return 0;
+    let idx;
+    do { idx = Math.floor(Math.random() * PAIJUE_CARDS.length); }
+    while (idx === _paijueLastIdx);
+    return idx;
+}
+
+initPaijue();

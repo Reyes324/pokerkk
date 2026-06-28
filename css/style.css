@@ -999,6 +999,67 @@ body { padding-bottom: calc(144px + env(safe-area-inset-bottom)) !important; }
 }
 .paijue-view.hidden { display: none; }
 
+/* ─── 牌诀翻牌卡片 ─── */
+.paijue-scene {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 28px;
+  padding: 0 24px;
+}
+.paijue-card {
+  width: min(300px, 80vw);
+  height: min(200px, 53vw);
+  perspective: 900px;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+.paijue-card-inner {
+  width: 100%;
+  height: 100%;
+  position: relative;
+  transform-style: preserve-3d;
+  transition: transform .45s ease-in-out;
+}
+.paijue-card-inner.flipped { transform: rotateY(180deg); }
+.paijue-card-back,
+.paijue-card-front {
+  position: absolute;
+  inset: 0;
+  border-radius: var(--r16);
+  box-shadow: var(--sh8);
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.paijue-card-back {
+  background: var(--surface);
+  border: 1px solid var(--line);
+}
+.paijue-card-front {
+  background: var(--brand);
+  transform: rotateY(180deg);
+  padding: 24px;
+}
+.paijue-text {
+  font-size: 18px;
+  font-weight: 600;
+  color: #121212;
+  text-align: center;
+  line-height: 1.6;
+  font-family: var(--font);
+  margin: 0;
+}
+.paijue-hint {
+  font-size: 13px;
+  color: var(--ink-3);
+  margin: 0;
+  min-height: 18px;
+}
+.paijue-redraw { min-width: 140px; }
+
 /* ─── Toast — centered ─── */
 .toast{
   position:fixed;
