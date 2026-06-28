@@ -6,7 +6,7 @@
     <title>猫店德州结算</title>
     <link rel="icon" type="image/png" href="img/paw.png">
     <link rel="apple-touch-icon" href="img/paw.png">
-    <link rel="stylesheet" href="css/style.css?v=81">
+    <link rel="stylesheet" href="css/style.css?v=82">
 </head>
 <body>
 
@@ -73,9 +73,6 @@
         添加玩家
     </button>
 
-    <!-- Long-press hint -->
-    <p class="hint-text">左滑或长按玩家卡片可删除</p>
-
     <!-- Bottom spacer so content isn't hidden behind floating bar -->
     <div style="height:88px"></div>
 
@@ -108,8 +105,10 @@
       </div>
     </div>
 
-    <!-- 按钮在签筒下方 -->
-    <button class="pj-btn-redraw hidden" id="btn-pj-redraw">再来一签</button>
+    <!-- 提示文字（签筒可点击时淡入） -->
+    <p class="pj-hint" id="pj-hint">点击签筒再来一签</p>
+    <!-- 出处 -->
+    <p class="pj-attribution">数据来源：《德州绿皮书》</p>
   </div>
 </div>
 
@@ -412,6 +411,6 @@
 <script src="js/settlement.js?v=22"></script>
 <script src="js/night-titles.js?v=22"></script>
 <script src="js/cards.js?v=1"></script>
-<script src="js/app.js?v=54"></script>
+<script src="js/app.js?v=55"></script>
 </body>
 </html>

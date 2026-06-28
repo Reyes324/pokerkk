@@ -119,7 +119,9 @@ html{font-size:16px;-webkit-text-size-adjust:100%}
 body{
   font-family:var(--font);
   font-weight:400;   /* 暗底下提一档保可读 */
-  background:var(--bg);
+  background: var(--bg);
+  background-image: radial-gradient(rgba(255,255,255,0.03) 1px, transparent 1px);
+  background-size: 28px 28px;
   overscroll-behavior: none; /* prevent pull-to-refresh on main page */
   color:var(--text);
   min-height:100dvh;
@@ -421,23 +423,23 @@ body{
 
 /* ─── Add player — airy dashed amber ─── */
 .btn-add-player{
-  display:flex;align-items:center;justify-content:center;gap:8px;
-  width:100%;height:54px;
+  display:flex;align-items:center;justify-content:center;gap:6px;
+  width:auto;height:36px;
+  padding:0 18px;
   background:transparent;
-  border:1px solid var(--n40);
+  border:1px dashed var(--n40);
   border-radius:var(--rfull);
-  font-family:var(--font);font-size:15px;font-weight:600;color:var(--ink-1);
-  cursor:pointer;margin-bottom:8px;
+  font-family:var(--font);font-size:13px;font-weight:500;color:var(--ink-2);
+  cursor:pointer;margin:4px auto 12px;
   -webkit-tap-highlight-color:transparent;
   transition:background .12s,border-color .12s,transform .12s;
 }
 .btn-add-player svg{
-  width:20px;height:20px;
+  width:15px;height:15px;
   stroke-width:2;
   display:block;flex-shrink:0;
 }
 .btn-add-player:active{background:var(--n10);border-color:var(--ink-2);transform:scale(.99)}
-.hint-text{font-size:12px;color:var(--ink-3);text-align:center;margin-top:4px;margin-bottom:14px}
 
 /* ─── Summary ─── */
 .summary-bar{
@@ -1181,7 +1183,7 @@ body { padding-bottom: calc(144px + env(safe-area-inset-bottom)) !important; }
   flex-shrink: 0;
   width: min(270px, 72vw);
   min-height: 280px;
-  background: linear-gradient(160deg, #f5ecca 0%, #e8d080 100%);
+  background: linear-gradient(160deg, #fefcf6 0%, #f5e8ac 100%);
   border: 1px solid rgba(180,140,40,0.3);
   border-radius: 14px;
   padding: 20px 18px;
@@ -1236,38 +1238,45 @@ body { padding-bottom: calc(144px + env(safe-area-inset-bottom)) !important; }
   filter: drop-shadow(0 0 4px var(--brand-shadow));
 }
 
-/* 「再来一签」按钮 */
-.pj-btn-redraw {
-  margin-top: 12px;
-  background: transparent;
-  border: 1px solid rgba(232,208,128,0.4);
-  color: rgba(232,208,128,0.75);
-  border-radius: var(--r8);
-  padding: 10px 28px;
+/* 签筒可点击提示文字 */
+.pj-hint {
   font-family: var(--font);
-  font-size: 14px;
-  font-weight: 500;
-  letter-spacing: 0.05em;
-  cursor: pointer;
-  -webkit-tap-highlight-color: transparent;
-  transition: background 0.2s, box-shadow 0.2s, opacity 0.3s ease;
-  min-width: 140px;
-  white-space: nowrap;
-}
-/* 用 opacity 隐藏，保留布局空间，避免 flex 重排跳帧 */
-.pj-btn-redraw.hidden {
+  font-size: 12px;
+  color: var(--ink-3);
+  letter-spacing: 0.1em;
+  margin: 14px 0 0;
   opacity: 0;
-  pointer-events: none;
-  visibility: hidden;
-  display: block !important;
-}
-.pj-btn-redraw:active {
-  background: rgba(232,208,128,0.08);
-}
-.pj-btn-redraw:disabled {
-  opacity: 0.3;
+  transition: opacity 0.6s ease;
+  text-align: center;
+  user-select: none;
   pointer-events: none;
 }
+.pj-hint.visible { opacity: 0.65; }
+
+/* 数据出处 */
+.pj-attribution {
+  position: absolute;
+  bottom: 20px;
+  left: 0; right: 0;
+  text-align: center;
+  font-family: var(--font);
+  font-size: 10px;
+  color: var(--ink-3);
+  opacity: 0.35;
+  letter-spacing: 0.05em;
+  pointer-events: none;
+  user-select: none;
+}
+
+/* 签筒：空闲时可点击 */
+.pj-cylinder-group { cursor: pointer; }
+.pj-cylinder-group.animating {
+  pointer-events: none;
+  cursor: default;
+}
+
+/* 便签：展开时可点击触发再来一签 */
+.pj-slip.out { cursor: pointer; }
 
 /* ─── Toast — centered ─── */
 .toast{

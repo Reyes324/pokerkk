@@ -247,12 +247,6 @@ function renderPlayers() {
 
         return `
         <div class="swipe-row" data-idx="${i}">
-            <div class="swipe-delete-btn" data-del="${i}">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                    <polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4h6v2"/>
-                </svg>
-                删除
-            </div>
             <div class="player-card ${settled ? 'settled' : ''}" data-idx="${i}"
                  ${settled ? '' : `onclick="openChipModal(${i})"`}>
                 <div class="player-card-main">
@@ -295,8 +289,6 @@ function renderPlayers() {
         </div>`;
     }).join('');
 
-    setupSwipeDelete();
-    setupLongPress();
 }
 
 function renderFloatBar() {
@@ -496,105 +488,6 @@ function generateAggImage() {
     });
 }
 
-// ── iOS swipe-left delete ──────────────────────────────────────
-function setupSwipeDelete() {
-    // Close all swiped rows when tapping elsewhere
-    document.addEventListener('click', closeAllSwiped, { once: false });
-
-    document.querySelectorAll('.swipe-row').forEach(row => {
-        const card = row.querySelector('.player-card');
-        const delBtn = row.querySelector('.swipe-delete-btn');
-        const idx = parseInt(row.dataset.idx);
-        let startX = 0, startY = 0, currentX = 0;
-        let tracking = false, directionLocked = false, isHorizontal = false;
-
-        card.addEventListener('touchstart', e => {
-            startX = e.touches[0].clientX;
-            startY = e.touches[0].clientY;
-            currentX = 0;
-            tracking = true;
-            directionLocked = false;
-            isHorizontal = false;
-            card.style.transition = 'none';
-        }, { passive: true });
-
-        card.addEventListener('touchmove', e => {
-            if (!tracking) return;
-            const dx = e.touches[0].clientX - startX;
-            const dy = e.touches[0].clientY - startY;
-
-            if (!directionLocked) {
-                if (Math.abs(dx) < 5 && Math.abs(dy) < 5) return;
-                directionLocked = true;
-                isHorizontal = Math.abs(dx) > Math.abs(dy);
-            }
-
-            if (!isHorizontal) return;
-            e.preventDefault(); // prevent vertical scroll during horizontal swipe
-
-            currentX = Math.max(-80, Math.min(0, dx));
-            card.style.transform = `translateX(${currentX}px)`;
-        }, { passive: false });
-
-        card.addEventListener('touchend', () => {
-            if (!tracking) return;
-            tracking = false;
-            card.style.transition = 'transform .22s cubic-bezier(.4,0,.2,1)';
-
-            if (currentX < -40) {
-                card.style.transform = 'translateX(-80px)';
-                row.classList.add('swiped');
-            } else {
-                card.style.transform = 'translateX(0)';
-                row.classList.remove('swiped');
-            }
-        });
-
-        delBtn.addEventListener('click', e => {
-            e.stopPropagation();
-            if (players.length <= 2) { showToast('至少保留2位玩家'); closeAllSwiped(); return; }
-            removePlayer(idx);
-            closeAllSwiped();
-        });
-    });
-}
-
-function closeAllSwiped() {
-    document.querySelectorAll('.swipe-row.swiped').forEach(row => {
-        row.classList.remove('swiped');
-        const card = row.querySelector('.player-card');
-        if (card) { card.style.transition = 'transform .22s cubic-bezier(.4,0,.2,1)'; card.style.transform = 'translateX(0)'; }
-    });
-}
-
-// ── Long-press delete ──────────────────────────────────────────
-function setupLongPress() {
-    document.querySelectorAll('.player-card[data-idx]').forEach(card => {
-        let timer = null, startX = 0, startY = 0;
-        card.addEventListener('touchstart', e => {
-            startX = e.touches[0].clientX;
-            startY = e.touches[0].clientY;
-            timer = setTimeout(() => {
-                const idx = parseInt(card.dataset.idx);
-                if (players.length <= 2) { showToast('至少保留2位玩家'); return; }
-                card.classList.add('long-press-active');
-                showDeleteConfirm(idx);
-            }, 600);
-        }, { passive: true });
-        const cancel = (e) => {
-            if (e && e.touches) {
-                const dx = Math.abs(e.touches[0].clientX - startX);
-                const dy = Math.abs(e.touches[0].clientY - startY);
-                if (dx < 8 && dy < 8) return;
-            }
-            clearTimeout(timer); timer = null;
-            card.classList.remove('long-press-active');
-        };
-        card.addEventListener('touchmove', cancel, { passive: true });
-        card.addEventListener('touchend', () => { clearTimeout(timer); timer = null; card.classList.remove('long-press-active'); });
-        card.addEventListener('touchcancel', () => { clearTimeout(timer); timer = null; card.classList.remove('long-press-active'); });
-    });
-}
 
 function showDeleteConfirm(idx) {
     pendingDeleteIdx = idx;
@@ -1920,66 +1813,66 @@ function _pjRandWisdom() {
     return idx;
 }
 
+function _pjSetAnimating(on) {
+    const cylWrap = document.getElementById('pj-cylinder-wrap');
+    cylWrap.classList.toggle('animating', on);
+}
+
+function _pjShowHint() {
+    const hint = document.getElementById('pj-hint');
+    if (hint) hint.classList.add('visible');
+}
+
 function initPaijueCylinder() {
     const gen = ++_pjGen;
     const slip     = document.getElementById('pj-slip');
     const slipText = document.getElementById('pj-slip-text');
     const cylWrap  = document.getElementById('pj-cylinder-wrap');
-    const redrawBtn= document.getElementById('btn-pj-redraw');
 
-    // 重置到初始状态
     slip.classList.remove('out');
     cylWrap.classList.remove('shaking');
-    redrawBtn.classList.add('hidden');
+    _pjSetAnimating(true);
 
     const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     if (reducedMotion) {
-        const wisdom = PAIJUE_CARDS[_pjRandWisdom()];
-        slipText.textContent = wisdom;
+        slipText.textContent = PAIJUE_CARDS[_pjRandWisdom()];
         slip.classList.add('out');
-        redrawBtn.classList.remove('hidden');
+        _pjSetAnimating(false);
+        _pjShowHint();
         return;
     }
 
-    // ① 300ms 进场停顿后开始摇签
     setTimeout(() => {
         if (_pjGen !== gen) return;
         cylWrap.classList.add('shaking');
 
-        // ② 摇签结束（700ms）后滑出签条
         setTimeout(() => {
             if (_pjGen !== gen) return;
             cylWrap.classList.remove('shaking');
-
-            const wisdom = PAIJUE_CARDS[_pjRandWisdom()];
-            slipText.textContent = wisdom;
-
-            // 强制浏览器计算布局后触发过渡
+            slipText.textContent = PAIJUE_CARDS[_pjRandWisdom()];
             slip.offsetHeight;
             slip.classList.add('out');
-            redrawBtn.classList.remove('hidden'); // 与便签同时出现
+            _pjSetAnimating(false);
+            _pjShowHint();
         }, 720);
     }, 300);
 }
 
 function redrawPaijueCylinder() {
-    const gen = ++_pjGen;          // 自增，取消上一轮未完成的动画
+    const gen = ++_pjGen;
     const slip     = document.getElementById('pj-slip');
     const slipText = document.getElementById('pj-slip-text');
     const cylWrap  = document.getElementById('pj-cylinder-wrap');
-    const redrawBtn= document.getElementById('btn-pj-redraw');
 
-    redrawBtn.classList.add('hidden');
+    _pjSetAnimating(true);
 
     const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     if (reducedMotion) {
-        const wisdom = PAIJUE_CARDS[_pjRandWisdom()];
-        slipText.textContent = wisdom;
-        redrawBtn.classList.remove('hidden');
+        slipText.textContent = PAIJUE_CARDS[_pjRandWisdom()];
+        _pjSetAnimating(false);
         return;
     }
 
-    // ① 签缩回筒内
     slip.classList.remove('out');
 
     setTimeout(() => {
@@ -1989,22 +1882,31 @@ function redrawPaijueCylinder() {
         setTimeout(() => {
             if (_pjGen !== gen) return;
             cylWrap.classList.remove('shaking');
+            slipText.textContent = PAIJUE_CARDS[_pjRandWisdom()];
 
-            const wisdom = PAIJUE_CARDS[_pjRandWisdom()];
-            slipText.textContent = wisdom;
-
-            // 确保 slip 先关掉 transition 重置到底部，再滑出（避免中途位置突变）
             slip.style.transition = 'none';
             slip.style.transform  = 'translateY(150px)';
             slip.style.opacity    = '0';
-            slip.offsetHeight;                   // force reflow
+            slip.offsetHeight;
             slip.style.transition = '';
             slip.style.transform  = '';
             slip.style.opacity    = '';
             slip.classList.add('out');
-            redrawBtn.classList.remove('hidden'); // 与便签同时出现
+            _pjSetAnimating(false);
         }, 720);
     }, 400);
 }
 
-document.getElementById('btn-pj-redraw').addEventListener('click', redrawPaijueCylinder);
+// 签筒点击 → 再来一签
+document.getElementById('pj-cylinder-wrap').addEventListener('click', () => {
+    if (document.getElementById('pj-cylinder-wrap').classList.contains('animating')) return;
+    redrawPaijueCylinder();
+});
+
+// 便签点击 → 再来一签（仅在展开状态）
+document.getElementById('pj-slip').addEventListener('click', () => {
+    const slip = document.getElementById('pj-slip');
+    if (!slip.classList.contains('out')) return;
+    if (document.getElementById('pj-cylinder-wrap').classList.contains('animating')) return;
+    redrawPaijueCylinder();
+});
