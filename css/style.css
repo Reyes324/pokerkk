@@ -135,11 +135,12 @@ body{
   padding-top:14px;
 }
 
-/* ─── App loader — full-screen, above everything ─── */
+/* ─── App loader — content area only, header/nav remain visible ─── */
 .app-loader {
   position: fixed;
-  inset: 0;
-  z-index: 50;
+  top: 56px;
+  left: 0; right: 0; bottom: 0;
+  z-index: 15;
   background: var(--bg);
   display: flex;
   align-items: center;
@@ -169,7 +170,7 @@ body{
   background:
     repeating-linear-gradient(45deg,  transparent 0, transparent 5px, rgba(201,168,76,0.09) 5px, rgba(201,168,76,0.09) 6px),
     repeating-linear-gradient(-45deg, transparent 0, transparent 5px, rgba(201,168,76,0.09) 5px, rgba(201,168,76,0.09) 6px),
-    #1b1b28;
+    var(--surface);
   box-shadow:
     0 10px 28px rgba(0,0,0,0.65),
     0 3px 8px rgba(0,0,0,0.4),
@@ -236,7 +237,7 @@ body{
 .app-title-icon img{width:100%;height:100%;object-fit:cover;display:block}
 .app-title-icon svg{width:22px;height:22px}
 .app-title-text{font-size:18px;font-weight:700;letter-spacing:.01em;color:var(--ink-1);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.header-actions{display:flex;gap:6px;flex-shrink:0}
+.header-actions{display:flex;gap:6px;flex-shrink:0;align-items:center}
 .btn-icon{
   width:40px;height:40px;
   border:none;background:transparent;
