@@ -1175,7 +1175,7 @@ body { padding-bottom: calc(144px + env(safe-area-inset-bottom)) !important; }
   flex-shrink: 0;
   width: min(270px, 72vw);
   min-height: 280px;
-  background: linear-gradient(160deg, #fdf7e4 0%, #f2e098 100%);
+  background: linear-gradient(160deg, #fdf5dc 0%, #f0d878 100%);
   border: 1px solid rgba(180,140,40,0.3);
   border-radius: 14px;
   padding: 20px 18px;
@@ -1234,7 +1234,7 @@ body { padding-bottom: calc(144px + env(safe-area-inset-bottom)) !important; }
 .pj-hint {
   font-family: var(--font);
   font-size: 12px;
-  color: var(--ink-3);
+  color: rgba(210, 172, 68, 0.9);
   letter-spacing: 0.1em;
   margin: 14px 0 0;
   opacity: 0;
@@ -1243,7 +1243,7 @@ body { padding-bottom: calc(144px + env(safe-area-inset-bottom)) !important; }
   user-select: none;
   pointer-events: none;
 }
-.pj-hint.visible { opacity: 0.85; }
+.pj-hint.visible { opacity: 1; }
 
 /* 数据出处 */
 .pj-attribution {
