@@ -1146,20 +1146,20 @@ body { padding-bottom: calc(144px + env(safe-area-inset-bottom)) !important; }
 
 /* 字号固定，不再按长度缩小 */
 
-/* 底部导航牌诀激活金色覆盖 */
+/* 底部导航牌诀激活——复用主色，不单独覆盖 */
 .bottom-nav-tab.pj-active {
-  color: var(--pj-gold) !important;
+  color: var(--brand);
 }
 .bottom-nav-tab.pj-active svg {
-  filter: drop-shadow(0 0 4px rgba(201,168,76,0.5));
+  filter: drop-shadow(0 0 4px var(--brand-shadow));
 }
 
 /* 「再来一签」按钮 */
 .pj-btn-redraw {
   margin-top: 12px;
   background: transparent;
-  border: 1px solid var(--pj-gold);
-  color: var(--pj-gold);
+  border: 1px solid var(--brand);
+  color: var(--brand);
   border-radius: var(--r8);
   padding: 10px 28px;
   font-family: var(--font);
@@ -1180,8 +1180,8 @@ body { padding-bottom: calc(144px + env(safe-area-inset-bottom)) !important; }
   display: block !important;
 }
 .pj-btn-redraw:active {
-  background: var(--pj-gold-soft);
-  box-shadow: 0 0 12px var(--pj-gold-glow);
+  background: var(--brand-soft);
+  box-shadow: 0 0 12px var(--brand-shadow);
 }
 .pj-btn-redraw:disabled {
   opacity: 0.3;
