@@ -1033,17 +1033,19 @@ body { padding-bottom: calc(144px + env(safe-area-inset-bottom)) !important; }
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  /* Reserve space for cylinder assembly at bottom */
-  padding-bottom: 215px;
-  gap: 20px;
+  gap: 24px; /* oracle 主体 与 按钮 之间的间距 */
+}
+
+/* 签+筒贴合容器 */
+.pj-oracle {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
 }
 
 /* 签筒整体（签头 + 筒身） */
 .pj-cylinder-wrap {
-  position: absolute;
-  bottom: 72px;
-  left: 50%;
-  transform: translateX(-50%);
+  position: relative;   /* 参与 pj-oracle 的 flex 流，紧贴签条底部 */
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -1150,14 +1152,14 @@ body { padding-bottom: calc(144px + env(safe-area-inset-bottom)) !important; }
 
 /* 摇签动画 */
 @keyframes pj-shake {
-  0%   { transform: translateX(-50%) rotate(0deg); }
-  12%  { transform: translateX(-50%) rotate(-6deg); }
-  28%  { transform: translateX(-50%) rotate(5deg); }
-  42%  { transform: translateX(-50%) rotate(-4deg); }
-  58%  { transform: translateX(-50%) rotate(3deg); }
-  72%  { transform: translateX(-50%) rotate(-2deg); }
-  86%  { transform: translateX(-50%) rotate(1deg); }
-  100% { transform: translateX(-50%) rotate(0deg); }
+  0%   { transform: rotate(0deg); }
+  12%  { transform: rotate(-6deg); }
+  28%  { transform: rotate(5deg); }
+  42%  { transform: rotate(-4deg); }
+  58%  { transform: rotate(3deg); }
+  72%  { transform: rotate(-2deg); }
+  86%  { transform: rotate(1deg); }
+  100% { transform: rotate(0deg); }
 }
 .pj-cylinder-wrap.shaking {
   animation: pj-shake 0.7s cubic-bezier(0.36, 0.07, 0.19, 0.97) both;
@@ -1165,10 +1167,10 @@ body { padding-bottom: calc(144px + env(safe-area-inset-bottom)) !important; }
 
 /* 签条（从筒口滑出的竹签） */
 .pj-slip {
-  position: relative;   /* flex item — 参与 pj-scene 的 flex 流 */
+  position: relative;   /* flex item — 参与 pj-oracle 的 flex 流 */
   flex-shrink: 0;
-  width: 160px;
-  min-height: 200px;
+  width: min(200px, 54vw);
+  min-height: 260px;
   background: linear-gradient(160deg, #f8f2e2 0%, #efe6cf 100%);
   border: 1px solid rgba(139,90,60,0.35);
   border-radius: 4px 4px 3px 3px;
@@ -1181,8 +1183,8 @@ body { padding-bottom: calc(144px + env(safe-area-inset-bottom)) !important; }
     0 6px 24px rgba(0,0,0,0.55),
     0 0 0 1px rgba(201,168,76,0.18);
   z-index: 3;
-  /* 初始：藏在签筒后方（向下 260px 进入筒身区域） */
-  transform: translateY(260px);
+  /* 初始：藏在签筒后方（向下 300px 进入筒身区域） */
+  transform: translateY(300px);
   opacity: 0;
   transition:
     transform 0.6s cubic-bezier(0.22,1,0.36,1),
@@ -1194,18 +1196,18 @@ body { padding-bottom: calc(144px + env(safe-area-inset-bottom)) !important; }
 }
 
 .pj-slip-deco {
-  width: 80px;
+  width: 100px;
   height: 1px;
   background: linear-gradient(to right, transparent, rgba(139,90,60,0.45), transparent);
   flex-shrink: 0;
 }
 
 .pj-slip-text {
-  font-size: 15px;
+  font-size: 16px;
   font-weight: 500;
   color: #2a1a10;
   text-align: center;
-  line-height: 1.75;
+  line-height: 1.8;
   font-family: var(--font);
   margin: 0;
   word-break: break-all;
@@ -1213,7 +1215,7 @@ body { padding-bottom: calc(144px + env(safe-area-inset-bottom)) !important; }
 
 /* 签文字数多时缩小字号 */
 .pj-slip-text.long {
-  font-size: 13px;
+  font-size: 14px;
 }
 
 /* 底部导航牌诀激活金色覆盖 */
