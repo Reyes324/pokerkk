@@ -1948,12 +1948,7 @@ function initPaijueCylinder() {
             // 强制浏览器计算布局后触发过渡
             slip.offsetHeight;
             slip.classList.add('out');
-
-            // ③ 签滑到位后显示「再求签」按钮
-            setTimeout(() => {
-                if (_pjGen !== gen) return;
-                redrawBtn.classList.remove('hidden');
-            }, 650);
+            redrawBtn.classList.remove('hidden'); // 与便签同时出现
         }, 720);
     }, 300);
 }
@@ -1998,11 +1993,7 @@ function redrawPaijueCylinder() {
             slip.style.transform  = '';
             slip.style.opacity    = '';
             slip.classList.add('out');
-
-            setTimeout(() => {
-                if (_pjGen !== gen) return;
-                redrawBtn.classList.remove('hidden');
-            }, 650);
+            redrawBtn.classList.remove('hidden'); // 与便签同时出现
         }, 720);
     }, 400);
 }
