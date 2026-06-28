@@ -1873,3 +1873,22 @@ document.getElementById('btn-agg-delete').addEventListener('click', () => {
 });
 document.getElementById('btn-agg-action-cancel').addEventListener('click', () => closeModal('agg-action-modal'));
 document.getElementById('agg-action-modal').addEventListener('click', e => { if (e.target === e.currentTarget) closeModal('agg-action-modal'); });
+
+// ── 底部导航 Tab 切换 ──────────────────────────────────────────
+function switchMainTab(tab) {
+    const mainView = document.getElementById('main-view');
+    const paijueView = document.getElementById('paijue-view');
+    const floatBar = document.getElementById('float-bar');
+    document.querySelectorAll('.bottom-nav-tab').forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.tab === tab);
+    });
+    if (tab === 'settle') {
+        mainView.style.display = '';
+        paijueView.classList.add('hidden');
+        floatBar.style.display = '';
+    } else {
+        mainView.style.display = 'none';
+        paijueView.classList.remove('hidden');
+        floatBar.style.display = 'none';
+    }
+}

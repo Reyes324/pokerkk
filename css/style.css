@@ -941,6 +941,64 @@ body{
 /* delete-modal must sit above records-page (z-index 100) and any other modal */
 #delete-modal { z-index: 200; }
 
+/* ─── 底部导航 ─── */
+:root { --nav-h: 56px; }
+
+.bottom-nav {
+  position: fixed;
+  bottom: 0; left: 0; right: 0;
+  z-index: 25;
+  display: flex;
+  height: calc(var(--nav-h) + env(safe-area-inset-bottom));
+  padding-bottom: env(safe-area-inset-bottom);
+  background: var(--surface);
+  border-top: 1px solid var(--line);
+  -webkit-transform: translateZ(0);
+  transform: translateZ(0);
+}
+.bottom-nav-tab {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  border: none;
+  background: none;
+  color: var(--ink-3);
+  font-size: 11px;
+  font-weight: 500;
+  font-family: var(--font);
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition: color .15s;
+}
+.bottom-nav-tab.active { color: var(--brand); }
+.bottom-nav-tab svg { flex-shrink: 0; }
+
+/* float-bar 上移到底部导航之上 */
+.float-bar {
+  bottom: calc(var(--nav-h) + env(safe-area-inset-bottom)) !important;
+  padding-bottom: 10px !important;
+}
+
+/* body 底部间距：float-bar 高度(~64px) + nav 高度 */
+body { padding-bottom: calc(144px + env(safe-area-inset-bottom)) !important; }
+
+/* 牌诀视图容器 */
+.paijue-view {
+  position: fixed;
+  top: 56px;
+  bottom: calc(var(--nav-h) + env(safe-area-inset-bottom));
+  left: 0; right: 0;
+  background: var(--bg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+.paijue-view.hidden { display: none; }
+
 /* ─── Toast — centered ─── */
 .toast{
   position:fixed;
