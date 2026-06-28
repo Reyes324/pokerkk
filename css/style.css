@@ -353,20 +353,18 @@ body{
 .player-info{flex:1;min-width:0}
 .player-name-row{display:flex;align-items:center;gap:0;margin-bottom:3px;flex-wrap:nowrap}
 .player-name{font-size:16px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;line-height:1.4}
-/* icon-only edit button — amber pencil, flush with text baseline */
+/* icon-only edit button — neutral, flush with text baseline */
 .btn-edit-name{
-  background:none;border:none;color:var(--brand);
+  background:none;border:none;color:var(--ink-3);
   padding:0 0 0 5px;margin:0;
   cursor:pointer;
   display:inline-flex;align-items:center;justify-content:center;
-  /* match text height exactly, no extra space */
   width:24px;height:24px;flex-shrink:0;
   border-radius:var(--r4);-webkit-tap-highlight-color:transparent;
   transition:color .12s;
-  /* vertically center with text */
   align-self:center;
 }
-.btn-edit-name:active{color:var(--green)}
+.btn-edit-name:active{color:var(--ink-1)}
 .btn-edit-name svg{width:14px;height:14px;display:block}
 
 /* Player card layout — name left, pnl+chevron right */
