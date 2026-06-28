@@ -1050,7 +1050,7 @@ body { padding-bottom: calc(144px + env(safe-area-inset-bottom)) !important; }
   flex-direction: column;
   align-items: center;
   z-index: 5;
-  margin-top: -24px; /* 筒口轻盖住签条底部 */
+  margin-top: -8px;
   transform-origin: 50% 75%;
 }
 
@@ -1085,8 +1085,8 @@ body { padding-bottom: calc(144px + env(safe-area-inset-bottom)) !important; }
   flex-shrink: 0;
   width: min(270px, 72vw);
   min-height: 280px;
-  background: linear-gradient(160deg, #f8f2e2 0%, #efe6cf 100%);
-  border: 1px solid rgba(139,90,60,0.25);
+  background: linear-gradient(160deg, #e8d48a 0%, #c9a84c 100%);
+  border: 1px solid rgba(180,140,40,0.4);
   border-radius: 14px;
   padding: 20px 18px;
   display: flex;
@@ -1115,14 +1115,14 @@ body { padding-bottom: calc(144px + env(safe-area-inset-bottom)) !important; }
 .pj-slip-deco {
   width: 100px;
   height: 1px;
-  background: linear-gradient(to right, transparent, rgba(139,90,60,0.45), transparent);
+  background: linear-gradient(to right, transparent, rgba(100,60,10,0.5), transparent);
   flex-shrink: 0;
 }
 
 .pj-slip-text {
   font-size: 16px;
   font-weight: 500;
-  color: #2a1a10;
+  color: #1a1008;
   text-align: center;
   line-height: 1.8;
   font-family: var(--font);
