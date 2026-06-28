@@ -1033,7 +1033,7 @@ body { padding-bottom: calc(144px + env(safe-area-inset-bottom)) !important; }
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 24px; /* oracle 主体 与 按钮 之间的间距 */
+  /* 按钮固定在底部，oracle 垂直居中 */
 }
 
 /* 签+筒贴合容器 */
@@ -1169,16 +1169,17 @@ body { padding-bottom: calc(144px + env(safe-area-inset-bottom)) !important; }
 .pj-slip {
   position: relative;   /* flex item — 参与 pj-oracle 的 flex 流 */
   flex-shrink: 0;
-  width: min(200px, 54vw);
-  min-height: 260px;
+  width: min(230px, 62vw);
+  min-height: 280px;
   background: linear-gradient(160deg, #f8f2e2 0%, #efe6cf 100%);
   border: 1px solid rgba(139,90,60,0.35);
   border-radius: 4px 4px 3px 3px;
-  padding: 18px 16px;
+  padding: 20px 18px;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 12px;
+  justify-content: center; /* 文字垂直居中 */
+  gap: 14px;
   box-shadow:
     0 6px 24px rgba(0,0,0,0.55),
     0 0 0 1px rgba(201,168,76,0.18);
@@ -1226,8 +1227,12 @@ body { padding-bottom: calc(144px + env(safe-area-inset-bottom)) !important; }
   filter: drop-shadow(0 0 4px rgba(201,168,76,0.5));
 }
 
-/* 「再求签」按钮 */
+/* 「再求签」按钮 — 固定在 paijue-view 底部 */
 .pj-btn-redraw {
+  position: absolute;
+  bottom: 32px;
+  left: 50%;
+  transform: translateX(-50%);
   background: transparent;
   border: 1px solid var(--pj-gold);
   color: var(--pj-gold);
@@ -1241,6 +1246,7 @@ body { padding-bottom: calc(144px + env(safe-area-inset-bottom)) !important; }
   -webkit-tap-highlight-color: transparent;
   transition: background 0.2s, box-shadow 0.2s;
   min-width: 140px;
+  white-space: nowrap;
 }
 .pj-btn-redraw:active {
   background: var(--pj-gold-soft);
