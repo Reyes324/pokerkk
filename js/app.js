@@ -1940,6 +1940,7 @@ function initPaijueFan() {
 
     // Build 25-card spread
     const spread = document.getElementById('pj-spread');
+    spread.classList.remove('dimmed');
     spread.innerHTML = '';
     const N = 25;
     const cards = [];
@@ -2001,50 +2002,70 @@ function _pjFlyToCenter(cardEl, gen) {
     const revealEl = document.getElementById('pj-reveal');
     const to = revealEl.getBoundingClientRect();
 
-    // Create a fixed-position flying clone
-    const clone = document.createElement('div');
-    clone.className = 'pj-card';
-    clone.style.cssText = 'position:fixed;left:' + from.left + 'px;top:' + from.top + 'px;' +
-        'width:' + from.width + 'px;height:' + from.height + 'px;' +
-        'margin:0;z-index:50;transition:none;transform-origin:center center;';
-    document.body.appendChild(clone);
+    document.getElementById('pj-wisdom').textContent = PAIJUE_CARDS[_pjRandWisdom()];
 
-    // Hide original (visibility keeps layout intact for return flight)
+    // 3D clone: back face visible at start, front face revealed as card rotates 180°
+    const clone = document.createElement('div');
+    clone.style.cssText = 'position:fixed;left:' + from.left + 'px;top:' + from.top + 'px;'
+        + 'width:' + from.width + 'px;height:' + from.height + 'px;'
+        + 'margin:0;z-index:50;perspective:900px;'
+        + 'transform-style:preserve-3d;transform-origin:center center;';
+
+    const cBack = document.createElement('div');
+    cBack.style.cssText = 'position:absolute;inset:0;border-radius:5px;'
+        + 'background:radial-gradient(ellipse 70% 70% at 50% 40%,rgba(201,168,76,.08),transparent 70%),#12101a;'
+        + 'border:1px solid rgba(201,168,76,.5);'
+        + 'box-shadow:0 4px 20px rgba(201,168,76,.3),0 2px 8px rgba(0,0,0,.5);'
+        + 'backface-visibility:hidden;-webkit-backface-visibility:hidden;';
+
+    const cFront = document.createElement('div');
+    cFront.style.cssText = 'position:absolute;inset:0;border-radius:12px;'
+        + 'background:linear-gradient(160deg,#1a0a2e 0%,#0e0b1a 60%,#0a0a0f 100%);'
+        + 'border:1px solid rgba(201,168,76,.3);'
+        + 'box-shadow:0 8px 40px rgba(0,0,0,.8),0 0 20px rgba(201,168,76,.15);'
+        + 'backface-visibility:hidden;-webkit-backface-visibility:hidden;'
+        + 'transform:rotateY(180deg);';
+
+    clone.appendChild(cBack);
+    clone.appendChild(cFront);
+    document.body.appendChild(clone);
     cardEl.style.visibility = 'hidden';
 
-    // Compute translate + scale to center of pj-reveal
+    document.getElementById('pj-spread').classList.add('dimmed');
+
     const fromCx = from.left + from.width / 2;
     const fromCy = from.top + from.height / 2;
-    const toCx = to.left + to.width / 2;
-    const toCy = to.top + to.height / 2;
+    const toCx   = to.left + to.width / 2;
+    const toCy   = to.top + to.height / 2;
     const tx = toCx - fromCx;
     const ty = toCy - fromCy;
-    const sx = to.width / from.width;
+    const sx = to.width  / from.width;
     const sy = to.height / from.height;
 
     clone.offsetHeight; // force reflow
-    clone.style.transition = 'transform 0.38s cubic-bezier(0.34,1.56,0.64,1)';
-    clone.style.transform = 'translate(' + tx + 'px,' + ty + 'px) scale(' + sx + ',' + sy + ')';
+    // Fly + flip simultaneously: translate to center, scale up, rotate 180° — all one motion
+    clone.style.transition = 'transform 0.65s cubic-bezier(0.22,1,0.36,1)';
+    clone.style.transform = 'translate(' + tx + 'px,' + ty + 'px) scale(' + sx + ',' + sy + ') rotateY(180deg)';
 
     setTimeout(() => {
         clone.remove();
         if (_pjGen !== gen) return;
-
-        // Set wisdom text then fade in stage
-        document.getElementById('pj-wisdom').textContent = PAIJUE_CARDS[_pjRandWisdom()];
-        document.getElementById('pj-stage').classList.add('visible');
-
-        // ④ Flip reveal card after brief settling pause
+        // Snap stage + inner to final state (clone already showed the flip — no CSS transition needed)
+        const inner = document.getElementById('pj-reveal-inner');
+        inner.style.transition = 'none';
+        inner.classList.add('flipped');
+        inner.offsetHeight;
+        inner.style.transition = '';
+        const stage = document.getElementById('pj-stage');
+        stage.style.transition = 'none';
+        stage.classList.add('visible');
+        stage.offsetHeight;
+        stage.style.transition = '';
         setTimeout(() => {
             if (_pjGen !== gen) return;
-            document.getElementById('pj-reveal-inner').classList.add('flipped');
-            // Show redraw button after flip completes
-            setTimeout(() => {
-                if (_pjGen !== gen) return;
-                document.getElementById('btn-pj-redraw').classList.remove('hidden');
-            }, 500);
-        }, 60);
-    }, 380);
+            document.getElementById('btn-pj-redraw').classList.remove('hidden');
+        }, 450);
+    }, 650);
 }
 
 function redrawPaijueFan() {
@@ -2080,6 +2101,9 @@ function redrawPaijueFan() {
             const revealEl = document.getElementById('pj-reveal');
             const from = revealEl.getBoundingClientRect();
 
+            // Un-dim spread as card flies back
+            document.getElementById('pj-spread').classList.remove('dimmed');
+
             const clone = document.createElement('div');
             clone.className = 'pj-card';
             clone.style.cssText = 'position:fixed;left:' + from.left + 'px;top:' + from.top + 'px;' +
@@ -2097,25 +2121,23 @@ function redrawPaijueFan() {
             const sy = to.height / from.height;
 
             clone.offsetHeight;
-            clone.style.transition = 'transform 0.35s ease-in';
+            clone.style.transition = 'transform 0.45s cubic-bezier(0.4,0,0.8,0.6)';
             clone.style.transform = 'translate(' + tx + 'px,' + ty + 'px) scale(' + sx + ',' + sy + ')';
 
             setTimeout(() => {
                 clone.remove();
                 if (_pjGen !== gen) return;
-                // Restore chosen card to normal state
                 chosenEl.style.visibility = '';
                 chosenEl.classList.remove('chosen');
                 _pjChosenEl = null;
 
-                // ③ 400ms pause then new selection cycle
                 setTimeout(() => {
                     if (_pjGen !== gen) return;
                     const spread = document.getElementById('pj-spread');
                     const cards = Array.from(spread.querySelectorAll('.pj-card'));
                     _pjSelectAndFly(cards, cards.length, gen);
-                }, 400);
-            }, 350);
+                }, 300);
+            }, 450);
         } else {
             // No chosen card; just do a fresh selection after pause
             setTimeout(() => {

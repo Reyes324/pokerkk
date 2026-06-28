@@ -1025,12 +1025,15 @@ body { padding-bottom: calc(144px + env(safe-area-inset-bottom)) !important; }
 /* ─── 牌山弧形抽签 ─── */
 .pj-spread {
   position: absolute;
-  bottom: 60px;
+  top: 50%;
   left: 50%;
-  transform: translateX(-50%);
+  transform: translate(-50%, -50%);
   width: min(340px, 90vw);
   height: 120px;
+  z-index: 1;
+  transition: opacity 0.5s ease;
 }
+.pj-spread.dimmed { opacity: 0.18; }
 .pj-card {
   position: absolute;
   width: 38px;
@@ -1041,7 +1044,7 @@ body { padding-bottom: calc(144px + env(safe-area-inset-bottom)) !important; }
   border: 1px solid rgba(201,168,76,0.2);
   box-shadow: 0 2px 8px rgba(0,0,0,0.5);
   transform: rotate(0deg);
-  transition: transform 0.4s ease-out;
+  transition: transform 0.55s cubic-bezier(0.22,1,0.36,1);
   left: 50%;
   margin-left: -19px;
 }
@@ -1049,16 +1052,16 @@ body { padding-bottom: calc(144px + env(safe-area-inset-bottom)) !important; }
   transform: rotate(var(--pj-angle, 0deg));
 }
 .pj-card.chosen {
-  transform: rotate(var(--pj-angle, 0deg)) translateY(-20px);
+  transform: rotate(var(--pj-angle, 0deg)) translateY(-22px);
   border-color: rgba(201,168,76,0.6);
   box-shadow: 0 4px 20px rgba(201,168,76,0.4), 0 2px 8px rgba(0,0,0,0.5);
-  transition: transform 0.3s ease-out, border-color 0.3s ease-out, box-shadow 0.3s ease-out;
+  transition: transform 0.4s cubic-bezier(0.22,1,0.36,1), border-color 0.4s ease, box-shadow 0.4s ease;
 }
 .pj-stage {
   position: absolute;
   top: 50%;
   left: 50%;
-  transform: translate(-50%, -60%);
+  transform: translate(-50%, -55%);
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -1066,6 +1069,7 @@ body { padding-bottom: calc(144px + env(safe-area-inset-bottom)) !important; }
   opacity: 0;
   pointer-events: none;
   transition: opacity 0.25s ease;
+  z-index: 10;
 }
 .pj-stage.visible {
   opacity: 1;
