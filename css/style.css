@@ -1033,6 +1033,9 @@ body { padding-bottom: calc(144px + env(safe-area-inset-bottom)) !important; }
   flex-direction: column;
   align-items: center;
   justify-content: center;
+  /* Reserve space for cylinder assembly at bottom */
+  padding-bottom: 215px;
+  gap: 20px;
 }
 
 /* 签筒整体（签头 + 筒身） */
@@ -1060,18 +1063,48 @@ body { padding-bottom: calc(144px + env(safe-area-inset-bottom)) !important; }
   z-index: 4;
 }
 .pj-stick-nub {
-  width: 9px;
-  /* 4根高度略有差异增加真实感 */
-  height: calc(22px + var(--ni, 0) * 5px - var(--ni, 0) * 2px);
-  background: linear-gradient(to right, #c8a76a 0%, #e8c87a 40%, #c8a76a 100%);
-  border-radius: 2px 2px 0 0;
-  box-shadow: inset 0 0 4px rgba(0,0,0,0.3);
+  width: 12px;
+  border-radius: 3px 3px 0 0;
+  /* 竹签渐变：侧面高光 + 暖黄竹色 */
+  background: linear-gradient(
+    to right,
+    #8a5e28 0%,
+    #c8904a 20%,
+    #e8c87a 45%,
+    #d4a850 65%,
+    #9a6a2e 100%
+  );
+  box-shadow:
+    inset 1px 0 2px rgba(255,220,100,0.3),
+    inset -1px 0 3px rgba(0,0,0,0.25),
+    0 -2px 6px rgba(0,0,0,0.3);
+  position: relative;
+  overflow: hidden;
+  transform-origin: 50% 100%;
+  animation: pj-nub-sway 2.8s ease-in-out infinite;
+  animation-delay: calc(var(--ni, 0) * 0.55s);
 }
-/* 4根高度：22,25,22,29（ni=0,1,2,3 → 22,27,24,29，调整计算保持自然感） */
-.pj-stick-nub:nth-child(1) { height: 22px; }
-.pj-stick-nub:nth-child(2) { height: 28px; }
-.pj-stick-nub:nth-child(3) { height: 20px; }
-.pj-stick-nub:nth-child(4) { height: 32px; }
+/* 竹节横纹 */
+.pj-stick-nub::after {
+  content: '';
+  position: absolute;
+  left: 0; right: 0;
+  height: 2px;
+  top: 38%;
+  background: rgba(80, 44, 12, 0.35);
+  border-radius: 1px;
+}
+.pj-stick-nub:nth-child(1) { height: 22px; animation-delay: 0s; }
+.pj-stick-nub:nth-child(2) { height: 30px; animation-delay: 0.55s; }
+.pj-stick-nub:nth-child(3) { height: 20px; animation-delay: 1.1s; }
+.pj-stick-nub:nth-child(4) { height: 34px; animation-delay: 1.65s; }
+
+@keyframes pj-nub-sway {
+  0%,100% { transform: rotate(0deg); }
+  20%     { transform: rotate(2deg); }
+  50%     { transform: rotate(-1.5deg); }
+  75%     { transform: rotate(1deg); }
+}
 
 /* 筒身主体 */
 .pj-cylinder {
@@ -1132,16 +1165,14 @@ body { padding-bottom: calc(144px + env(safe-area-inset-bottom)) !important; }
 
 /* 签条（从筒口滑出的竹签） */
 .pj-slip {
-  position: absolute;
-  /* final resting: bottom 边在筒口上方约 20px */
-  bottom: calc(72px + 88px + 10px);  /* cylinder-bottom + cylinder-height + gap */
-  left: 50%;
-  width: 120px;
+  position: relative;   /* flex item — 参与 pj-scene 的 flex 流 */
+  flex-shrink: 0;
+  width: 160px;
   min-height: 200px;
   background: linear-gradient(160deg, #f8f2e2 0%, #efe6cf 100%);
   border: 1px solid rgba(139,90,60,0.35);
   border-radius: 4px 4px 3px 3px;
-  padding: 18px 14px;
+  padding: 18px 16px;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -1150,20 +1181,20 @@ body { padding-bottom: calc(144px + env(safe-area-inset-bottom)) !important; }
     0 6px 24px rgba(0,0,0,0.55),
     0 0 0 1px rgba(201,168,76,0.18);
   z-index: 3;
-  /* 初始：translateX(-50%) 水平居中，translateY(130px) 藏入筒身后方 */
-  transform: translateX(-50%) translateY(130px);
+  /* 初始：藏在签筒后方（向下 260px 进入筒身区域） */
+  transform: translateY(260px);
   opacity: 0;
   transition:
     transform 0.6s cubic-bezier(0.22,1,0.36,1),
     opacity   0.4s ease;
 }
 .pj-slip.out {
-  transform: translateX(-50%) translateY(0);
+  transform: translateY(0);
   opacity: 1;
 }
 
 .pj-slip-deco {
-  width: 56px;
+  width: 80px;
   height: 1px;
   background: linear-gradient(to right, transparent, rgba(139,90,60,0.45), transparent);
   flex-shrink: 0;
