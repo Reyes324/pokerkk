@@ -6,7 +6,7 @@
     <title>猫店德州结算</title>
     <link rel="icon" type="image/png" href="img/paw.png">
     <link rel="apple-touch-icon" href="img/paw.png">
-    <link rel="stylesheet" href="css/style.css?v=51">
+    <link rel="stylesheet" href="css/style.css?v=52">
 </head>
 <body>
 <div class="container" id="main-view">
@@ -66,8 +66,13 @@
       <div class="paijue-card-inner" id="paijue-card-inner">
         <!-- 背面 -->
         <div class="paijue-card-back">
-          <svg width="64" height="64" viewBox="0 0 24 24" style="fill:var(--brand)" opacity=".18">
-            <path d="M12 2C9 6 4 7 4 11c0 2.5 2 4 4 4-.5 2-2 3-2 3h12s-1.5-1-2-3c2 0 4-1.5 4-4 0-4-5-5-8-9z"/>
+          <svg width="80" height="80" viewBox="0 0 80 80" fill="none" xmlns="http://www.w3.org/2000/svg" style="opacity:0.4">
+            <!-- 外圆 -->
+            <circle cx="40" cy="40" r="36" stroke="#c9a84c" stroke-width="0.8" stroke-dasharray="4 3" opacity="0.5"/>
+            <!-- 八芒星 -->
+            <polygon points="40,6 44.5,35.5 70,16 51,38 74,40 51,42 70,64 44.5,44.5 40,74 35.5,44.5 10,64 29,42 6,40 29,38 10,16 35.5,35.5" fill="#c9a84c" opacity="0.35"/>
+            <!-- 中心小圆 -->
+            <circle cx="40" cy="40" r="4" fill="#c9a84c" opacity="0.6"/>
           </svg>
         </div>
         <!-- 正面 -->
@@ -380,6 +385,6 @@
 <script src="js/settlement.js?v=22"></script>
 <script src="js/night-titles.js?v=22"></script>
 <script src="js/cards.js?v=1"></script>
-<script src="js/app.js?v=44"></script>
+<script src="js/app.js?v=45"></script>
 </body>
 </html>

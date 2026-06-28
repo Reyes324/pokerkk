@@ -93,6 +93,15 @@
   /* ── Extended shadows ── */
   --sh-modal:  0 -8px 40px rgba(0,0,0,.6);
   --sh-sm:     0 1px 4px rgba(0,0,0,.5);
+
+  /* ── 牌诀局部 token ── */
+  --pj-bg:        #08080f;
+  --pj-surface:   #12101a;
+  --pj-gold:      #c9a84c;
+  --pj-gold-soft: rgba(201,168,76,0.18);
+  --pj-gold-glow: rgba(201,168,76,0.35);
+  --pj-ink:       #f5f0e8;
+  --pj-front-grad: linear-gradient(160deg,#1a0a2e 0%,#0e0b1a 60%,#0a0a0f 100%);
 }
 
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
@@ -998,11 +1007,18 @@ body { padding-bottom: calc(144px + env(safe-area-inset-bottom)) !important; }
   top: 56px;
   bottom: calc(var(--nav-h) + env(safe-area-inset-bottom));
   left: 0; right: 0;
-  background: var(--bg);
+  background: var(--pj-bg);
   display: flex;
   align-items: center;
   justify-content: center;
   overflow: hidden;
+}
+.paijue-view::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(ellipse 60% 40% at 50% 45%, rgba(201,168,76,0.06) 0%, transparent 70%);
+  pointer-events: none;
 }
 .paijue-view.hidden { display: none; }
 
@@ -1043,18 +1059,32 @@ body { padding-bottom: calc(144px + env(safe-area-inset-bottom)) !important; }
   justify-content: center;
 }
 .paijue-card-back {
-  background: var(--surface);
-  border: 1px solid var(--line);
+  background: radial-gradient(ellipse 70% 70% at 50% 50%, rgba(201,168,76,0.07) 0%, transparent 70%), var(--pj-surface);
+  border: 1px solid rgba(201,168,76,0.25);
+  box-shadow: 0 8px 40px rgba(0,0,0,0.7), 0 0 0 1px rgba(201,168,76,0.1);
 }
 .paijue-card-front {
-  background: var(--brand);
+  background: var(--pj-front-grad);
+  border: 1px solid rgba(201,168,76,0.3);
+  box-shadow: 0 8px 40px rgba(0,0,0,0.8), 0 0 20px rgba(201,168,76,0.15);
   transform: rotateY(180deg);
   padding: 24px;
+  flex-direction: column;
+}
+.paijue-card-front::before {
+  content: '';
+  display: block;
+  width: 40px;
+  height: 1px;
+  background: var(--pj-gold);
+  opacity: 0.6;
+  margin-bottom: 16px;
+  flex-shrink: 0;
 }
 .paijue-text {
   font-size: 20px;
   font-weight: 600;
-  color: #000;
+  color: var(--pj-ink);
   text-align: center;
   line-height: 1.6;
   font-family: var(--font);
@@ -1062,11 +1092,58 @@ body { padding-bottom: calc(144px + env(safe-area-inset-bottom)) !important; }
 }
 .paijue-hint {
   font-size: 13px;
-  color: var(--ink-3);
+  color: rgba(201,168,76,0.6);
+  letter-spacing: 0.08em;
   margin: 0;
   min-height: 18px;
 }
 .paijue-redraw { min-width: 140px; }
+
+/* 牌诀翻牌光效 */
+@keyframes paijue-flip-glow {
+  0%,100% { box-shadow: 0 8px 40px rgba(0,0,0,0.7); }
+  50%      { box-shadow: 0 8px 40px rgba(0,0,0,0.4), 0 0 30px rgba(201,168,76,0.4); }
+}
+.paijue-card-inner.flipped {
+  animation: paijue-flip-glow 0.45s ease-in-out;
+}
+
+/* 底部导航牌诀激活金色覆盖 */
+.bottom-nav-tab.pj-active {
+  color: var(--pj-gold) !important;
+}
+.bottom-nav-tab.pj-active svg {
+  filter: drop-shadow(0 0 4px rgba(201,168,76,0.5));
+}
+
+/* 「再抽一张」按钮 */
+#btn-paijue-redraw {
+  background: transparent;
+  border: 1px solid var(--pj-gold);
+  color: var(--pj-gold);
+  border-radius: var(--r8);
+  padding: 10px 28px;
+  font-size: 14px;
+  font-weight: 500;
+  letter-spacing: 0.05em;
+  transition: background 0.2s, box-shadow 0.2s;
+  min-width: 140px;
+}
+#btn-paijue-redraw:hover {
+  background: var(--pj-gold-soft);
+  box-shadow: 0 0 12px var(--pj-gold-glow);
+}
+#btn-paijue-redraw:disabled {
+  opacity: 0.3;
+  pointer-events: none;
+}
+
+/* 提示文字 */
+#paijue-hint {
+  color: rgba(201,168,76,0.6);
+  font-size: 13px;
+  letter-spacing: 0.08em;
+}
 
 /* ─── Toast — centered ─── */
 .toast{

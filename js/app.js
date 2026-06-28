@@ -1881,6 +1881,10 @@ function switchMainTab(tab) {
     const floatBar = document.getElementById('float-bar');
     document.querySelectorAll('.bottom-nav-tab').forEach(btn => {
         btn.classList.toggle('active', btn.dataset.tab === tab);
+        // 牌诀激活时给牌诀 tab 加金色 class
+        if (btn.dataset.tab === 'paijue') {
+            btn.classList.toggle('pj-active', tab === 'paijue');
+        }
     });
     if (tab === 'settle') {
         mainView.style.display = '';
