@@ -1050,7 +1050,7 @@ body { padding-bottom: calc(144px + env(safe-area-inset-bottom)) !important; }
   flex-direction: column;
   align-items: center;
   z-index: 5;
-  margin-top: -100px;     /* 筒口盖住签条底部约 50px */
+  margin-top: -60px;      /* 签筒组轻触签条底部 */
   transform-origin: 50% 75%;
 }
 
