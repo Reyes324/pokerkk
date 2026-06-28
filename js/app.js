@@ -1929,7 +1929,8 @@ function _redrawPaijue() {
     setTimeout(() => {
         _paijueAnimating = false;
         _flipPaijue();
-        btn.disabled = false;
+        // Re-enable only after the second flip (front face reveal) finishes
+        setTimeout(() => { btn.disabled = false; }, 460);
     }, 460);
 }
 

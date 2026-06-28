@@ -951,8 +951,11 @@ body{
   display: flex;
   height: calc(var(--nav-h) + env(safe-area-inset-bottom));
   padding-bottom: env(safe-area-inset-bottom);
-  background: var(--surface);
+  background: var(--bg-blur-bar);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
   border-top: 1px solid var(--line);
+  will-change: transform;
   -webkit-transform: translateZ(0);
   transform: translateZ(0);
 }
@@ -975,6 +978,10 @@ body{
 }
 .bottom-nav-tab.active { color: var(--brand); }
 .bottom-nav-tab svg { flex-shrink: 0; }
+@media (hover: hover) {
+  .bottom-nav-tab:hover { color: var(--ink-2); }
+  .bottom-nav-tab.active:hover { color: var(--brand-strong); }
+}
 
 /* float-bar 上移到底部导航之上 */
 .float-bar {
@@ -1012,6 +1019,7 @@ body { padding-bottom: calc(144px + env(safe-area-inset-bottom)) !important; }
   height: min(200px, 53vw);
   perspective: 900px;
   cursor: pointer;
+  touch-action: manipulation;
   -webkit-tap-highlight-color: transparent;
 }
 .paijue-card-inner {
@@ -1046,7 +1054,7 @@ body { padding-bottom: calc(144px + env(safe-area-inset-bottom)) !important; }
 .paijue-text {
   font-size: 20px;
   font-weight: 600;
-  color: #ffffff;
+  color: #000;
   text-align: center;
   line-height: 1.6;
   font-family: var(--font);
