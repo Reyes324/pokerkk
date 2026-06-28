@@ -1991,7 +1991,7 @@ function redrawPaijueCylinder() {
 
             // 确保 slip 先关掉 transition 重置到底部，再滑出（避免中途位置突变）
             slip.style.transition = 'none';
-            slip.style.transform  = 'translateY(300px)';
+            slip.style.transform  = 'translateY(150px)';
             slip.style.opacity    = '0';
             slip.offsetHeight;                   // force reflow
             slip.style.transition = '';

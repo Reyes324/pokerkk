@@ -1101,7 +1101,7 @@ body { padding-bottom: calc(144px + env(safe-area-inset-bottom)) !important; }
     0 2px 12px rgba(201,168,76,0.12);
   z-index: 3;
   /* 初始：藏在签筒后方（向下 300px 进入筒身区域） */
-  transform: translateY(300px);
+  transform: translateY(150px);
   opacity: 0;
   transition:
     transform 0.6s cubic-bezier(0.22,1,0.36,1),
