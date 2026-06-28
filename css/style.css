@@ -1175,7 +1175,7 @@ body { padding-bottom: calc(144px + env(safe-area-inset-bottom)) !important; }
   flex-shrink: 0;
   width: min(270px, 72vw);
   min-height: 280px;
-  background: linear-gradient(160deg, #fefcf6 0%, #f5e8ac 100%);
+  background: linear-gradient(160deg, #fdf7e4 0%, #f2e098 100%);
   border: 1px solid rgba(180,140,40,0.3);
   border-radius: 14px;
   padding: 20px 18px;
