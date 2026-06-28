@@ -1959,7 +1959,7 @@ function initPaijueCylinder() {
 }
 
 function redrawPaijueCylinder() {
-    const gen = _pjGen;
+    const gen = ++_pjGen;          // 自增，取消上一轮未完成的动画
     const slip     = document.getElementById('pj-slip');
     const slipText = document.getElementById('pj-slip-text');
     const cylWrap  = document.getElementById('pj-cylinder-wrap');
@@ -1980,7 +1980,6 @@ function redrawPaijueCylinder() {
 
     setTimeout(() => {
         if (_pjGen !== gen) return;
-        // ② 短暂停顿后重新摇签
         cylWrap.classList.add('shaking');
 
         setTimeout(() => {
@@ -1990,7 +1989,14 @@ function redrawPaijueCylinder() {
             const wisdom = PAIJUE_CARDS[_pjRandWisdom()];
             slipText.textContent = wisdom;
 
-            slip.offsetHeight;
+            // 确保 slip 先关掉 transition 重置到底部，再滑出（避免中途位置突变）
+            slip.style.transition = 'none';
+            slip.style.transform  = 'translateY(300px)';
+            slip.style.opacity    = '0';
+            slip.offsetHeight;                   // force reflow
+            slip.style.transition = '';
+            slip.style.transform  = '';
+            slip.style.opacity    = '';
             slip.classList.add('out');
 
             setTimeout(() => {
@@ -1998,7 +2004,7 @@ function redrawPaijueCylinder() {
                 redrawBtn.classList.remove('hidden');
             }, 650);
         }, 720);
-    }, 400); // 等签缩回（transition 0.6s → 400ms 后筒身已遮住签）
+    }, 400);
 }
 
 document.getElementById('btn-pj-redraw').addEventListener('click', redrawPaijueCylinder);

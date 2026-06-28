@@ -1050,7 +1050,7 @@ body { padding-bottom: calc(144px + env(safe-area-inset-bottom)) !important; }
   flex-direction: column;
   align-items: center;
   z-index: 5;
-  margin-top: -8px;
+  margin-top: 8px;
   transform-origin: 50% 75%;
 }
 
@@ -1085,8 +1085,8 @@ body { padding-bottom: calc(144px + env(safe-area-inset-bottom)) !important; }
   flex-shrink: 0;
   width: min(270px, 72vw);
   min-height: 280px;
-  background: linear-gradient(160deg, #e8d48a 0%, #c9a84c 100%);
-  border: 1px solid rgba(180,140,40,0.4);
+  background: linear-gradient(160deg, #f5ecca 0%, #e8d080 100%);
+  border: 1px solid rgba(180,140,40,0.3);
   border-radius: 14px;
   padding: 20px 18px;
   display: flex;
@@ -1154,9 +1154,16 @@ body { padding-bottom: calc(144px + env(safe-area-inset-bottom)) !important; }
   letter-spacing: 0.05em;
   cursor: pointer;
   -webkit-tap-highlight-color: transparent;
-  transition: background 0.2s, box-shadow 0.2s;
+  transition: background 0.2s, box-shadow 0.2s, opacity 0.3s ease;
   min-width: 140px;
   white-space: nowrap;
+}
+/* 用 opacity 隐藏，保留布局空间，避免 flex 重排跳帧 */
+.pj-btn-redraw.hidden {
+  opacity: 0;
+  pointer-events: none;
+  visibility: hidden;
+  display: block !important;
 }
 .pj-btn-redraw:active {
   background: var(--pj-gold-soft);
