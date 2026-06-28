@@ -145,6 +145,8 @@ body{
   display: flex;
   align-items: center;
   justify-content: center;
+  /* 底部 float-bar + nav 共约 130px，补偿使牌组视觉居中 */
+  padding-bottom: calc(var(--nav-h) + 74px + env(safe-area-inset-bottom));
   transition: opacity 0.45s ease;
 }
 .app-loader.done {
