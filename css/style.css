@@ -1022,48 +1022,85 @@ body { padding-bottom: calc(144px + env(safe-area-inset-bottom)) !important; }
 }
 .paijue-view.hidden { display: none; }
 
-/* ─── 牌诀翻牌卡片 ─── */
-.paijue-scene {
+/* ─── 牌山弧形抽签 ─── */
+.pj-spread {
+  position: absolute;
+  bottom: 60px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: min(340px, 90vw);
+  height: 120px;
+}
+.pj-card {
+  position: absolute;
+  width: 38px;
+  height: 54px;
+  border-radius: 5px;
+  transform-origin: 50% 400px;
+  background: radial-gradient(ellipse 70% 70% at 50% 40%, rgba(201,168,76,0.08), transparent 70%), var(--pj-surface);
+  border: 1px solid rgba(201,168,76,0.2);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.5);
+  transform: rotate(0deg);
+  transition: transform 0.4s ease-out;
+  left: 50%;
+  margin-left: -19px;
+}
+.pj-card.spread {
+  transform: rotate(var(--pj-angle, 0deg));
+}
+.pj-card.chosen {
+  transform: rotate(var(--pj-angle, 0deg)) translateY(-20px);
+  border-color: rgba(201,168,76,0.6);
+  box-shadow: 0 4px 20px rgba(201,168,76,0.4), 0 2px 8px rgba(0,0,0,0.5);
+  transition: transform 0.3s ease-out, border-color 0.3s ease-out, box-shadow 0.3s ease-out;
+}
+.pj-stage {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -60%);
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 28px;
-  padding: 0 24px;
+  gap: 20px;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.25s ease;
 }
-.paijue-card {
-  width: min(300px, 80vw);
-  height: min(200px, 53vw);
+.pj-stage.visible {
+  opacity: 1;
+  pointer-events: auto;
+}
+.pj-reveal {
+  width: min(280px, 78vw);
+  height: min(196px, 55vw);
   perspective: 900px;
-  cursor: pointer;
-  touch-action: manipulation;
-  -webkit-tap-highlight-color: transparent;
 }
-.paijue-card-inner {
+.pj-reveal-inner {
   width: 100%;
   height: 100%;
   position: relative;
   transform-style: preserve-3d;
-  transition: transform .45s ease-in-out;
+  transition: transform 0.45s ease-in-out;
 }
-.paijue-card-inner.flipped { transform: rotateY(180deg); }
-.paijue-card-back,
-.paijue-card-front {
+.pj-reveal-inner.flipped { transform: rotateY(180deg); }
+.pj-reveal-back,
+.pj-reveal-front {
   position: absolute;
   inset: 0;
   border-radius: var(--r16);
-  box-shadow: var(--sh8);
   backface-visibility: hidden;
   -webkit-backface-visibility: hidden;
   display: flex;
   align-items: center;
   justify-content: center;
 }
-.paijue-card-back {
+.pj-reveal-back {
   background: radial-gradient(ellipse 70% 70% at 50% 50%, rgba(201,168,76,0.07) 0%, transparent 70%), var(--pj-surface);
   border: 1px solid rgba(201,168,76,0.25);
   box-shadow: 0 8px 40px rgba(0,0,0,0.7), 0 0 0 1px rgba(201,168,76,0.1);
 }
-.paijue-card-front {
+.pj-reveal-front {
   background: var(--pj-front-grad);
   border: 1px solid rgba(201,168,76,0.3);
   box-shadow: 0 8px 40px rgba(0,0,0,0.8), 0 0 20px rgba(201,168,76,0.15);
@@ -1071,7 +1108,7 @@ body { padding-bottom: calc(144px + env(safe-area-inset-bottom)) !important; }
   padding: 24px;
   flex-direction: column;
 }
-.paijue-card-front::before {
+.pj-reveal-front::before {
   content: '';
   display: block;
   width: 40px;
@@ -1081,8 +1118,8 @@ body { padding-bottom: calc(144px + env(safe-area-inset-bottom)) !important; }
   margin-bottom: 16px;
   flex-shrink: 0;
 }
-.paijue-text {
-  font-size: 20px;
+.pj-wisdom {
+  font-size: 18px;
   font-weight: 600;
   color: var(--pj-ink);
   text-align: center;
@@ -1090,20 +1127,12 @@ body { padding-bottom: calc(144px + env(safe-area-inset-bottom)) !important; }
   font-family: var(--font);
   margin: 0;
 }
-.paijue-card-inner.flipped .paijue-text {
+.pj-reveal-inner.flipped .pj-wisdom {
   animation: paijue-text-reveal 350ms ease-out 350ms both;
 }
-.paijue-card-inner.flipped .paijue-card-front::before {
+.pj-reveal-inner.flipped .pj-reveal-front::before {
   animation: paijue-text-reveal 250ms ease-out 300ms both;
 }
-.paijue-hint {
-  font-size: 13px;
-  color: rgba(201,168,76,0.6);
-  letter-spacing: 0.08em;
-  margin: 0;
-  min-height: 18px;
-}
-.paijue-redraw { min-width: 140px; }
 
 /* 牌诀翻牌光效 */
 @keyframes paijue-flip-glow {
@@ -1114,7 +1143,7 @@ body { padding-bottom: calc(144px + env(safe-area-inset-bottom)) !important; }
   from { opacity:0; filter:blur(6px); }
   to   { opacity:1; filter:blur(0);   }
 }
-.paijue-card-inner.flipped {
+.pj-reveal-inner.flipped {
   animation: paijue-flip-glow 0.45s ease-in-out;
 }
 
@@ -1126,33 +1155,29 @@ body { padding-bottom: calc(144px + env(safe-area-inset-bottom)) !important; }
   filter: drop-shadow(0 0 4px rgba(201,168,76,0.5));
 }
 
-/* 「再抽一张」按钮 */
-#btn-paijue-redraw {
+/* 「再求签」按钮 */
+.pj-btn-redraw {
   background: transparent;
   border: 1px solid var(--pj-gold);
   color: var(--pj-gold);
   border-radius: var(--r8);
   padding: 10px 28px;
+  font-family: var(--font);
   font-size: 14px;
   font-weight: 500;
   letter-spacing: 0.05em;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
   transition: background 0.2s, box-shadow 0.2s;
   min-width: 140px;
 }
-#btn-paijue-redraw:hover {
+.pj-btn-redraw:active {
   background: var(--pj-gold-soft);
   box-shadow: 0 0 12px var(--pj-gold-glow);
 }
-#btn-paijue-redraw:disabled {
+.pj-btn-redraw:disabled {
   opacity: 0.3;
   pointer-events: none;
-}
-
-/* 提示文字 */
-#paijue-hint {
-  color: rgba(201,168,76,0.6);
-  font-size: 13px;
-  letter-spacing: 0.08em;
 }
 
 /* ─── Toast — centered ─── */

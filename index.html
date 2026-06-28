@@ -6,7 +6,7 @@
     <title>猫店德州结算</title>
     <link rel="icon" type="image/png" href="img/paw.png">
     <link rel="apple-touch-icon" href="img/paw.png">
-    <link rel="stylesheet" href="css/style.css?v=53">
+    <link rel="stylesheet" href="css/style.css?v=54">
 </head>
 <body>
 <div class="container" id="main-view">
@@ -61,28 +61,23 @@
 
 <!-- ── 牌诀视图 ── -->
 <div id="paijue-view" class="paijue-view hidden">
-  <div class="paijue-scene">
-    <div class="paijue-card" id="paijue-card">
-      <div class="paijue-card-inner" id="paijue-card-inner">
-        <!-- 背面 -->
-        <div class="paijue-card-back">
+  <div class="pj-spread" id="pj-spread"></div>
+  <div class="pj-stage" id="pj-stage">
+    <div class="pj-reveal" id="pj-reveal">
+      <div class="pj-reveal-inner" id="pj-reveal-inner">
+        <div class="pj-reveal-back">
           <svg width="80" height="80" viewBox="0 0 80 80" fill="none" xmlns="http://www.w3.org/2000/svg" style="opacity:0.4">
-            <!-- 外圆 -->
             <circle cx="40" cy="40" r="36" stroke="#c9a84c" stroke-width="0.8" stroke-dasharray="4 3" opacity="0.5"/>
-            <!-- 八芒星 -->
             <polygon points="40,6 44.5,35.5 70,16 51,38 74,40 51,42 70,64 44.5,44.5 40,74 35.5,44.5 10,64 29,42 6,40 29,38 10,16 35.5,35.5" fill="#c9a84c" opacity="0.35"/>
-            <!-- 中心小圆 -->
             <circle cx="40" cy="40" r="4" fill="#c9a84c" opacity="0.6"/>
           </svg>
         </div>
-        <!-- 正面 -->
-        <div class="paijue-card-front">
-          <p class="paijue-text" id="paijue-text"></p>
+        <div class="pj-reveal-front">
+          <p class="pj-wisdom" id="pj-wisdom"></p>
         </div>
       </div>
     </div>
-    <p class="paijue-hint" id="paijue-hint">点击翻牌</p>
-    <button class="btn btn-secondary paijue-redraw hidden" id="btn-paijue-redraw">再抽一张</button>
+    <button class="pj-btn-redraw hidden" id="btn-pj-redraw">再求签</button>
   </div>
 </div>
 
@@ -385,6 +380,6 @@
 <script src="js/settlement.js?v=22"></script>
 <script src="js/night-titles.js?v=22"></script>
 <script src="js/cards.js?v=1"></script>
-<script src="js/app.js?v=46"></script>
+<script src="js/app.js?v=47"></script>
 </body>
 </html>
