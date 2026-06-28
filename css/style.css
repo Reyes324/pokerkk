@@ -422,24 +422,25 @@ body{
 .card-chevron svg{display:block}
 
 /* ─── Add player — airy dashed amber ─── */
-.btn-add-player{
-  display:flex;align-items:center;justify-content:center;gap:6px;
-  width:auto;height:36px;
-  padding:0 18px;
-  background:transparent;
-  border:1px dashed var(--n40);
-  border-radius:var(--rfull);
-  font-family:var(--font);font-size:13px;font-weight:500;color:var(--ink-2);
-  cursor:pointer;margin:4px auto 12px;
+/* FAB: add player — fixed bottom-right above float-bar */
+.fab-add-player{
+  position:fixed;
+  right:20px;
+  bottom:calc(var(--nav-h) + 74px + 16px + env(safe-area-inset-bottom));
+  z-index:26;
+  width:44px;height:44px;
+  border-radius:50%;
+  background:rgba(255,255,255,0.08);
+  border:1px solid rgba(255,255,255,0.14);
+  backdrop-filter:blur(10px);
+  -webkit-backdrop-filter:blur(10px);
+  display:flex;align-items:center;justify-content:center;
+  color:var(--ink-1);
+  cursor:pointer;
   -webkit-tap-highlight-color:transparent;
-  transition:background .12s,border-color .12s,transform .12s;
+  transition:background .15s,transform .15s;
 }
-.btn-add-player svg{
-  width:15px;height:15px;
-  stroke-width:2;
-  display:block;flex-shrink:0;
-}
-.btn-add-player:active{background:var(--n10);border-color:var(--ink-2);transform:scale(.99)}
+.fab-add-player:active{background:rgba(255,255,255,0.15);transform:scale(.9)}
 
 /* ─── Summary ─── */
 .summary-bar{
