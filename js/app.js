@@ -1803,13 +1803,15 @@ function switchMainTab(tab) {
 
 // ── 牌诀·签筒摇签 ──
 let _pjGen = 0;
-let _pjLastWisdomIdx = -1;
+let _pjRecentIdxs = [];
 
 function _pjRandWisdom() {
+    const exclude = Math.min(10, PAIJUE_CARDS.length - 1);
     let idx;
     do { idx = Math.floor(Math.random() * PAIJUE_CARDS.length); }
-    while (idx === _pjLastWisdomIdx && PAIJUE_CARDS.length > 1);
-    _pjLastWisdomIdx = idx;
+    while (_pjRecentIdxs.slice(-exclude).includes(idx));
+    _pjRecentIdxs.push(idx);
+    if (_pjRecentIdxs.length > 10) _pjRecentIdxs.shift();
     return idx;
 }
 
