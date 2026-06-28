@@ -1043,111 +1043,17 @@ body { padding-bottom: calc(144px + env(safe-area-inset-bottom)) !important; }
   align-items: center;
 }
 
-/* 签筒整体（签头 + 筒身） */
-.pj-cylinder-wrap {
-  position: relative;   /* 参与 pj-oracle 的 flex 流，紧贴签条底部 */
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  width: 130px;
+/* 签筒 PNG 图片 */
+.pj-cylinder-img {
+  width: min(220px, 58vw);
+  height: auto;
+  position: relative;
   z-index: 5;
-  transform-origin: 50% 100%; /* 摇摆以底部为轴 */
-}
-
-/* 筒口露出的签头（4根静态竹签） */
-.pj-sticks-top {
-  display: flex;
-  gap: 8px;
-  align-items: flex-end;
-  height: 44px;
-  padding: 0 18px;
-  position: relative;
-  z-index: 4;
-}
-.pj-stick-nub {
-  width: 12px;
-  border-radius: 3px 3px 0 0;
-  /* 竹签渐变：侧面高光 + 暖黄竹色 */
-  background: linear-gradient(
-    to right,
-    #8a5e28 0%,
-    #c8904a 20%,
-    #e8c87a 45%,
-    #d4a850 65%,
-    #9a6a2e 100%
-  );
-  box-shadow:
-    inset 1px 0 2px rgba(255,220,100,0.3),
-    inset -1px 0 3px rgba(0,0,0,0.25),
-    0 -2px 6px rgba(0,0,0,0.3);
-  position: relative;
-  overflow: hidden;
-  transform-origin: 50% 100%;
-  animation: pj-nub-sway 2.8s ease-in-out infinite;
-  animation-delay: calc(var(--ni, 0) * 0.55s);
-}
-/* 竹节横纹 */
-.pj-stick-nub::after {
-  content: '';
-  position: absolute;
-  left: 0; right: 0;
-  height: 2px;
-  top: 38%;
-  background: rgba(80, 44, 12, 0.35);
-  border-radius: 1px;
-}
-.pj-stick-nub:nth-child(1) { height: 22px; animation-delay: 0s; }
-.pj-stick-nub:nth-child(2) { height: 30px; animation-delay: 0.55s; }
-.pj-stick-nub:nth-child(3) { height: 20px; animation-delay: 1.1s; }
-.pj-stick-nub:nth-child(4) { height: 34px; animation-delay: 1.65s; }
-
-@keyframes pj-nub-sway {
-  0%,100% { transform: rotate(0deg); }
-  20%     { transform: rotate(2deg); }
-  50%     { transform: rotate(-1.5deg); }
-  75%     { transform: rotate(1deg); }
-}
-
-/* 筒身主体 */
-.pj-cylinder {
-  width: 130px;
-  height: 88px;
-  position: relative;
-  background: linear-gradient(
-    to right,
-    #2a1a0e 0%,
-    #5a3320 12%,
-    #8b5e3a 35%,
-    #a07040 50%,
-    #8b5e3a 65%,
-    #5a3320 88%,
-    #2a1a0e 100%
-  );
-  border-radius: 6px 6px 14px 14px;
-  border: 1.5px solid rgba(201,168,76,0.45);
-  box-shadow:
-    inset 0 6px 18px rgba(0,0,0,0.55),
-    inset 0 -4px 10px rgba(0,0,0,0.35),
-    0 6px 20px rgba(0,0,0,0.65);
-}
-
-/* 筒口上沿（椭圆感） */
-.pj-cylinder-rim {
-  position: absolute;
-  top: -10px; left: -2px; right: -2px;
-  height: 20px;
-  background: linear-gradient(to bottom, #7a4e2a 0%, #4a2e18 100%);
-  border-radius: 50%;
-  border: 1.5px solid rgba(201,168,76,0.55);
-  box-shadow: 0 2px 8px rgba(0,0,0,0.5);
-}
-
-/* 装饰金箍 */
-.pj-cylinder-band {
-  position: absolute;
-  top: 26px; left: 6px; right: 6px;
-  height: 1px;
-  background: linear-gradient(to right, transparent, rgba(201,168,76,0.5), transparent);
+  margin-top: -72px;      /* 与签条底部叠压，制造"从筒口滑出"感 */
+  transform-origin: 50% 80%; /* 摇摆轴靠近筒体中下部 */
+  display: block;
+  pointer-events: none;
+  filter: drop-shadow(0 8px 24px rgba(0,0,0,0.6));
 }
 
 /* 摇签动画 */
@@ -1161,7 +1067,7 @@ body { padding-bottom: calc(144px + env(safe-area-inset-bottom)) !important; }
   86%  { transform: rotate(1deg); }
   100% { transform: rotate(0deg); }
 }
-.pj-cylinder-wrap.shaking {
+.pj-cylinder-img.shaking {
   animation: pj-shake 0.7s cubic-bezier(0.36, 0.07, 0.19, 0.97) both;
 }
 
