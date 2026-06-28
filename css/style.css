@@ -1014,27 +1014,19 @@ body { padding-bottom: calc(144px + env(safe-area-inset-bottom)) !important; }
   overflow: hidden;
 }
 
-/* 牌诀顶部导航栏 */
+/* 牌诀顶部导航栏 — 与 .app-header 完全一致，无右侧按钮 */
 .pj-header {
   flex-shrink: 0;
   height: 56px;
   display: flex;
   align-items: center;
-  justify-content: center;
-  padding-top: env(safe-area-inset-top);
-  border-bottom: 1px solid rgba(201,168,76,0.12);
-  background: rgba(8,8,15,0.85);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  position: relative;
+  padding: 0 12px;
+  gap: 8px;
+  background: var(--bg-blur);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  border-bottom: 1px solid var(--line);
   z-index: 10;
-}
-.pj-header-title {
-  font-family: var(--font);
-  font-size: 17px;
-  font-weight: 600;
-  color: var(--pj-gold);
-  letter-spacing: 0.15em;
 }
 .paijue-view::before {
   content: '';
