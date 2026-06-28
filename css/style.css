@@ -1022,133 +1022,167 @@ body { padding-bottom: calc(144px + env(safe-area-inset-bottom)) !important; }
 }
 .paijue-view.hidden { display: none; }
 
-/* ─── 牌山弧形抽签 ─── */
-.pj-spread {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  width: min(340px, 90vw);
-  height: 120px;
-  z-index: 1;
-  transition: opacity 0.5s ease;
-}
-.pj-spread.dimmed { opacity: 0.18; }
-.pj-card {
-  position: absolute;
-  width: 38px;
-  height: 54px;
-  border-radius: 5px;
-  transform-origin: 50% 400px;
-  background: radial-gradient(ellipse 70% 70% at 50% 40%, rgba(201,168,76,0.08), transparent 70%), var(--pj-surface);
-  border: 1px solid rgba(201,168,76,0.2);
-  box-shadow: 0 2px 8px rgba(0,0,0,0.5);
-  transform: rotate(0deg);
-  transition: transform 0.55s cubic-bezier(0.22,1,0.36,1);
-  left: 50%;
-  margin-left: -19px;
-}
-.pj-card.spread {
-  transform: rotate(var(--pj-angle, 0deg));
-}
-.pj-card.chosen {
-  transform: rotate(var(--pj-angle, 0deg)) translateY(-22px);
-  border-color: rgba(201,168,76,0.6);
-  box-shadow: 0 4px 20px rgba(201,168,76,0.4), 0 2px 8px rgba(0,0,0,0.5);
-  transition: transform 0.4s cubic-bezier(0.22,1,0.36,1), border-color 0.4s ease, box-shadow 0.4s ease;
-}
-.pj-stage {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -55%);
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 20px;
-  opacity: 0;
-  pointer-events: none;
-  transition: opacity 0.25s ease;
-  z-index: 10;
-}
-.pj-stage.visible {
-  opacity: 1;
-  pointer-events: auto;
-}
-.pj-reveal {
-  width: min(280px, 78vw);
-  height: min(196px, 55vw);
-  perspective: 900px;
-}
-.pj-reveal-inner {
+/* ─── 牌诀·签筒摇签 ─── */
+
+/* 整体场景容器 */
+.pj-scene {
+  position: relative;
   width: 100%;
   height: 100%;
-  position: relative;
-  transform-style: preserve-3d;
-  transition: transform 0.45s ease-in-out;
-}
-.pj-reveal-inner.flipped { transform: rotateY(180deg); }
-.pj-reveal-back,
-.pj-reveal-front {
-  position: absolute;
-  inset: 0;
-  border-radius: var(--r16);
-  backface-visibility: hidden;
-  -webkit-backface-visibility: hidden;
   display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
 }
-.pj-reveal-back {
-  background: radial-gradient(ellipse 70% 70% at 50% 50%, rgba(201,168,76,0.07) 0%, transparent 70%), var(--pj-surface);
-  border: 1px solid rgba(201,168,76,0.25);
-  box-shadow: 0 8px 40px rgba(0,0,0,0.7), 0 0 0 1px rgba(201,168,76,0.1);
-}
-.pj-reveal-front {
-  background: var(--pj-front-grad);
-  border: 1px solid rgba(201,168,76,0.3);
-  box-shadow: 0 8px 40px rgba(0,0,0,0.8), 0 0 20px rgba(201,168,76,0.15);
-  transform: rotateY(180deg);
-  padding: 24px;
+
+/* 签筒整体（签头 + 筒身） */
+.pj-cylinder-wrap {
+  position: absolute;
+  bottom: 72px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
   flex-direction: column;
-}
-.pj-reveal-front::before {
-  content: '';
-  display: block;
-  width: 40px;
-  height: 1px;
-  background: var(--pj-gold);
-  opacity: 0.6;
-  margin-bottom: 16px;
-  flex-shrink: 0;
-}
-.pj-wisdom {
-  font-size: 18px;
-  font-weight: 600;
-  color: var(--pj-ink);
-  text-align: center;
-  line-height: 1.6;
-  font-family: var(--font);
-  margin: 0;
-}
-.pj-reveal-inner.flipped .pj-wisdom {
-  animation: paijue-text-reveal 350ms ease-out 350ms both;
-}
-.pj-reveal-inner.flipped .pj-reveal-front::before {
-  animation: paijue-text-reveal 250ms ease-out 300ms both;
+  align-items: center;
+  width: 130px;
+  z-index: 5;
+  transform-origin: 50% 100%; /* 摇摆以底部为轴 */
 }
 
-/* 牌诀翻牌光效 */
-@keyframes paijue-flip-glow {
-  0%,100% { box-shadow: 0 8px 40px rgba(0,0,0,0.7); }
-  50%      { box-shadow: 0 8px 40px rgba(0,0,0,0.4), 0 0 30px rgba(201,168,76,0.4); }
+/* 筒口露出的签头（4根静态竹签） */
+.pj-sticks-top {
+  display: flex;
+  gap: 8px;
+  align-items: flex-end;
+  height: 44px;
+  padding: 0 18px;
+  position: relative;
+  z-index: 4;
 }
-@keyframes paijue-text-reveal {
-  from { opacity:0; filter:blur(6px); }
-  to   { opacity:1; filter:blur(0);   }
+.pj-stick-nub {
+  width: 9px;
+  /* 4根高度略有差异增加真实感 */
+  height: calc(22px + var(--ni, 0) * 5px - var(--ni, 0) * 2px);
+  background: linear-gradient(to right, #c8a76a 0%, #e8c87a 40%, #c8a76a 100%);
+  border-radius: 2px 2px 0 0;
+  box-shadow: inset 0 0 4px rgba(0,0,0,0.3);
 }
-.pj-reveal-inner.flipped {
-  animation: paijue-flip-glow 0.45s ease-in-out;
+/* 4根高度：22,25,22,29（ni=0,1,2,3 → 22,27,24,29，调整计算保持自然感） */
+.pj-stick-nub:nth-child(1) { height: 22px; }
+.pj-stick-nub:nth-child(2) { height: 28px; }
+.pj-stick-nub:nth-child(3) { height: 20px; }
+.pj-stick-nub:nth-child(4) { height: 32px; }
+
+/* 筒身主体 */
+.pj-cylinder {
+  width: 130px;
+  height: 88px;
+  position: relative;
+  background: linear-gradient(
+    to right,
+    #2a1a0e 0%,
+    #5a3320 12%,
+    #8b5e3a 35%,
+    #a07040 50%,
+    #8b5e3a 65%,
+    #5a3320 88%,
+    #2a1a0e 100%
+  );
+  border-radius: 6px 6px 14px 14px;
+  border: 1.5px solid rgba(201,168,76,0.45);
+  box-shadow:
+    inset 0 6px 18px rgba(0,0,0,0.55),
+    inset 0 -4px 10px rgba(0,0,0,0.35),
+    0 6px 20px rgba(0,0,0,0.65);
+}
+
+/* 筒口上沿（椭圆感） */
+.pj-cylinder-rim {
+  position: absolute;
+  top: -10px; left: -2px; right: -2px;
+  height: 20px;
+  background: linear-gradient(to bottom, #7a4e2a 0%, #4a2e18 100%);
+  border-radius: 50%;
+  border: 1.5px solid rgba(201,168,76,0.55);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.5);
+}
+
+/* 装饰金箍 */
+.pj-cylinder-band {
+  position: absolute;
+  top: 26px; left: 6px; right: 6px;
+  height: 1px;
+  background: linear-gradient(to right, transparent, rgba(201,168,76,0.5), transparent);
+}
+
+/* 摇签动画 */
+@keyframes pj-shake {
+  0%   { transform: translateX(-50%) rotate(0deg); }
+  12%  { transform: translateX(-50%) rotate(-6deg); }
+  28%  { transform: translateX(-50%) rotate(5deg); }
+  42%  { transform: translateX(-50%) rotate(-4deg); }
+  58%  { transform: translateX(-50%) rotate(3deg); }
+  72%  { transform: translateX(-50%) rotate(-2deg); }
+  86%  { transform: translateX(-50%) rotate(1deg); }
+  100% { transform: translateX(-50%) rotate(0deg); }
+}
+.pj-cylinder-wrap.shaking {
+  animation: pj-shake 0.7s cubic-bezier(0.36, 0.07, 0.19, 0.97) both;
+}
+
+/* 签条（从筒口滑出的竹签） */
+.pj-slip {
+  position: absolute;
+  /* final resting: bottom 边在筒口上方约 20px */
+  bottom: calc(72px + 88px + 10px);  /* cylinder-bottom + cylinder-height + gap */
+  left: 50%;
+  width: 120px;
+  min-height: 200px;
+  background: linear-gradient(160deg, #f8f2e2 0%, #efe6cf 100%);
+  border: 1px solid rgba(139,90,60,0.35);
+  border-radius: 4px 4px 3px 3px;
+  padding: 18px 14px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  box-shadow:
+    0 6px 24px rgba(0,0,0,0.55),
+    0 0 0 1px rgba(201,168,76,0.18);
+  z-index: 3;
+  /* 初始：translateX(-50%) 水平居中，translateY(130px) 藏入筒身后方 */
+  transform: translateX(-50%) translateY(130px);
+  opacity: 0;
+  transition:
+    transform 0.6s cubic-bezier(0.22,1,0.36,1),
+    opacity   0.4s ease;
+}
+.pj-slip.out {
+  transform: translateX(-50%) translateY(0);
+  opacity: 1;
+}
+
+.pj-slip-deco {
+  width: 56px;
+  height: 1px;
+  background: linear-gradient(to right, transparent, rgba(139,90,60,0.45), transparent);
+  flex-shrink: 0;
+}
+
+.pj-slip-text {
+  font-size: 15px;
+  font-weight: 500;
+  color: #2a1a10;
+  text-align: center;
+  line-height: 1.75;
+  font-family: var(--font);
+  margin: 0;
+  word-break: break-all;
+}
+
+/* 签文字数多时缩小字号 */
+.pj-slip-text.long {
+  font-size: 13px;
 }
 
 /* 底部导航牌诀激活金色覆盖 */

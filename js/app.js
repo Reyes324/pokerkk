@@ -1895,27 +1895,13 @@ function switchMainTab(tab) {
         paijueView.classList.remove('hidden');
         floatBar.style.display = 'none';
         // 每次进入牌诀 tab 重新走抽签流程
-        initPaijueFan();
+        initPaijueCylinder();
     }
 }
 
-// ── 牌山弧形抽签 ──────────────────────────────────────────────
-
-// Generation counter: increments each time initPaijueFan() is called,
-// so stale async callbacks from a previous run silently abort.
+// ── 牌诀·签筒摇签 ──
 let _pjGen = 0;
-let _pjLastSpreadIdx = -1; // which spread card was last chosen (avoid repeat)
-let _pjLastWisdomIdx = -1; // which PAIJUE_CARDS idx was last shown (avoid repeat)
-let _pjChosenEl = null;    // the chosen .pj-card element
-
-function _pjRandSpread(n, gen) {
-    if (_pjGen !== gen) return -1;
-    let idx;
-    do { idx = Math.floor(Math.random() * n); }
-    while (idx === _pjLastSpreadIdx && n > 1);
-    _pjLastSpreadIdx = idx;
-    return idx;
-}
+let _pjLastWisdomIdx = -1;
 
 function _pjRandWisdom() {
     let idx;
@@ -1925,229 +1911,98 @@ function _pjRandWisdom() {
     return idx;
 }
 
-function initPaijueFan() {
+function initPaijueCylinder() {
     const gen = ++_pjGen;
-    const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const slip     = document.getElementById('pj-slip');
+    const slipText = document.getElementById('pj-slip-text');
+    const cylWrap  = document.getElementById('pj-cylinder-wrap');
+    const redrawBtn= document.getElementById('btn-pj-redraw');
 
-    // Reset UI
-    const stage = document.getElementById('pj-stage');
-    const inner = document.getElementById('pj-reveal-inner');
-    const redrawBtn = document.getElementById('btn-pj-redraw');
-    stage.classList.remove('visible');
-    inner.classList.remove('flipped');
+    // 重置到初始状态
+    slip.classList.remove('out');
+    cylWrap.classList.remove('shaking');
     redrawBtn.classList.add('hidden');
-    if (_pjChosenEl) { _pjChosenEl.style.visibility = ''; _pjChosenEl = null; }
 
-    // Build 25-card spread
-    const spread = document.getElementById('pj-spread');
-    spread.classList.remove('dimmed');
-    spread.innerHTML = '';
-    const N = 25;
-    const cards = [];
-    for (let i = 0; i < N; i++) {
-        const el = document.createElement('div');
-        el.className = 'pj-card';
-        el.style.setProperty('--pj-angle', (-36 + i * 3) + 'deg');
-        spread.appendChild(el);
-        cards.push(el);
-    }
-
+    const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     if (reducedMotion) {
-        // Skip all transitions: show fan + chosen card + flipped reveal instantly
-        cards.forEach(el => el.classList.add('spread'));
-        const si = _pjRandSpread(N, gen);
-        if (si < 0) return;
-        _pjChosenEl = cards[si];
-        _pjChosenEl.classList.add('chosen');
-        document.getElementById('pj-wisdom').textContent = PAIJUE_CARDS[_pjRandWisdom()];
-        inner.classList.add('flipped');
-        stage.classList.add('visible');
+        const wisdom = PAIJUE_CARDS[_pjRandWisdom()];
+        slipText.textContent = wisdom;
+        slipText.classList.toggle('long', wisdom.length > 18);
+        slip.classList.add('out');
         redrawBtn.classList.remove('hidden');
         return;
     }
 
-    // ① Stagger fan spread (each card delays i*20ms, transition 400ms)
-    cards.forEach((el, i) => {
+    // ① 300ms 进场停顿后开始摇签
+    setTimeout(() => {
+        if (_pjGen !== gen) return;
+        cylWrap.classList.add('shaking');
+
+        // ② 摇签结束（700ms）后滑出签条
         setTimeout(() => {
             if (_pjGen !== gen) return;
-            el.classList.add('spread');
-        }, i * 20);
-    });
+            cylWrap.classList.remove('shaking');
 
-    // ② 200ms after last card finishes spreading → pick & highlight
-    const spreadDone = (N - 1) * 20 + 400; // last transition finishes here
-    setTimeout(() => {
-        if (_pjGen !== gen) return;
-        _pjSelectAndFly(cards, N, gen);
-    }, spreadDone + 200);
+            const wisdom = PAIJUE_CARDS[_pjRandWisdom()];
+            slipText.textContent = wisdom;
+            slipText.classList.toggle('long', wisdom.length > 18);
+
+            // 强制浏览器计算布局后触发过渡
+            slip.offsetHeight;
+            slip.classList.add('out');
+
+            // ③ 签滑到位后显示「再求签」按钮
+            setTimeout(() => {
+                if (_pjGen !== gen) return;
+                redrawBtn.classList.remove('hidden');
+            }, 650);
+        }, 720);
+    }, 300);
 }
 
-function _pjSelectAndFly(cards, N, gen) {
-    if (_pjGen !== gen) return;
-    const si = _pjRandSpread(N, gen);
-    if (si < 0) return;
-    _pjChosenEl = cards[si];
-    _pjChosenEl.classList.add('chosen');
-
-    // ③ 250ms pause then fly to center
-    setTimeout(() => {
-        if (_pjGen !== gen) return;
-        _pjFlyToCenter(_pjChosenEl, gen);
-    }, 250);
-}
-
-function _pjFlyToCenter(cardEl, gen) {
-    if (_pjGen !== gen) return;
-    const from = cardEl.getBoundingClientRect();
-    const revealEl = document.getElementById('pj-reveal');
-    const to = revealEl.getBoundingClientRect();
-
-    document.getElementById('pj-wisdom').textContent = PAIJUE_CARDS[_pjRandWisdom()];
-
-    // 3D clone: back face visible at start, front face revealed as card rotates 180°
-    const clone = document.createElement('div');
-    clone.style.cssText = 'position:fixed;left:' + from.left + 'px;top:' + from.top + 'px;'
-        + 'width:' + from.width + 'px;height:' + from.height + 'px;'
-        + 'margin:0;z-index:50;perspective:900px;'
-        + 'transform-style:preserve-3d;transform-origin:center center;';
-
-    const cBack = document.createElement('div');
-    cBack.style.cssText = 'position:absolute;inset:0;border-radius:5px;'
-        + 'background:radial-gradient(ellipse 70% 70% at 50% 40%,rgba(201,168,76,.08),transparent 70%),#12101a;'
-        + 'border:1px solid rgba(201,168,76,.5);'
-        + 'box-shadow:0 4px 20px rgba(201,168,76,.3),0 2px 8px rgba(0,0,0,.5);'
-        + 'backface-visibility:hidden;-webkit-backface-visibility:hidden;';
-
-    const cFront = document.createElement('div');
-    cFront.style.cssText = 'position:absolute;inset:0;border-radius:12px;'
-        + 'background:linear-gradient(160deg,#1a0a2e 0%,#0e0b1a 60%,#0a0a0f 100%);'
-        + 'border:1px solid rgba(201,168,76,.3);'
-        + 'box-shadow:0 8px 40px rgba(0,0,0,.8),0 0 20px rgba(201,168,76,.15);'
-        + 'backface-visibility:hidden;-webkit-backface-visibility:hidden;'
-        + 'transform:rotateY(180deg);';
-
-    clone.appendChild(cBack);
-    clone.appendChild(cFront);
-    document.body.appendChild(clone);
-    cardEl.style.visibility = 'hidden';
-
-    document.getElementById('pj-spread').classList.add('dimmed');
-
-    const fromCx = from.left + from.width / 2;
-    const fromCy = from.top + from.height / 2;
-    const toCx   = to.left + to.width / 2;
-    const toCy   = to.top + to.height / 2;
-    const tx = toCx - fromCx;
-    const ty = toCy - fromCy;
-    const sx = to.width  / from.width;
-    const sy = to.height / from.height;
-
-    clone.offsetHeight; // force reflow
-    // Fly + flip simultaneously: translate to center, scale up, rotate 180° — all one motion
-    clone.style.transition = 'transform 0.65s cubic-bezier(0.22,1,0.36,1)';
-    clone.style.transform = 'translate(' + tx + 'px,' + ty + 'px) scale(' + sx + ',' + sy + ') rotateY(180deg)';
-
-    setTimeout(() => {
-        clone.remove();
-        if (_pjGen !== gen) return;
-        // Snap stage + inner to final state (clone already showed the flip — no CSS transition needed)
-        const inner = document.getElementById('pj-reveal-inner');
-        inner.style.transition = 'none';
-        inner.classList.add('flipped');
-        inner.offsetHeight;
-        inner.style.transition = '';
-        const stage = document.getElementById('pj-stage');
-        stage.style.transition = 'none';
-        stage.classList.add('visible');
-        stage.offsetHeight;
-        stage.style.transition = '';
-        setTimeout(() => {
-            if (_pjGen !== gen) return;
-            document.getElementById('btn-pj-redraw').classList.remove('hidden');
-        }, 450);
-    }, 650);
-}
-
-function redrawPaijueFan() {
-    const gen = _pjGen; // capture before potential increment
-    const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    const inner = document.getElementById('pj-reveal-inner');
-    const stage = document.getElementById('pj-stage');
-    const redrawBtn = document.getElementById('btn-pj-redraw');
+function redrawPaijueCylinder() {
+    const gen = _pjGen;
+    const slip     = document.getElementById('pj-slip');
+    const slipText = document.getElementById('pj-slip-text');
+    const cylWrap  = document.getElementById('pj-cylinder-wrap');
+    const redrawBtn= document.getElementById('btn-pj-redraw');
 
     redrawBtn.classList.add('hidden');
 
+    const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     if (reducedMotion) {
-        inner.classList.remove('flipped');
-        stage.classList.remove('visible');
-        if (_pjChosenEl) { _pjChosenEl.classList.remove('chosen'); _pjChosenEl.style.visibility = ''; }
-        const spread = document.getElementById('pj-spread');
-        const cards = Array.from(spread.querySelectorAll('.pj-card'));
-        _pjSelectAndFly(cards, cards.length, gen);
+        const wisdom = PAIJUE_CARDS[_pjRandWisdom()];
+        slipText.textContent = wisdom;
+        slipText.classList.toggle('long', wisdom.length > 18);
+        redrawBtn.classList.remove('hidden');
         return;
     }
 
-    // ① Flip back (0.3s)
-    inner.classList.remove('flipped');
+    // ① 签缩回筒内
+    slip.classList.remove('out');
 
-    // ② After 200ms: fade out stage + start fly-back clone
     setTimeout(() => {
         if (_pjGen !== gen) return;
-        stage.classList.remove('visible');
+        // ② 短暂停顿后重新摇签
+        cylWrap.classList.add('shaking');
 
-        if (_pjChosenEl) {
-            const chosenEl = _pjChosenEl;
-            const to = chosenEl.getBoundingClientRect(); // card in spread (visibility:hidden, still in layout)
-            const revealEl = document.getElementById('pj-reveal');
-            const from = revealEl.getBoundingClientRect();
+        setTimeout(() => {
+            if (_pjGen !== gen) return;
+            cylWrap.classList.remove('shaking');
 
-            // Un-dim spread as card flies back
-            document.getElementById('pj-spread').classList.remove('dimmed');
+            const wisdom = PAIJUE_CARDS[_pjRandWisdom()];
+            slipText.textContent = wisdom;
+            slipText.classList.toggle('long', wisdom.length > 18);
 
-            const clone = document.createElement('div');
-            clone.className = 'pj-card';
-            clone.style.cssText = 'position:fixed;left:' + from.left + 'px;top:' + from.top + 'px;' +
-                'width:' + from.width + 'px;height:' + from.height + 'px;' +
-                'margin:0;z-index:50;transition:none;transform-origin:center center;';
-            document.body.appendChild(clone);
-
-            const fromCx = from.left + from.width / 2;
-            const fromCy = from.top + from.height / 2;
-            const toCx = to.left + to.width / 2;
-            const toCy = to.top + to.height / 2;
-            const tx = toCx - fromCx;
-            const ty = toCy - fromCy;
-            const sx = to.width / from.width;
-            const sy = to.height / from.height;
-
-            clone.offsetHeight;
-            clone.style.transition = 'transform 0.45s cubic-bezier(0.4,0,0.8,0.6)';
-            clone.style.transform = 'translate(' + tx + 'px,' + ty + 'px) scale(' + sx + ',' + sy + ')';
+            slip.offsetHeight;
+            slip.classList.add('out');
 
             setTimeout(() => {
-                clone.remove();
                 if (_pjGen !== gen) return;
-                chosenEl.style.visibility = '';
-                chosenEl.classList.remove('chosen');
-                _pjChosenEl = null;
-
-                setTimeout(() => {
-                    if (_pjGen !== gen) return;
-                    const spread = document.getElementById('pj-spread');
-                    const cards = Array.from(spread.querySelectorAll('.pj-card'));
-                    _pjSelectAndFly(cards, cards.length, gen);
-                }, 300);
-            }, 450);
-        } else {
-            // No chosen card; just do a fresh selection after pause
-            setTimeout(() => {
-                if (_pjGen !== gen) return;
-                const spread = document.getElementById('pj-spread');
-                const cards = Array.from(spread.querySelectorAll('.pj-card'));
-                _pjSelectAndFly(cards, cards.length, gen);
-            }, 750);
-        }
-    }, 200);
+                redrawBtn.classList.remove('hidden');
+            }, 650);
+        }, 720);
+    }, 400); // 等签缩回（transition 0.6s → 400ms 后筒身已遮住签）
 }
 
-document.getElementById('btn-pj-redraw').addEventListener('click', redrawPaijueFan);
+document.getElementById('btn-pj-redraw').addEventListener('click', redrawPaijueCylinder);
