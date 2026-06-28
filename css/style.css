@@ -1243,7 +1243,7 @@ body { padding-bottom: calc(144px + env(safe-area-inset-bottom)) !important; }
   user-select: none;
   pointer-events: none;
 }
-.pj-hint.visible { opacity: 0.65; }
+.pj-hint.visible { opacity: 0.85; }
 
 /* 数据出处 */
 .pj-attribution {
