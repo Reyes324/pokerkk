@@ -420,25 +420,17 @@ body{
 .card-chevron svg{display:block}
 
 /* ─── Add player — airy dashed amber ─── */
-/* FAB: add player — fixed bottom-right above float-bar */
-.fab-add-player{
-  position:fixed;
-  right:20px;
-  bottom:calc(var(--nav-h) + 74px + 16px + env(safe-area-inset-bottom));
-  z-index:26;
-  width:44px;height:44px;
-  border-radius:50%;
-  background:rgba(255,255,255,0.08);
-  border:1px solid rgba(255,255,255,0.14);
-  backdrop-filter:blur(10px);
-  -webkit-backdrop-filter:blur(10px);
-  display:flex;align-items:center;justify-content:center;
-  color:var(--ink-1);
-  cursor:pointer;
+/* Add player — small inline button, right-aligned below list */
+.add-player-row{display:flex;justify-content:flex-end;margin-top:6px}
+.btn-add-player{
+  display:inline-flex;align-items:center;gap:5px;
+  background:none;border:none;
+  font-family:var(--font);font-size:12px;font-weight:500;color:var(--ink-3);
+  padding:8px 4px;cursor:pointer;
   -webkit-tap-highlight-color:transparent;
-  transition:background .15s,transform .15s;
+  transition:color .12s;
 }
-.fab-add-player:active{background:rgba(255,255,255,0.15);transform:scale(.9)}
+.btn-add-player:active{color:var(--ink-1)}
 
 /* ─── Summary ─── */
 .summary-bar{
