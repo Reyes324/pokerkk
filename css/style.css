@@ -421,15 +421,16 @@ body{
 
 /* ─── Add player — airy dashed amber ─── */
 /* Add player — small inline button, right-aligned below list */
-.add-player-row{display:flex;justify-content:flex-end;margin-top:6px}
+.add-player-row{display:flex;justify-content:flex-end;margin-top:6px;padding-right:14px}
 .btn-add-player{
   display:inline-flex;align-items:center;gap:5px;
   background:none;border:none;
-  font-family:var(--font);font-size:12px;font-weight:500;color:var(--ink-3);
-  padding:8px 4px;cursor:pointer;
+  font-family:var(--font);font-size:14px;font-weight:400;color:var(--n60);
+  padding:8px 0;cursor:pointer;
   -webkit-tap-highlight-color:transparent;
   transition:color .12s;
 }
+.btn-add-player svg{width:14px;height:14px;flex-shrink:0}
 .btn-add-player:active{color:var(--ink-1)}
 
 /* ─── Summary ─── */
