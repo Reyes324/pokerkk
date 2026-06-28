@@ -1138,12 +1138,9 @@ body { padding-bottom: calc(144px + env(safe-area-inset-bottom)) !important; }
   filter: drop-shadow(0 0 4px rgba(201,168,76,0.5));
 }
 
-/* 「再求签」按钮 — 固定在 paijue-view 底部 */
+/* 「再求签」按钮 — 紧跟签筒下方 */
 .pj-btn-redraw {
-  position: absolute;
-  bottom: 32px;
-  left: 50%;
-  transform: translateX(-50%);
+  margin-top: 24px;
   background: transparent;
   border: 1px solid var(--pj-gold);
   color: var(--pj-gold);
