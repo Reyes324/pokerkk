@@ -1896,6 +1896,7 @@ function switchMainTab(tab) {
 // ── 牌诀翻牌 ──────────────────────────────────────────────────
 let _paijueLastIdx = -1;
 let _paijueFlipped = false;
+let _paijueAnimating = false;
 
 function initPaijue() {
     document.getElementById('paijue-card').addEventListener('click', function() {
@@ -1905,6 +1906,8 @@ function initPaijue() {
 }
 
 function _flipPaijue() {
+    if (_paijueAnimating) return;
+    _paijueAnimating = true;
     const idx = _randomPaijueIdx();
     _paijueLastIdx = idx;
     document.getElementById('paijue-text').textContent = PAIJUE_CARDS[idx];
@@ -1912,13 +1915,22 @@ function _flipPaijue() {
     document.getElementById('paijue-hint').textContent = '';
     document.getElementById('btn-paijue-redraw').classList.remove('hidden');
     _paijueFlipped = true;
+    setTimeout(() => { _paijueAnimating = false; }, 460);
 }
 
 function _redrawPaijue() {
+    if (_paijueAnimating) return;
+    _paijueAnimating = true;
+    const btn = document.getElementById('btn-paijue-redraw');
+    btn.disabled = true;
     const inner = document.getElementById('paijue-card-inner');
     inner.classList.remove('flipped');
     _paijueFlipped = false;
-    setTimeout(_flipPaijue, 460);
+    setTimeout(() => {
+        _paijueAnimating = false;
+        _flipPaijue();
+        btn.disabled = false;
+    }, 460);
 }
 
 function _randomPaijueIdx() {
