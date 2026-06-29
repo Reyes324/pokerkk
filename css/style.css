@@ -1177,8 +1177,6 @@ body { padding-bottom: calc(144px + env(safe-area-inset-bottom)) !important; }
   flex-shrink: 0;
   width: min(270px, 72vw);
   min-height: 280px;
-  background: linear-gradient(160deg, #fefdf2 0%, #f6ecaa 100%);
-  border: 1px solid rgba(180,140,40,0.25);
   border-radius: 14px;
   display: flex;
   flex-direction: column;
@@ -1224,15 +1222,7 @@ body { padding-bottom: calc(144px + env(safe-area-inset-bottom)) !important; }
   transition: opacity 0.35s ease 0.3s;
 }
 
-/* 内边框：签条文件感的核心 */
-.pj-slip::before {
-  content: '';
-  position: absolute;
-  inset: 7px;
-  border: 1px solid rgba(140,95,15,0.22);
-  border-radius: 8px;
-  pointer-events: none;
-}
+/* 内边框移到每个 face，随卡一起翻 */
 
 /* 分隔线：线 + 菱形点 */
 .pj-slip-deco {
@@ -1278,11 +1268,45 @@ body { padding-bottom: calc(144px + env(safe-area-inset-bottom)) !important; }
   justify-content: center;
   gap: 14px;
   padding: 20px 18px;
+  border-radius: 14px;
+  border: 1px solid rgba(180,140,40,0.25);
 }
+.pj-slip-face::before {
+  content: '';
+  position: absolute;
+  inset: 7px;
+  border: 1px solid rgba(140,95,15,0.22);
+  border-radius: 8px;
+  pointer-events: none;
+}
+.pj-slip-face-front {
+  background: linear-gradient(160deg, #fefdf2 0%, #f6ecaa 100%);
+}
+
+/* 背面：墨底注疏 — 与正面金纸构成概念反转 */
 .pj-slip-face-back {
   transform: rotateY(180deg);
-  background: linear-gradient(340deg, #fefcef 0%, #f3e598 100%);
-  border-radius: 14px;
+  background: linear-gradient(160deg, #1e1005 0%, #0e0800 100%);
+  border-color: rgba(160, 115, 15, 0.45);
+}
+.pj-slip-face-back::before {
+  border-color: rgba(180, 130, 20, 0.2);
+}
+/* 「注」印记 */
+.pj-slip-face-back::after {
+  content: '注';
+  position: absolute;
+  top: 15px;
+  right: 17px;
+  font-size: 9px;
+  font-family: 'Songti SC', 'STSong', 'SimSun', serif;
+  color: rgba(200, 155, 30, 0.38);
+  letter-spacing: 0.12em;
+  pointer-events: none;
+}
+/* 背面不需要装饰线和菱形，去掉 */
+.pj-slip-face-back .pj-slip-deco {
+  display: none;
 }
 
 .pj-slip-text {
@@ -1298,12 +1322,12 @@ body { padding-bottom: calc(144px + env(safe-area-inset-bottom)) !important; }
 }
 
 .pj-slip-note {
-  font-size: 13px;
+  font-size: 15px;
   font-weight: 400;
-  color: #2a1a06;
+  color: rgba(222, 180, 60, 0.88);
   text-align: center;
-  line-height: 1.9;
-  letter-spacing: 0.04em;
+  line-height: 1.85;
+  letter-spacing: 0.05em;
   font-family: 'Songti SC', 'STSong', 'SimSun', 'Noto Serif SC', Georgia, serif;
   margin: 0;
 }
