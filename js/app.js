@@ -247,6 +247,12 @@ function renderPlayers() {
 
         return `
         <div class="swipe-row" data-idx="${i}">
+            <div class="swipe-delete-btn" data-del="${i}">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                    <polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4h6v2"/>
+                </svg>
+                删除
+            </div>
             <div class="player-card ${settled ? 'settled' : ''}" data-idx="${i}"
                  ${settled ? '' : `onclick="openChipModal(${i})"`}>
                 <div class="player-card-main">
@@ -289,6 +295,83 @@ function renderPlayers() {
         </div>`;
     }).join('');
 
+    setupSwipeDelete();
+    setupLongPress();
+}
+
+// ── iOS swipe-left delete ──────────────────────────────────────
+function setupSwipeDelete() {
+    document.addEventListener('click', closeAllSwiped, { once: false });
+    document.querySelectorAll('.swipe-row').forEach(row => {
+        const card = row.querySelector('.player-card');
+        const delBtn = row.querySelector('.swipe-delete-btn');
+        if (!card || !delBtn) return;
+        const idx = parseInt(row.dataset.idx);
+        let startX = 0, startY = 0, currentX = 0;
+        let tracking = false, directionLocked = false, isHorizontal = false;
+        card.addEventListener('touchstart', e => {
+            startX = e.touches[0].clientX; startY = e.touches[0].clientY;
+            currentX = 0; tracking = true; directionLocked = false; isHorizontal = false;
+            card.style.transition = 'none';
+        }, { passive: true });
+        card.addEventListener('touchmove', e => {
+            if (!tracking) return;
+            const dx = e.touches[0].clientX - startX, dy = e.touches[0].clientY - startY;
+            if (!directionLocked) {
+                if (Math.abs(dx) < 5 && Math.abs(dy) < 5) return;
+                directionLocked = true; isHorizontal = Math.abs(dx) > Math.abs(dy);
+            }
+            if (!isHorizontal) return;
+            e.preventDefault();
+            currentX = Math.max(-80, Math.min(0, dx));
+            card.style.transform = `translateX(${currentX}px)`;
+        }, { passive: false });
+        card.addEventListener('touchend', () => {
+            if (!tracking) return; tracking = false;
+            card.style.transition = 'transform .22s cubic-bezier(.4,0,.2,1)';
+            if (currentX < -40) { card.style.transform = 'translateX(-80px)'; row.classList.add('swiped'); }
+            else { card.style.transform = 'translateX(0)'; row.classList.remove('swiped'); }
+        });
+        delBtn.addEventListener('click', e => {
+            e.stopPropagation();
+            if (players.length <= 2) { showToast('至少保留2位玩家'); closeAllSwiped(); return; }
+            removePlayer(idx); closeAllSwiped();
+        });
+    });
+}
+
+function closeAllSwiped() {
+    document.querySelectorAll('.swipe-row.swiped').forEach(row => {
+        row.classList.remove('swiped');
+        const card = row.querySelector('.player-card');
+        if (card) { card.style.transition = 'transform .22s cubic-bezier(.4,0,.2,1)'; card.style.transform = 'translateX(0)'; }
+    });
+}
+
+// ── Long-press delete ──────────────────────────────────────────
+function setupLongPress() {
+    document.querySelectorAll('.player-card[data-idx]').forEach(card => {
+        let timer = null, startX = 0, startY = 0;
+        card.addEventListener('touchstart', e => {
+            startX = e.touches[0].clientX; startY = e.touches[0].clientY;
+            timer = setTimeout(() => {
+                const idx = parseInt(card.dataset.idx);
+                if (players.length <= 2) { showToast('至少保留2位玩家'); return; }
+                card.classList.add('long-press-active');
+                showDeleteConfirm(idx);
+            }, 600);
+        }, { passive: true });
+        const cancel = (e) => {
+            if (e && e.touches) {
+                const dx = Math.abs(e.touches[0].clientX - startX), dy = Math.abs(e.touches[0].clientY - startY);
+                if (dx < 8 && dy < 8) return;
+            }
+            clearTimeout(timer); timer = null; card.classList.remove('long-press-active');
+        };
+        card.addEventListener('touchmove', cancel, { passive: true });
+        card.addEventListener('touchend', () => { clearTimeout(timer); timer = null; card.classList.remove('long-press-active'); });
+        card.addEventListener('touchcancel', () => { clearTimeout(timer); timer = null; card.classList.remove('long-press-active'); });
+    });
 }
 
 function renderFloatBar() {
@@ -495,6 +578,10 @@ function showDeleteConfirm(idx) {
     openModal('delete-modal');
 }
 
+function openPlayerActionSheet() {
+    openModal('player-action-modal');
+}
+
 // ── Chip half-sheet ────────────────────────────────────────────
 function openChipModal(idx) {
     chipModalIdx = idx;
@@ -529,6 +616,9 @@ function renderChipModal(idx) {
         </div>
         <button class="mode-toggle-btn" id="btn-mode-toggle" onclick="toggleChipMode(${idx})">
             ${chipInputMode === 'stepper' ? '直接输入' : '按筹码输入'}
+        </button>
+        <button class="btn-icon" id="btn-chip-more" aria-label="更多" onclick="openPlayerActionSheet()">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/><circle cx="5" cy="12" r="1"/></svg>
         </button>`;
     renderChipModalBody(idx);
 }
@@ -1643,6 +1733,15 @@ document.getElementById('export-modal').addEventListener('click', e => {
 });
 document.getElementById('btn-chip-done').addEventListener('click', () => closeChipModal(true));
 document.getElementById('chip-modal').addEventListener('click', e => { if (e.target === e.currentTarget) closeChipModal(false); });
+document.getElementById('btn-player-action-delete').addEventListener('click', () => {
+    const idx = chipModalIdx;
+    closeModal('player-action-modal', () => {
+        closeChipModal(false);
+        if (players.length <= 2) { showToast('至少保留2位玩家'); return; }
+        showDeleteConfirm(idx);
+    });
+});
+document.getElementById('btn-player-action-cancel').addEventListener('click', () => closeModal('player-action-modal'));
 document.getElementById('btn-close-modal').addEventListener('click', closeAvatarModal);
 document.getElementById('avatar-modal').addEventListener('click', e => { if (e.target === e.currentTarget) closeAvatarModal(); });
 document.getElementById('btn-close-name-modal').addEventListener('click', closeNameModal);
