@@ -1943,20 +1943,16 @@ function initPaijueCylinder() {
         return;
     }
 
+    // 摇签立即开始
+    cylWrap.classList.add('shaking');
     setTimeout(() => {
         if (_pjGen !== gen) return;
-        cylWrap.classList.add('shaking');
-
-        setTimeout(() => {
-            if (_pjGen !== gen) return;
-            cylWrap.classList.remove('shaking');
-            slipText.textContent = PAIJUE_CARDS[_pjRandWisdom()];
-            slip.offsetHeight;
-            slip.classList.add('out');
-            _pjSetAnimating(false);
-            _pjShowHint();
-        }, 720);
-    }, 300);
+        cylWrap.classList.remove('shaking');
+        slipText.textContent = PAIJUE_CARDS[_pjRandWisdom()];
+        slip.classList.add('out');   // 摇签结束同时浮出
+        _pjSetAnimating(false);
+        _pjShowHint();
+    }, 720);
 }
 
 function redrawPaijueCylinder() {
@@ -1974,24 +1970,18 @@ function redrawPaijueCylinder() {
         return;
     }
 
+    // 签条退后 + 摇签同时触发
     slip.classList.remove('out');
+    cylWrap.classList.add('shaking');
 
     setTimeout(() => {
         if (_pjGen !== gen) return;
-        cylWrap.classList.add('shaking');
-
-        setTimeout(() => {
-            if (_pjGen !== gen) return;
-            cylWrap.classList.remove('shaking');
-            slipText.textContent = PAIJUE_CARDS[_pjRandWisdom()];
-
-            // 移除再加回 .out 以重启 keyframe 动画
-            slip.classList.remove('out');
-            slip.offsetHeight; // force reflow
-            slip.classList.add('out');
-            _pjSetAnimating(false);
-        }, 720);
-    }, 400);
+        cylWrap.classList.remove('shaking');
+        slipText.textContent = PAIJUE_CARDS[_pjRandWisdom()];
+        slip.offsetHeight; // force reflow
+        slip.classList.add('out');   // 摇签结束同时浮出
+        _pjSetAnimating(false);
+    }, 720);
 }
 
 // 签筒点击 → 再来一签
