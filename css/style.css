@@ -1185,23 +1185,33 @@ body { padding-bottom: calc(144px + env(safe-area-inset-bottom)) !important; }
   align-items: center;
   justify-content: center;
   gap: 14px;
+  /* 沉下去状态：光晕占位（与 .out 状态层数一致保证 transition 平滑） */
   box-shadow:
-    0 6px 24px rgba(0,0,0,0.5),
-    0 0 0 1px rgba(201,168,76,0.15),
-    0 0 28px rgba(201,168,76,0.14),
-    0 2px 12px rgba(201,168,76,0.10);
+    0 3px 12px rgba(0,0,0,0.4),
+    0 0 0 1px rgba(201,168,76,0),
+    0 0 0px rgba(201,168,76,0),
+    0 0 0px rgba(201,168,76,0);
   z-index: 3;
-  opacity: 0.45;
+  opacity: 0.72;
   transform: scale(0.93);
+  filter: brightness(0.68) saturate(0.6);
   transition:
-    transform 0.55s cubic-bezier(0.22,1,0.36,1),
-    opacity   0.4s ease;
+    transform  0.55s cubic-bezier(0.22,1,0.36,1),
+    opacity    0.4s ease,
+    filter     0.4s ease,
+    box-shadow 0.5s ease;
   pointer-events: none;
 }
 
 .pj-slip.out {
   opacity: 1;
   transform: scale(1);
+  filter: brightness(1) saturate(1);
+  box-shadow:
+    0 6px 24px rgba(0,0,0,0.5),
+    0 0 0 1px rgba(201,168,76,0.15),
+    0 0 28px rgba(201,168,76,0.14),
+    0 2px 12px rgba(201,168,76,0.10);
   pointer-events: auto;
 }
 
@@ -1223,7 +1233,7 @@ body { padding-bottom: calc(144px + env(safe-area-inset-bottom)) !important; }
 }
 
 .pj-slip-text {
-  font-size: 16px;
+  font-size: 18px;
   font-weight: 400;
   color: #1c1004;
   text-align: center;
