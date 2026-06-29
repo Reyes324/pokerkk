@@ -1985,13 +1985,9 @@ function redrawPaijueCylinder() {
             cylWrap.classList.remove('shaking');
             slipText.textContent = PAIJUE_CARDS[_pjRandWisdom()];
 
-            slip.style.transition = 'none';
-            slip.style.transform  = 'translateY(150px)';
-            slip.style.opacity    = '0';
-            slip.offsetHeight;
-            slip.style.transition = '';
-            slip.style.transform  = '';
-            slip.style.opacity    = '';
+            // 移除再加回 .out 以重启 keyframe 动画
+            slip.classList.remove('out');
+            slip.offsetHeight; // force reflow
             slip.classList.add('out');
             _pjSetAnimating(false);
         }, 720);

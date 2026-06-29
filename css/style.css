@@ -1169,14 +1169,26 @@ body { padding-bottom: calc(144px + env(safe-area-inset-bottom)) !important; }
   animation: pj-shake 0.7s cubic-bezier(0.36, 0.07, 0.19, 0.97) both;
 }
 
-/* 签条（从筒口滑出的竹签） */
+/* 签条出场：整体从 28px 下方轻浮上来 */
+@keyframes pj-slip-rise {
+  from { opacity: 0; transform: translateY(28px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* 签文浮现：在签条落定后，文字从轻微模糊中浮出 */
+@keyframes pj-text-emerge {
+  from { opacity: 0; transform: translateY(6px); filter: blur(3px); }
+  to   { opacity: 1; transform: translateY(0);   filter: blur(0); }
+}
+
+/* 签条（固定位置，只靠动画浮入） */
 .pj-slip {
-  position: relative;   /* flex item — 参与 pj-oracle 的 flex 流 */
+  position: relative;
   flex-shrink: 0;
   width: min(270px, 72vw);
   min-height: 280px;
-  background: linear-gradient(160deg, #fdf5dc 0%, #f0d878 100%);
-  border: 1px solid rgba(180,140,40,0.3);
+  background: linear-gradient(160deg, #fefdf2 0%, #f6ecaa 100%);
+  border: 1px solid rgba(180,140,40,0.25);
   border-radius: 14px;
   padding: 20px 18px;
   display: flex;
@@ -1186,36 +1198,45 @@ body { padding-bottom: calc(144px + env(safe-area-inset-bottom)) !important; }
   gap: 14px;
   box-shadow:
     0 6px 24px rgba(0,0,0,0.5),
-    0 0 0 1px rgba(201,168,76,0.2),
-    0 0 28px rgba(201,168,76,0.18),
-    0 2px 12px rgba(201,168,76,0.12);
+    0 0 0 1px rgba(201,168,76,0.15),
+    0 0 28px rgba(201,168,76,0.14),
+    0 2px 12px rgba(201,168,76,0.10);
   z-index: 3;
-  /* 初始：藏在签筒后方（向下 300px 进入筒身区域） */
-  transform: translateY(150px);
+  /* 默认隐藏，.out 触发动画 */
   opacity: 0;
-  transition:
-    transform 0.6s cubic-bezier(0.22,1,0.36,1),
-    opacity   0.4s ease;
+  pointer-events: none;
 }
 .pj-slip.out {
-  transform: translateY(0);
+  animation: pj-slip-rise 0.55s cubic-bezier(0.22,1,0.36,1) both;
+  opacity: 1;
+  pointer-events: auto;
+}
+
+/* 签文：签条浮起 300ms 后再浮现 */
+.pj-slip .pj-slip-text {
+  opacity: 0;
+}
+.pj-slip.out .pj-slip-text {
+  animation: pj-text-emerge 0.5s ease both;
+  animation-delay: 0.3s;
   opacity: 1;
 }
 
 .pj-slip-deco {
   width: 100px;
   height: 1px;
-  background: linear-gradient(to right, transparent, rgba(100,60,10,0.5), transparent);
+  background: linear-gradient(to right, transparent, rgba(100,60,10,0.45), transparent);
   flex-shrink: 0;
 }
 
 .pj-slip-text {
   font-size: 16px;
-  font-weight: 500;
-  color: #1a1008;
+  font-weight: 400;
+  color: #1c1004;
   text-align: center;
-  line-height: 1.8;
-  font-family: var(--font);
+  line-height: 2;
+  letter-spacing: 0.08em;
+  font-family: 'Songti SC', 'STSong', 'SimSun', 'Noto Serif SC', Georgia, serif;
   margin: 0;
   word-break: break-all;
 }
