@@ -1227,10 +1227,35 @@ body { padding-bottom: calc(144px + env(safe-area-inset-bottom)) !important; }
   transition: opacity 0.35s ease 0.3s;
 }
 
+/* 内边框：签条文件感的核心 */
+.pj-slip::before {
+  content: '';
+  position: absolute;
+  inset: 7px;
+  border: 1px solid rgba(140,95,15,0.22);
+  border-radius: 8px;
+  pointer-events: none;
+}
+
+/* 分隔线：线 + 菱形点 */
 .pj-slip-deco {
-  width: 100px;
+  width: 76%;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+.pj-slip-deco::before,
+.pj-slip-deco::after {
+  content: '';
+  flex: 1;
   height: 1px;
-  background: linear-gradient(to right, transparent, rgba(100,60,10,0.45), transparent);
+  background: rgba(120,80,15,0.35);
+}
+.pj-slip-deco span {
+  font-size: 7px;
+  color: rgba(120,80,15,0.5);
+  line-height: 1;
   flex-shrink: 0;
 }
 
