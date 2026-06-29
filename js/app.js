@@ -1936,7 +1936,10 @@ function initPaijueCylinder() {
 
     const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     if (reducedMotion) {
-        slipText.textContent = PAIJUE_CARDS[_pjRandWisdom()];
+        const wisdom = PAIJUE_CARDS[_pjRandWisdom()];
+        slipText.textContent = wisdom.quote;
+        document.getElementById('pj-slip-note').textContent = wisdom.note;
+        document.getElementById('pj-slip-card').classList.remove('flipped');
         slip.classList.add('out');
         _pjSetAnimating(false);
         _pjShowHint();
@@ -1944,7 +1947,10 @@ function initPaijueCylinder() {
     }
 
     // 文字提前写入（此时签条沉着不可见，无闪烁）
-    slipText.textContent = PAIJUE_CARDS[_pjRandWisdom()];
+    const wisdom = PAIJUE_CARDS[_pjRandWisdom()];
+    slipText.textContent = wisdom.quote;
+    document.getElementById('pj-slip-note').textContent = wisdom.note;
+    document.getElementById('pj-slip-card').classList.remove('flipped');
     // 摇签立即开始
     cylWrap.classList.add('shaking');
     setTimeout(() => {
@@ -1970,20 +1976,26 @@ function redrawPaijueCylinder() {
 
     const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     if (reducedMotion) {
-        slipText.textContent = PAIJUE_CARDS[_pjRandWisdom()];
+        const w = PAIJUE_CARDS[_pjRandWisdom()];
+        slipText.textContent = w.quote;
+        document.getElementById('pj-slip-note').textContent = w.note;
+        document.getElementById('pj-slip-card').classList.remove('flipped');
         _pjSetAnimating(false);
         return;
     }
 
     // 签条退后 + 摇签同时触发
     slip.classList.remove('out');
+    document.getElementById('pj-slip-card').classList.remove('flipped');
     cylWrap.classList.add('shaking');
 
     setTimeout(() => {
         if (_pjGen !== gen) return;
         cylWrap.classList.remove('shaking');
         // 文字写入后隔一帧再触发 transition
-        slipText.textContent = PAIJUE_CARDS[_pjRandWisdom()];
+        const w = PAIJUE_CARDS[_pjRandWisdom()];
+        slipText.textContent = w.quote;
+        document.getElementById('pj-slip-note').textContent = w.note;
         requestAnimationFrame(() => {
             if (_pjGen !== gen) return;
             slip.classList.add('out');
@@ -1998,10 +2010,9 @@ document.getElementById('pj-cylinder-wrap').addEventListener('click', () => {
     redrawPaijueCylinder();
 });
 
-// 便签点击 → 再来一签（仅在展开状态）
+// 便签点击 → 翻面查看注释（仅在展开状态）
 document.getElementById('pj-slip').addEventListener('click', () => {
     const slip = document.getElementById('pj-slip');
     if (!slip.classList.contains('out')) return;
-    if (document.getElementById('pj-cylinder-wrap').classList.contains('animating')) return;
-    redrawPaijueCylinder();
+    document.getElementById('pj-slip-card').classList.toggle('flipped');
 });

@@ -1180,12 +1180,9 @@ body { padding-bottom: calc(144px + env(safe-area-inset-bottom)) !important; }
   background: linear-gradient(160deg, #fefdf2 0%, #f6ecaa 100%);
   border: 1px solid rgba(180,140,40,0.25);
   border-radius: 14px;
-  padding: 20px 18px;
   display: flex;
   flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 14px;
+  perspective: 900px;
   /* 沉下去状态：光晕占位（与 .out 状态层数一致保证 transition 平滑） */
   box-shadow:
     0 3px 12px rgba(0,0,0,0.4),
@@ -1259,6 +1256,35 @@ body { padding-bottom: calc(144px + env(safe-area-inset-bottom)) !important; }
   flex-shrink: 0;
 }
 
+/* ── 翻面卡片 ── */
+.pj-slip-card {
+  width: 100%;
+  flex: 1;
+  position: relative;
+  transform-style: preserve-3d;
+  transition: transform 0.65s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.pj-slip-card.flipped {
+  transform: rotateY(180deg);
+}
+.pj-slip-face {
+  position: absolute;
+  inset: 0;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  padding: 20px 18px;
+}
+.pj-slip-face-back {
+  transform: rotateY(180deg);
+  background: linear-gradient(340deg, #fefcef 0%, #f3e598 100%);
+  border-radius: 14px;
+}
+
 .pj-slip-text {
   font-size: 18px;
   font-weight: 400;
@@ -1269,6 +1295,17 @@ body { padding-bottom: calc(144px + env(safe-area-inset-bottom)) !important; }
   font-family: 'Songti SC', 'STSong', 'SimSun', 'Noto Serif SC', Georgia, serif;
   margin: 0;
   word-break: break-all;
+}
+
+.pj-slip-note {
+  font-size: 13px;
+  font-weight: 400;
+  color: #2a1a06;
+  text-align: center;
+  line-height: 1.9;
+  letter-spacing: 0.04em;
+  font-family: 'Songti SC', 'STSong', 'SimSun', 'Noto Serif SC', Georgia, serif;
+  margin: 0;
 }
 
 /* 字号固定，不再按长度缩小 */
@@ -1318,7 +1355,7 @@ body { padding-bottom: calc(144px + env(safe-area-inset-bottom)) !important; }
   cursor: default;
 }
 
-/* 便签：展开时可点击触发再来一签 */
+/* 便签：展开时可点击翻面查看注释 */
 .pj-slip.out { cursor: pointer; }
 
 /* ─── Toast — centered ─── */
