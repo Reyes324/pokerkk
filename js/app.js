@@ -1956,12 +1956,14 @@ function initPaijueCylinder() {
     setTimeout(() => {
         if (_pjGen !== gen) return;
         cylWrap.classList.remove('shaking');
-        // rAF 隔一帧再触发 transition，避免 layout 与 paint 同帧导致卡顿
+        // 双 rAF：第一帧让浏览器 commit 沉下去的样式，第二帧才触发浮出 transition
         requestAnimationFrame(() => {
-            if (_pjGen !== gen) return;
-            slip.classList.add('out');
-            _pjSetAnimating(false);
-            _pjShowHint();
+            requestAnimationFrame(() => {
+                if (_pjGen !== gen) return;
+                slip.classList.add('out');
+                _pjSetAnimating(false);
+                _pjShowHint();
+            });
         });
     }, 720);
 }
@@ -1997,9 +1999,11 @@ function redrawPaijueCylinder() {
         slipText.textContent = w.quote;
         document.getElementById('pj-slip-note').textContent = w.note;
         requestAnimationFrame(() => {
-            if (_pjGen !== gen) return;
-            slip.classList.add('out');
-            _pjSetAnimating(false);
+            requestAnimationFrame(() => {
+                if (_pjGen !== gen) return;
+                slip.classList.add('out');
+                _pjSetAnimating(false);
+            });
         });
     }, 720);
 }

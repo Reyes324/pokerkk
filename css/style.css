@@ -1158,12 +1158,12 @@ body { padding-bottom: calc(144px + env(safe-area-inset-bottom)) !important; }
 /* 摇签动画 */
 @keyframes pj-shake {
   0%   { transform: rotate(0deg); }
-  12%  { transform: rotate(-6deg); }
-  28%  { transform: rotate(5deg); }
-  42%  { transform: rotate(-4deg); }
-  58%  { transform: rotate(3deg); }
-  72%  { transform: rotate(-2deg); }
-  86%  { transform: rotate(1deg); }
+  10%  { transform: rotate(-13deg); }
+  26%  { transform: rotate(10deg); }
+  40%  { transform: rotate(-8deg); }
+  55%  { transform: rotate(5deg); }
+  70%  { transform: rotate(-3deg); }
+  85%  { transform: rotate(1.5deg); }
   100% { transform: rotate(0deg); }
 }
 .pj-cylinder-group.shaking {
@@ -1182,33 +1182,41 @@ body { padding-bottom: calc(144px + env(safe-area-inset-bottom)) !important; }
   flex-direction: column;
   perspective: 900px;
   /* 沉下去状态：光晕占位（与 .out 状态层数一致保证 transition 平滑） */
-  box-shadow:
-    0 3px 12px rgba(0,0,0,0.4),
-    0 0 0 1px rgba(201,168,76,0),
-    0 0 0px rgba(201,168,76,0),
-    0 0 0px rgba(201,168,76,0);
+  box-shadow: 0 3px 12px rgba(0,0,0,0.4);
   z-index: 3;
-  opacity: 0.72;
+  opacity: 0.58;
   transform: scale(0.93);
-  filter: brightness(0.75) saturate(0.8);
-  will-change: transform, opacity, filter;
+  /* filter 已移除：iOS Safari 下 filter 会 flatten preserve-3d 子元素 */
+  will-change: transform, opacity;
   transition:
-    transform  0.55s cubic-bezier(0.22,1,0.36,1),
-    opacity    0.4s ease,
-    filter     0.4s ease,
-    box-shadow 0.5s ease;
+    transform 0.55s cubic-bezier(0.22,1,0.36,1),
+    opacity   0.4s ease;
   pointer-events: none;
 }
 
-.pj-slip.out {
-  opacity: 1;
-  transform: scale(1);
-  filter: brightness(1) saturate(1);
+/* glow 用 ::after + opacity 过渡，走 GPU 合成，不触发 repaint */
+.pj-slip::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 14px;
   box-shadow:
     0 6px 24px rgba(0,0,0,0.5),
     0 0 0 1px rgba(201,168,76,0.15),
     0 0 28px rgba(201,168,76,0.14),
     0 2px 12px rgba(201,168,76,0.10);
+  opacity: 0;
+  will-change: opacity;
+  transition: opacity 0.5s ease;
+  pointer-events: none;
+}
+.pj-slip.out::after {
+  opacity: 1;
+}
+
+.pj-slip.out {
+  opacity: 1;
+  transform: scale(1);
   pointer-events: auto;
 }
 
@@ -1251,8 +1259,10 @@ body { padding-bottom: calc(144px + env(safe-area-inset-bottom)) !important; }
   width: 100%;
   flex: 1;
   position: relative;
+  -webkit-transform-style: preserve-3d;
   transform-style: preserve-3d;
   transition: transform 0.65s cubic-bezier(0.4, 0, 0.2, 1);
+  will-change: transform;
 }
 .pj-slip-card.flipped {
   transform: rotateY(180deg);
@@ -1260,8 +1270,8 @@ body { padding-bottom: calc(144px + env(safe-area-inset-bottom)) !important; }
 .pj-slip-face {
   position: absolute;
   inset: 0;
-  backface-visibility: hidden;
   -webkit-backface-visibility: hidden;
+  backface-visibility: hidden;
   display: flex;
   flex-direction: column;
   align-items: center;
