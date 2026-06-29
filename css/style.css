@@ -1142,6 +1142,7 @@ body { padding-bottom: calc(144px + env(safe-area-inset-bottom)) !important; }
   z-index: 5;
   margin-top: 8px;
   transform-origin: 50% 75%;
+  will-change: transform;
 }
 
 
@@ -1194,7 +1195,8 @@ body { padding-bottom: calc(144px + env(safe-area-inset-bottom)) !important; }
   z-index: 3;
   opacity: 0.72;
   transform: scale(0.93);
-  filter: brightness(0.68) saturate(0.6);
+  filter: brightness(0.75) saturate(0.8);
+  will-change: transform, opacity, filter;
   transition:
     transform  0.55s cubic-bezier(0.22,1,0.36,1),
     opacity    0.4s ease,

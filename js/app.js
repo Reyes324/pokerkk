@@ -1943,15 +1943,20 @@ function initPaijueCylinder() {
         return;
     }
 
+    // 文字提前写入（此时签条沉着不可见，无闪烁）
+    slipText.textContent = PAIJUE_CARDS[_pjRandWisdom()];
     // 摇签立即开始
     cylWrap.classList.add('shaking');
     setTimeout(() => {
         if (_pjGen !== gen) return;
         cylWrap.classList.remove('shaking');
-        slipText.textContent = PAIJUE_CARDS[_pjRandWisdom()];
-        slip.classList.add('out');   // 摇签结束同时浮出
-        _pjSetAnimating(false);
-        _pjShowHint();
+        // rAF 隔一帧再触发 transition，避免 layout 与 paint 同帧导致卡顿
+        requestAnimationFrame(() => {
+            if (_pjGen !== gen) return;
+            slip.classList.add('out');
+            _pjSetAnimating(false);
+            _pjShowHint();
+        });
     }, 720);
 }
 
@@ -1977,10 +1982,13 @@ function redrawPaijueCylinder() {
     setTimeout(() => {
         if (_pjGen !== gen) return;
         cylWrap.classList.remove('shaking');
+        // 文字写入后隔一帧再触发 transition
         slipText.textContent = PAIJUE_CARDS[_pjRandWisdom()];
-        slip.offsetHeight; // force reflow
-        slip.classList.add('out');   // 摇签结束同时浮出
-        _pjSetAnimating(false);
+        requestAnimationFrame(() => {
+            if (_pjGen !== gen) return;
+            slip.classList.add('out');
+            _pjSetAnimating(false);
+        });
     }, 720);
 }
 
