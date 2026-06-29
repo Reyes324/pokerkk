@@ -1169,19 +1169,8 @@ body { padding-bottom: calc(144px + env(safe-area-inset-bottom)) !important; }
   animation: pj-shake 0.7s cubic-bezier(0.36, 0.07, 0.19, 0.97) both;
 }
 
-/* 签条：沉入 → 浮出（卡片始终可见，只是 scale+opacity 变化） */
-@keyframes pj-slip-rise {
-  from { opacity: 0.4; transform: scale(0.88); filter: blur(3px); }
-  to   { opacity: 1;   transform: scale(1);    filter: blur(0); }
-}
-
-/* 签文：完全隐藏 → 渐显（文字才真正消失/出现） */
-@keyframes pj-text-emerge {
-  from { opacity: 0; filter: blur(4px); }
-  to   { opacity: 1; filter: blur(0); }
-}
-
-/* 签条默认"沉下去"状态——轮廓可见 */
+/* 签条：默认沉下去（轮廓可见），.out 时浮上来 */
+/* CSS transition 双向生效，不需要 keyframe */
 .pj-slip {
   position: relative;
   flex-shrink: 0;
@@ -1202,26 +1191,28 @@ body { padding-bottom: calc(144px + env(safe-area-inset-bottom)) !important; }
     0 0 28px rgba(201,168,76,0.14),
     0 2px 12px rgba(201,168,76,0.10);
   z-index: 3;
-  opacity: 0.4;
-  transform: scale(0.88);
-  filter: blur(3px);
+  opacity: 0.45;
+  transform: scale(0.93);
+  transition:
+    transform 0.55s cubic-bezier(0.22,1,0.36,1),
+    opacity   0.4s ease;
   pointer-events: none;
 }
 
-/* 浮出状态 */
 .pj-slip.out {
-  animation: pj-slip-rise 0.65s cubic-bezier(0.22,1,0.36,1) forwards;
+  opacity: 1;
+  transform: scale(1);
   pointer-events: auto;
 }
 
-/* 签文默认隐藏 */
+/* 签文：默认隐藏，浮出后 300ms 才渐显 */
 .pj-slip .pj-slip-text {
   opacity: 0;
+  transition: opacity 0.35s ease;
 }
-/* 签条浮起 300ms 后文字渐显 */
 .pj-slip.out .pj-slip-text {
-  animation: pj-text-emerge 0.5s ease forwards;
-  animation-delay: 0.3s;
+  opacity: 1;
+  transition: opacity 0.35s ease 0.3s;
 }
 
 .pj-slip-deco {
