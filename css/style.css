@@ -1169,10 +1169,10 @@ body { padding-bottom: calc(144px + env(safe-area-inset-bottom)) !important; }
   animation: pj-shake 0.7s cubic-bezier(0.36, 0.07, 0.19, 0.97) both;
 }
 
-/* 签条出场：整体从 28px 下方轻浮上来 */
+/* 签条出场：从 Z 轴深处浮现（原位 scale + blur 消散） */
 @keyframes pj-slip-rise {
-  from { opacity: 0; transform: translateY(28px); }
-  to   { opacity: 1; transform: translateY(0); }
+  from { opacity: 0; transform: scale(0.88); filter: blur(4px); }
+  to   { opacity: 1; transform: scale(1);    filter: blur(0); }
 }
 
 /* 签文浮现：在签条落定后，文字从轻微模糊中浮出 */
@@ -1207,7 +1207,7 @@ body { padding-bottom: calc(144px + env(safe-area-inset-bottom)) !important; }
   pointer-events: none;
 }
 .pj-slip.out {
-  animation: pj-slip-rise 0.55s cubic-bezier(0.22,1,0.36,1) both;
+  animation: pj-slip-rise 0.6s cubic-bezier(0.22,1,0.36,1) both;
   opacity: 1;
   pointer-events: auto;
 }
