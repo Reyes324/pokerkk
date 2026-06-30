@@ -1900,6 +1900,51 @@ function switchMainTab(tab) {
     }
 }
 
+// ── 牌诀·音效 & 触感 ──
+function _pjPlayShakeSound() {
+    try {
+        const AudioCtx = window.AudioContext || window.webkitAudioContext;
+        if (!AudioCtx) return;
+        const ctx = new AudioCtx();
+        // 6次竹签撞击，分布在前580ms，逐渐减弱
+        [0, 0.07, 0.16, 0.27, 0.42, 0.57].forEach(function(t, i) {
+            const start = ctx.currentTime + t + (Math.random() - 0.5) * 0.022;
+            const vol   = 0.44 - i * 0.04;
+            const bufLen = Math.floor(ctx.sampleRate * 0.15);
+            const buf  = ctx.createBuffer(1, bufLen, ctx.sampleRate);
+            const data = buf.getChannelData(0);
+            for (var j = 0; j < bufLen; j++) data[j] = Math.random() * 2 - 1;
+            const src = ctx.createBufferSource();
+            src.buffer = buf;
+            // 竹木共鸣：带通 350-680 Hz
+            const bp = ctx.createBiquadFilter();
+            bp.type = 'bandpass';
+            bp.frequency.value = 350 + Math.random() * 330;
+            bp.Q.value = 1.8 + Math.random() * 0.9;
+            // 截掉刺耳高频
+            const lp = ctx.createBiquadFilter();
+            lp.type = 'lowpass';
+            lp.frequency.value = 1800;
+            const gain = ctx.createGain();
+            gain.gain.setValueAtTime(0, start);
+            gain.gain.linearRampToValueAtTime(vol, start + 0.003);
+            gain.gain.exponentialRampToValueAtTime(0.001, start + 0.13);
+            src.connect(bp); bp.connect(lp); lp.connect(gain);
+            gain.connect(ctx.destination);
+            src.start(start);
+            src.stop(start + 0.15);
+        });
+        setTimeout(function() { try { ctx.close(); } catch(e) {} }, 1200);
+    } catch(e) {}
+}
+
+function _pjVibrate() {
+    try {
+        if (!navigator.vibrate) return;
+        navigator.vibrate([55, 35, 55, 35, 70]); // 三段节奏，共250ms
+    } catch(e) {}
+}
+
 // ── 牌诀·签筒摇签 ──
 let _pjGen = 0;
 let _pjRecentIdxs = [];
@@ -1951,7 +1996,9 @@ function initPaijueCylinder() {
     slipText.textContent = wisdom.quote;
     document.getElementById('pj-slip-note').textContent = wisdom.note;
     document.getElementById('pj-slip-card').classList.remove('flipped');
-    // 摇签立即开始
+    // 摇签立即开始，同步音效+震动
+    _pjPlayShakeSound();
+    _pjVibrate();
     cylWrap.classList.add('shaking');
     setTimeout(() => {
         if (_pjGen !== gen) return;
@@ -1986,9 +2033,11 @@ function redrawPaijueCylinder() {
         return;
     }
 
-    // 签条退后 + 摇签同时触发
+    // 签条退后 + 摇签同时触发，同步音效+震动
     slip.classList.remove('out');
     document.getElementById('pj-slip-card').classList.remove('flipped');
+    _pjPlayShakeSound();
+    _pjVibrate();
     cylWrap.classList.add('shaking');
 
     setTimeout(() => {
@@ -2014,9 +2063,131 @@ document.getElementById('pj-cylinder-wrap').addEventListener('click', () => {
     redrawPaijueCylinder();
 });
 
-// 便签点击 → 翻面查看注释（仅在展开状态）
-document.getElementById('pj-slip').addEventListener('click', () => {
-    const slip = document.getElementById('pj-slip');
-    if (!slip.classList.contains('out')) return;
-    document.getElementById('pj-slip-card').classList.toggle('flipped');
+// 便签交互：点击翻面 / 长按保存图片
+(function () {
+    const slipEl = document.getElementById('pj-slip');
+    let pressTimer = null;
+    let pressMoved = false;
+    let longPressTriggered = false;
+
+    slipEl.addEventListener('touchstart', () => {
+        pressMoved = false;
+        longPressTriggered = false;
+        pressTimer = setTimeout(() => {
+            if (!pressMoved) {
+                longPressTriggered = true;
+                capturePjSlip();
+            }
+        }, 600);
+    }, { passive: true });
+
+    slipEl.addEventListener('touchmove', () => {
+        pressMoved = true;
+        clearTimeout(pressTimer);
+    }, { passive: true });
+
+    slipEl.addEventListener('touchend', () => {
+        clearTimeout(pressTimer);
+    }, { passive: true });
+
+    slipEl.addEventListener('click', () => {
+        if (longPressTriggered) { longPressTriggered = false; return; }
+        if (!slipEl.classList.contains('out')) return;
+        document.getElementById('pj-slip-card').classList.toggle('flipped');
+    });
+})();
+
+// 便签截图：构建 2D 平面克隆，避开 CSS 3D 渲染问题
+function capturePjSlip() {
+    const isFlipped = document.getElementById('pj-slip-card').classList.contains('flipped');
+    const quoteText = document.getElementById('pj-slip-text').textContent;
+    const noteText  = document.getElementById('pj-slip-note').textContent;
+
+    const container = document.createElement('div');
+    container.style.cssText = 'position:absolute;left:-9999px;top:0;width:270px;';
+
+    const card = document.createElement('div');
+    card.style.cssText = [
+        'position:relative',
+        'width:270px',
+        'min-height:280px',
+        'box-sizing:border-box',
+        'border-radius:14px',
+        'display:flex',
+        'flex-direction:column',
+        'align-items:center',
+        'justify-content:center',
+        'gap:14px',
+        'padding:20px 18px',
+        isFlipped
+            ? 'background:#161410;border:1px solid rgba(255,255,255,0.06)'
+            : 'background:#f5f0e2;border:1px solid rgba(140,90,10,0.1)',
+    ].join(';');
+
+    // 内边框
+    const inner = document.createElement('div');
+    inner.style.cssText = [
+        'position:absolute',
+        'inset:7px',
+        'border-radius:8px',
+        'pointer-events:none',
+        isFlipped
+            ? 'border:0.5px solid rgba(255,255,255,0.05)'
+            : 'border:0.5px solid rgba(0,0,0,0.1)',
+    ].join(';');
+    card.appendChild(inner);
+
+    if (isFlipped) {
+        // 「注」印记
+        const stamp = document.createElement('span');
+        stamp.style.cssText = 'position:absolute;top:15px;right:17px;font-size:9px;font-family:"Songti SC","STSong",serif;color:rgba(255,255,255,0.18);letter-spacing:0.12em;';
+        stamp.textContent = '注';
+        card.appendChild(stamp);
+        // 注释文字
+        const note = document.createElement('p');
+        note.style.cssText = 'font-size:15px;font-weight:400;color:rgba(240,235,220,0.75);text-align:center;line-height:1.85;letter-spacing:0.05em;font-family:"LXGW WenKai","Songti SC","STSong","Noto Serif SC",Georgia,serif;margin:0;';
+        note.textContent = noteText;
+        card.appendChild(note);
+    } else {
+        // ◆ 分隔线 + 签文 + ◆ 分隔线
+        [true, false].forEach(isTop => {
+            const deco = document.createElement('div');
+            deco.style.cssText = 'width:76%;display:flex;align-items:center;gap:8px;flex-shrink:0;';
+            const l = document.createElement('span');
+            l.style.cssText = 'flex:1;height:1px;background:rgba(0,0,0,0.18);display:block;';
+            const d = document.createElement('span');
+            d.style.cssText = 'font-size:7px;color:rgba(0,0,0,0.25);line-height:1;flex-shrink:0;';
+            d.textContent = '◆';
+            const r = document.createElement('span');
+            r.style.cssText = 'flex:1;height:1px;background:rgba(0,0,0,0.18);display:block;';
+            deco.appendChild(l); deco.appendChild(d); deco.appendChild(r);
+            card.appendChild(deco);
+            if (isTop) {
+                const text = document.createElement('p');
+                text.style.cssText = 'font-size:18px;font-weight:400;color:#1a1208;text-align:center;line-height:2;letter-spacing:0.08em;font-family:"LXGW WenKai","Songti SC","STSong","Noto Serif SC",Georgia,serif;margin:0;word-break:break-all;';
+                text.textContent = quoteText;
+                card.appendChild(text);
+            }
+        });
+    }
+
+    container.appendChild(card);
+    document.body.appendChild(container);
+
+    html2canvas(card, { scale: 3, backgroundColor: null, useCORS: true, logging: false }).then(canvas => {
+        document.body.removeChild(container);
+        document.getElementById('pj-save-img').src = canvas.toDataURL('image/png');
+        const modal = document.getElementById('pj-save-modal');
+        modal.classList.remove('hidden');
+        requestAnimationFrame(() => modal.classList.add('visible'));
+    }).catch(() => {
+        document.body.removeChild(container);
+    });
+}
+
+// 点击 overlay 关闭
+document.getElementById('pj-save-modal').addEventListener('click', () => {
+    const modal = document.getElementById('pj-save-modal');
+    modal.classList.remove('visible');
+    setTimeout(() => modal.classList.add('hidden'), 250);
 });

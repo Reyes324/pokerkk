@@ -1201,10 +1201,9 @@ body { padding-bottom: calc(144px + env(safe-area-inset-bottom)) !important; }
   inset: 0;
   border-radius: 14px;
   box-shadow:
-    0 6px 24px rgba(0,0,0,0.5),
-    0 0 0 1px rgba(201,168,76,0.15),
-    0 0 28px rgba(201,168,76,0.14),
-    0 2px 12px rgba(201,168,76,0.10);
+    0 8px 32px rgba(0,0,0,0.65),
+    0 0 0 1px rgba(255,255,255,0.1),
+    0 0 24px rgba(255,250,240,0.06);
   opacity: 0;
   will-change: opacity;
   transition: opacity 0.5s ease;
@@ -1245,11 +1244,11 @@ body { padding-bottom: calc(144px + env(safe-area-inset-bottom)) !important; }
   content: '';
   flex: 1;
   height: 1px;
-  background: rgba(120,80,15,0.35);
+  background: rgba(130,85,12,0.3);
 }
 .pj-slip-deco span {
   font-size: 7px;
-  color: rgba(120,80,15,0.5);
+  color: rgba(130,85,12,0.42);
   line-height: 1;
   flex-shrink: 0;
 }
@@ -1279,28 +1278,26 @@ body { padding-bottom: calc(144px + env(safe-area-inset-bottom)) !important; }
   gap: 14px;
   padding: 20px 18px;
   border-radius: 14px;
-  border: 1px solid rgba(180,140,40,0.25);
+  border: 1px solid rgba(140,90,10,0.1);
 }
 .pj-slip-face::before {
   content: '';
   position: absolute;
   inset: 7px;
-  border: 1px solid rgba(140,95,15,0.22);
+  border: 0.5px solid rgba(130,85,10,0.14);
   border-radius: 8px;
   pointer-events: none;
 }
 .pj-slip-face-front {
-  background: linear-gradient(160deg, #fefdf2 0%, #f6ecaa 100%);
+  background: #f5f0e2;
 }
-
-/* 背面：墨底注疏 — 与正面金纸构成概念反转 */
 .pj-slip-face-back {
   transform: rotateY(180deg);
-  background: linear-gradient(160deg, #1e1005 0%, #0e0800 100%);
-  border-color: rgba(160, 115, 15, 0.45);
+  background: #161410;
+  border-color: rgba(255,255,255,0.06);
 }
 .pj-slip-face-back::before {
-  border-color: rgba(180, 130, 20, 0.2);
+  border-color: rgba(255,255,255,0.05);
 }
 /* 「注」印记 */
 .pj-slip-face-back::after {
@@ -1310,7 +1307,7 @@ body { padding-bottom: calc(144px + env(safe-area-inset-bottom)) !important; }
   right: 17px;
   font-size: 9px;
   font-family: 'Songti SC', 'STSong', 'SimSun', serif;
-  color: rgba(200, 155, 30, 0.38);
+  color: rgba(255,255,255,0.18);
   letter-spacing: 0.12em;
   pointer-events: none;
 }
@@ -1322,7 +1319,7 @@ body { padding-bottom: calc(144px + env(safe-area-inset-bottom)) !important; }
 .pj-slip-text {
   font-size: 18px;
   font-weight: 400;
-  color: #1c1004;
+  color: #1a1208;
   text-align: center;
   line-height: 2;
   letter-spacing: 0.08em;
@@ -1332,13 +1329,13 @@ body { padding-bottom: calc(144px + env(safe-area-inset-bottom)) !important; }
 }
 
 .pj-slip-note {
-  font-size: 15px;
+  font-size: 17px;
   font-weight: 400;
-  color: rgba(222, 180, 60, 0.88);
+  color: rgba(255, 238, 185, 0.72);
   text-align: center;
   line-height: 1.85;
   letter-spacing: 0.05em;
-  font-family: 'Songti SC', 'STSong', 'SimSun', 'Noto Serif SC', Georgia, serif;
+  font-family: 'LXGW WenKai', 'Songti SC', 'STSong', 'Noto Serif SC', Georgia, serif;
   margin: 0;
 }
 
@@ -1374,10 +1371,9 @@ body { padding-bottom: calc(144px + env(safe-area-inset-bottom)) !important; }
   left: 0; right: 0;
   text-align: center;
   font-family: var(--font);
-  font-size: 10px;
-  color: var(--ink-3);
-  opacity: 0.35;
-  letter-spacing: 0.05em;
+  font-size: 11px;
+  color: rgba(255, 255, 255, 0.28);
+  letter-spacing: 0.06em;
   pointer-events: none;
   user-select: none;
 }
@@ -1716,3 +1712,38 @@ body { padding-bottom: calc(144px + env(safe-area-inset-bottom)) !important; }
 .aggx-footer{display:flex;align-items:center;justify-content:center;gap:9px;padding:9px 16px 10px;background:#0d0d0d;border-top:1px solid #2a2a2a;font-family:'Montserrat','Noto Sans SC',sans-serif;font-size:11px;color:#b3b3b3}
 .aggx-fstat{color:#b3b3b3}
 .aggx-fsep{width:3px;height:3px;border-radius:50%;background:#4a4a4a}
+
+/* ── 便签长按保存 overlay ── */
+.pj-save-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 500;
+  background: rgba(0,0,0,0.82);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transition: opacity 0.25s ease;
+  pointer-events: none;
+}
+.pj-save-overlay.visible {
+  opacity: 1;
+  pointer-events: auto;
+}
+.pj-save-inner {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+}
+.pj-save-inner img {
+  max-width: min(270px, 80vw);
+  border-radius: 14px;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.6);
+  display: block;
+}
+.pj-save-hint {
+  font-size: 13px;
+  color: rgba(255,255,255,0.45);
+  letter-spacing: 0.04em;
+}
